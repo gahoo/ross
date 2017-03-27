@@ -45,3 +45,20 @@
   endpoint <- .build.endpoint(...)
   sprintf('http://%s.%s', name, endpoint)
 }
+
+.except.http_error <- function(response){
+  doc <- content(response, encoding = 'UTF-8')
+  Code <- xml_text(xml_find_all(doc, '/Error/Code'))
+  Message <- xml_text(xml_find_all(doc, '/Error/Message'))
+  RequestId <- xml_text(xml_find_all(doc, '/Error/RequestId'))
+  warning(sprintf("%s:<%s %s> %s", RequestId, response$status_code, Code, Message))
+}
+
+.check.http_error <- function(response){
+  is_error <- http_error(response)
+  if(is_error){
+    .except.http_error(response)
+  }
+  is_error
+}
+
