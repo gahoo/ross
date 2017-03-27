@@ -46,6 +46,7 @@
   sprintf('http://%s.%s', name, endpoint)
 }
 
+#' @import xml2
 .except.http_error <- function(response){
   doc <- content(response, encoding = 'UTF-8')
   Code <- xml_text(xml_find_all(doc, '/Error/Code'))
