@@ -90,6 +90,8 @@ NULL
                          AccessKeyId = Sys.getenv("AccessKeyId"),
                          AccessKeySecret = Sys.getenv("AccessKeySecret"),
                          query = NULL,
+                         body = NULL,
+                         .headers = character(),
                          ...
                          ){
 
@@ -98,9 +100,9 @@ NULL
   date <- http_date(Sys.time())
   signature <- .build.signature(method, ossresource, expires = date, AccessKeySecret=AccessKeySecret, ...)
   authorization <- sprintf("OSS %s:%s", AccessKeyId, signature)
-  headers <- add_headers(date = date, authorization = authorization)
+  headers <- add_headers(date = date, authorization = authorization, .headers=.headers)
 
-  do.call(method, args = list(url, headers, query = query))
+  do.call(method, args = list(url, headers, query = query, body=body))
 }
 
 #' Sign URL for requests.
