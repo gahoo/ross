@@ -250,6 +250,65 @@ PutBucketLifecycle <- function(name, Location="oss-cn-beijing",
 }
 
 ######## GET
+#' GetBucket
+#'
+#' Equals to ListObject
+#'
+#' @param prefix The prefix of buckets to filter.
+#' @param marker Which index to start with.
+#' @param max_keys Max number of buckets.
+#' @param delimiter Single character grouping the object name.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#'
+# TODO: an R6 Class to hadle ListBucketResult is needed
+GetBucket <- function(name, Location="oss-cn-beijing", prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL){
+  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
+  ossresource <- sprintf("/%s/", name)
+  response <- .sign.header('GET', host, ossresource,
+                           query=list(prefix=prefix,
+                                      marker=marker,
+                                      delimiter=delimiter,
+                                      "max-keys"=max_keys))
+
+  .check.http_error(response)
+
+  response
+}
+
+#' Title
+#'
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+ListObject <- function(...) {
+  GetBucket(...)
+}
+
+#' GetBucketAcl
+#'
+#' @inheritParams PutBucket
+#'
+#' @return
+#' @export
+#'
+#' @examples
+GetBucketAcl <- function(name, Location="oss-cn-beijing"){
+  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
+  ossresource <- sprintf("/%s/?acl", name)
+  response <- .sign.header('GET', host, ossresource,
+                           query = c('acl'))
+
+  .check.http_error(response)
+
+  response
+}
 
 
 ######## DELETE
