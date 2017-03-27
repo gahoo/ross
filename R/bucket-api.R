@@ -1,3 +1,5 @@
+#### PUT
+
 #' PutBucket
 #'
 #' Create new Bucket. Modify authority control.
@@ -39,7 +41,7 @@ PutBucket <- function(name, Location="oss-cn-beijing", acl = "private", StorageC
       StorageClass=list(StorageClass)
     )
   )
-  doc <- as_xml_document(doc)
+  doc <- xml2::as_xml_document(doc)
   as.character(doc)
 }
 
@@ -98,7 +100,7 @@ PutBucketLogging <- function(name, prefix, target=name, Location="oss-cn-beijing
         )
       )
     )
-    doc <- as.character(as_xml_document(doc))
+    doc <- as.character(xml2::as_xml_document(doc))
   }else{
     doc <- "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<BucketLoggingStatus>\n</BucketLoggingStatus>\n"
   }
@@ -117,6 +119,8 @@ PutBucketLogging <- function(name, prefix, target=name, Location="oss-cn-beijing
 #' @export
 #'
 #' @examples
+#' PutBucketWebsite('ross-test')
+#' PutBucketWebsite('ross-test', key='error.html' suffix='index.html')
 PutBucketWebsite <- function(name, Location="oss-cn-beijing", suffix='index.html', key='404.html'){
   host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
   body <- .build.xml_body.PutBucketWebsite(suffix, key)
@@ -139,7 +143,7 @@ PutBucketWebsite <- function(name, Location="oss-cn-beijing", suffix='index.html
       )
     )
   )
-  doc <- as_xml_document(doc)
+  doc <- xml2::as_xml_document(doc)
   as.character(doc)
 }
 
@@ -183,6 +187,85 @@ PutBucketReferer <- function(name, Location="oss-cn-beijing", AllowEmptyReferer=
       RefererList=RefererList
     )
   )
-  doc <- as_xml_document(doc)
+  doc <- xml2::as_xml_document(doc)
   as.character(doc)
 }
+
+#' PutBucketLifecycle
+#'
+#' Config bucket object life cycle rules.
+#'
+#' @inheritParams PutBucket
+#' @param Prefix Object prefix applying the rule.
+#' @param RuleID Uid of rule
+#' @param Status Enable or Disable the rule.
+#' @param Object.CreatedBeforeDate Expires date for object.
+#' @param Object.Days Expris days for object.
+#' @param Multpart.CreatedBeforeDate Expris date for multipart upload.
+#' @param Multpart.Days Expris day for multipart upload.
+#'
+#' @return
+#' @export
+#'
+#'
+#' @examples
+#' PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.Days = 30)
+#' PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.CreatedBeforeDate = Sys.Date()+7)
+#' PutBucketLifecycle('ross-test', Prefix = 'upload_', Multpart.Days = 5)
+#' PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.Days = 30, Multpart.Days = 5)
+PutBucketLifecycle <- function(name, Location="oss-cn-beijing",
+                               Prefix, RuleID=NULL, Status='Enabled',
+                               Object.CreatedBeforeDate=NULL, Object.Days=NULL,
+                               Multpart.CreatedBeforeDate=NULL, Multpart.Days=NULL){
+
+  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
+  body <- .build.xml_body.PutBucketLifecycle(Prefix, RuleID, Status,
+                                             Object.CreatedBeforeDate, Object.Days,
+                                             Multpart.CreatedBeforeDate, Multpart.Days)
+  ossresource <- sprintf("/%s/?lifecycle", name)
+  response <- .sign.header("PUT", host, ossresource,
+                           query = c('lifecycle'),
+                           body=body)
+  .check.http_error(response)
+  response
+}
+
+
+.build.xml_body.PutBucketLifecycle <- function(Prefix, RuleID=NULL, Status='Enabled',
+                                               Object.CreatedBeforeDate=NULL, Object.Days=NULL,
+                                               Multpart.CreatedBeforeDate=NULL, Multpart.Days=NULL) {
+
+  build.expir <- function(CreatedBeforeDate=NULL, Days=NULL){
+    if(is.null(CreatedBeforeDate) && !is.null(Days)){
+      list(Days=list(Days))
+    }else if(!is.null(CreatedBeforeDate) && is.null(Days)){
+      list(CreatedBeforeDate=list(paste0(CreatedBeforeDate, "T00:00:00.000Z")))
+    }else if(!is.null(CreatedBeforeDate) && !is.null(Days)){
+      stop('Conflict! Either Days or CreatedBeforeDate should be used.')
+    }else{
+      NULL
+    }
+  }
+
+  # TODO: add multiple rule support.
+
+  doc <- list(
+    LifecycleConfiguration=list(
+      Rule=list(
+        ID = list(RuleID),
+        Prefix = list(Prefix),
+        Status = list(Status),
+        Expiration = build.expir(Object.CreatedBeforeDate, Object.Days),
+        AbortMultipartUpload = build.expir(Multpart.CreatedBeforeDate, Multpart.Days)
+      )
+    )
+  )
+
+  null_idx<-sapply(doc$LifecycleConfiguration$Rule, function(x) is.null(x[[1]]) )
+  doc$LifecycleConfiguration$Rule <- doc$LifecycleConfiguration$Rule[!null_idx]
+
+  doc <- xml2::as_xml_document(doc)
+  as.character(doc)
+}
+
+######## GET
