@@ -46,25 +46,6 @@ PutBucket <- function(name, Location="oss-cn-beijing", acl = "private", StorageC
 }
 
 
-#' DeleteBucket
-#'
-#' Remove bucket.
-#'
-#' @inheritParams PutBucket
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' DeleteBucket('ross-test')
-DeleteBucket <- function(name, Location="oss-cn-beijing") {
-  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
-  response <- .sign.header("DELETE", host, sprintf("/%s/", name))
-  .check.http_error(response)
-  response
-}
-
-
 #' PutBucketLogging
 #'
 #' Turn on/off bucket logging.
@@ -269,3 +250,25 @@ PutBucketLifecycle <- function(name, Location="oss-cn-beijing",
 }
 
 ######## GET
+
+
+######## DELETE
+
+#' DeleteBucket
+#'
+#' Remove bucket.
+#'
+#' @inheritParams PutBucket
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' DeleteBucket('ross-test')
+DeleteBucket <- function(name, Location="oss-cn-beijing") {
+  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
+  response <- .sign.header("DELETE", host, sprintf("/%s/", name))
+  .check.http_error(response)
+  response
+}
+
