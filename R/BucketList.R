@@ -25,17 +25,25 @@ BucketList <- R6::R6Class("BucketList",
     content = NULL,
     owner = NULL,
     buckets = list(),
-    initialize = function(prefix=NULL, marker=NULL, max_keys=100) {
-      self$prefix = prefix
-      self$marker = marker
-      self$max_keys = max_keys
-      self$refresh()
+    initialize = function(response=NULL, prefix=NULL, marker=NULL, max_keys=NULL) {
+      if(is.null(response)){
+        self$prefix = prefix
+        self$marker = marker
+        self$max_keys = max_keys
+        self$refresh()
+      }else{
+        self$parseResponse(response)
+      }
     },
-    refresh = function() {
-      self$response <- GetService(self$prefix, self$marker, self$max_keys)
+    parseResponse = function(response) {
+      self$response <- response
       self$content <- httr::content(self$response, encoding="UTF-8")
       self$owner <- private$parseOwner(self$content)
       self$buckets <- private$parseBuckets(self$content)
+    },
+    refresh = function() {
+      response <- GetService(self$prefix, self$marker, self$max_keys)
+      self$parseResponse(response)
     },
     list = function(val) {
       self$buckets <- val
