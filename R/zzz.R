@@ -64,7 +64,7 @@
   if(is.null(x)){
     NULL
   }else{
-    paste0(sprintf("%s:%s", names(x), x), collapse = '\n')
+    paste0(sprintf("%s:%s", names(x), x), '\n', collapse = '\n')
   }
 }
 
