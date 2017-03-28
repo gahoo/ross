@@ -56,6 +56,10 @@ NULL
     paste0(ossheaders, ossresource),
     sep = '\n')
 
+  if(getOption('ross.debug')){
+    print(string2sign)
+  }
+
   hmac_sha1(AccessKeySecret, string2sign)
 
 }
@@ -102,7 +106,12 @@ NULL
   authorization <- sprintf("OSS %s:%s", AccessKeyId, signature)
   headers <- add_headers(date = date, authorization = authorization, .headers=.headers)
 
-  do.call(method, args = list(url, headers, query = query, body=body))
+  response <- do.call(method, args = list(url, headers, query = query, body=body))
+  if(getOption('ross.debug') && response$status_code != 200){
+    print(httr::content(response))
+  }
+
+  response
 }
 
 #' Sign URL for requests.

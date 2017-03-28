@@ -3,7 +3,8 @@
   op <- options()
   op.ross <- list(
     ross.location = "beijing",
-    ross.internal = FALSE
+    ross.internal = FALSE,
+    ross.debug = FALSE
   )
   toset <- !(names(op.ross) %in% names(op))
   if(any(toset)) options(op.ross[toset])

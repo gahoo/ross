@@ -14,7 +14,7 @@
 #'
 #' @examples
 #' PutBucket('ross-test', 'public-read-write')
-PutBucket <- function(name, Location="oss-cn-beijing", acl = "private", StorageClass="Standard") {
+PutBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private", StorageClass="Standard") {
   if(!acl %in% c('private', 'public-read-write', 'public-read')){
     stop('Invalid acl, choose from public-read-write, public-read, private')
   }
@@ -23,16 +23,10 @@ PutBucket <- function(name, Location="oss-cn-beijing", acl = "private", StorageC
     stop('Invalid StorageClass, choose from Standard, .')
   }
 
-  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
-  ossheader <- paste0('x-oss-acl:', acl, '\n')
-  ossresource <- sprintf("/%s/", name)
   body <- .build.xml_body.PutBucket(StorageClass)
-  response <- .sign.header("PUT", host, ossresource,
-                           .header=c("x-oss-acl"=acl),
-                           ossheader=ossheader,
-                           body=body)
-  .check.http_error(response)
-  response
+  header <- list('x-oss-acl' = acl)
+  ossresource <- sprintf("/%s/", bucketname)
+  .api.put.header.request(ossresource, bucketname=bucketname, Location=Location, header=header, body=body)
 }
 
 .build.xml_body.PutBucket <- function(StorageClass="Standard"){
@@ -59,15 +53,10 @@ PutBucket <- function(name, Location="oss-cn-beijing", acl = "private", StorageC
 #'
 #' @examples
 #' r <- PutBucketLogging('ross-test', 'log-')
-PutBucketLogging <- function(name, prefix, target=name, Location="oss-cn-beijing", on=TRUE) {
-  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
+PutBucketLogging <- function(name, prefix, target=name, on=TRUE) {
   body <- .build.xml_body.PutBucketLogging(name, prefix, target, on)
   ossresource <- sprintf("/%s/?logging", name)
-  response <- .sign.header("PUT", host, ossresource,
-                           query = c('logging'),
-                           body=body)
-  .check.http_error(response)
-  response
+  .api.put.header.request(ossresource, bucketname=name, query = c('logging'), body=body)
 }
 
 .build.xml_body.PutBucketLogging <- function(name, prefix, target=name, on=TRUE){
@@ -101,16 +90,11 @@ PutBucketLogging <- function(name, prefix, target=name, Location="oss-cn-beijing
 #'
 #' @examples
 #' PutBucketWebsite('ross-test')
-#' PutBucketWebsite('ross-test', key='error.html' suffix='index.html')
-PutBucketWebsite <- function(name, Location="oss-cn-beijing", suffix='index.html', key='404.html'){
-  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
+#' PutBucketWebsite('ross-test', key='error.html', suffix='index.html')
+PutBucketWebsite <- function(name, suffix='index.html', key='404.html'){
   body <- .build.xml_body.PutBucketWebsite(suffix, key)
   ossresource <- sprintf("/%s/?website", name)
-  response <- .sign.header("PUT", host, ossresource,
-                           query = c('website'),
-                           body=body)
-  .check.http_error(response)
-  response
+  .api.put.header.request(ossresource, bucketname=name, query = c('website'), body=body)
 }
 
 .build.xml_body.PutBucketWebsite <- function(suffix='index.html', key='404.html'){
@@ -142,15 +126,10 @@ PutBucketWebsite <- function(name, Location="oss-cn-beijing", suffix='index.html
 #'
 #' @examples
 #' PutBucketReferer('ross-test', AllowEmptyReferer=FALSE, RefererList='http://*.aliyun.com')
-PutBucketReferer <- function(name, Location="oss-cn-beijing", AllowEmptyReferer=TRUE, RefererList=c()){
-  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
+PutBucketReferer <- function(name, AllowEmptyReferer=TRUE, RefererList=c()){
   body <- .build.xml_body.PutBucketReferer(AllowEmptyReferer, RefererList)
   ossresource <- sprintf("/%s/?referer", name)
-  response <- .sign.header("PUT", host, ossresource,
-                           query = c('referer'),
-                           body=body)
-  .check.http_error(response)
-  response
+  .api.put.header.request(ossresource, bucketname=name, query = c('referer'), body=body)
 }
 
 .build.xml_body.PutBucketReferer <- function(AllowEmptyReferer=TRUE, RefererList=c()) {
@@ -199,16 +178,12 @@ PutBucketLifecycle <- function(name, Location="oss-cn-beijing",
                                Object.CreatedBeforeDate=NULL, Object.Days=NULL,
                                Multpart.CreatedBeforeDate=NULL, Multpart.Days=NULL){
 
-  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
   body <- .build.xml_body.PutBucketLifecycle(Prefix, RuleID, Status,
                                              Object.CreatedBeforeDate, Object.Days,
                                              Multpart.CreatedBeforeDate, Multpart.Days)
+
   ossresource <- sprintf("/%s/?lifecycle", name)
-  response <- .sign.header("PUT", host, ossresource,
-                           query = c('lifecycle'),
-                           body=body)
-  .check.http_error(response)
-  response
+  .api.put.header.request(ossresource, bucketname=name, query = c('lifecycle'), body = body)
 }
 
 
@@ -265,18 +240,10 @@ PutBucketLifecycle <- function(name, Location="oss-cn-beijing",
 #' @examples
 #'
 # TODO: an R6 Class to hadle ListBucketResult is needed
-GetBucket <- function(name, Location="oss-cn-beijing", prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL){
-  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
-  ossresource <- sprintf("/%s/", name)
-  response <- .sign.header('GET', host, ossresource,
-                           query=list(prefix=prefix,
-                                      marker=marker,
-                                      delimiter=delimiter,
-                                      "max-keys"=max_keys))
-
-  .check.http_error(response)
-
-  response
+GetBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL){
+  ossresource <- sprintf("/%s/", bucketname)
+  query <- list(prefix=prefix, marker=marker, delimiter=delimiter, "max-keys"=max_keys)
+  .api.get.header.request(ossresource, bucketname=bucketname, query = query)
 }
 
 #' Title
@@ -299,9 +266,9 @@ ListObject <- function(...) {
 #' @export
 #'
 #' @examples
-GetBucketAcl <- function(bucketname){
-  ossresource <- sprintf("/%s/?acl", bucketname)
-  .api.get.header.request(ossresource, bucketname=bucketname, query = c('acl'))
+GetBucketAcl <- function(name){
+  ossresource <- sprintf("/%s/?acl", name)
+  .api.get.header.request(ossresource, bucketname=name, query = c('acl'))
 }
 
 
@@ -313,9 +280,9 @@ GetBucketAcl <- function(bucketname){
 #' @export
 #'
 #' @examples
-GetBucketLocation <- function(bucketname) {
-  ossresource <- sprintf("/%s/?location", bucketname)
-  .api.get.header.request(ossresource, bucketname=bucketname,
+GetBucketLocation <- function(name) {
+  ossresource <- sprintf("/%s/?location", name)
+  .api.get.header.request(ossresource, bucketname=name,
                           Location='oss-cn-hangzhou',
                           query = c('location'))
 }
@@ -335,7 +302,7 @@ GetBucketLocation <- function(bucketname) {
 #' @examples
 #' DeleteBucket('ross-test')
 DeleteBucket <- function(name, Location="oss-cn-beijing") {
-  host <- .build.bucket.host(name, Location, internal=getOption('ross.internal'))
+  host <- .build.host(name, Location, internal=getOption('ross.internal'))
   response <- .sign.header("DELETE", host, sprintf("/%s/", name))
   .check.http_error(response)
   response
