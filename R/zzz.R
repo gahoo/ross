@@ -23,16 +23,16 @@
 #' @export
 #'
 #' @examples
-.build.endpoint <- function(location="oss-cn-beijing", internal=TRUE){
+.build.endpoint <- function(Location="oss-cn-beijing", internal=TRUE){
   if(internal){
     domain <- "%s-internal.aliyuncs.com"
   }else{
     domain <- "%s.aliyuncs.com"
   }
-  sprintf(domain, location)
+  sprintf(domain, Location)
 }
 
-#' Build Bucket host
+#' Build host
 #'
 #' @param name bucket name
 #' @param ...
@@ -41,9 +41,33 @@
 #' @export
 #'
 #' @examples
-.build.bucket.host <- function(name, ...){
-  endpoint <- .build.endpoint(...)
-  sprintf('http://%s.%s', name, endpoint)
+.build.host <- function(name=NULL, Location=NULL, ...){
+  if(is.null(name)){
+    "http://oss.aliyuncs.com"
+  }else{
+    if(is.null(Location)){
+      Location <- .get.bucket.location(name)
+    }
+    endpoint <- .build.endpoint(Location, ...)
+    sprintf('http://%s.%s', name, endpoint)
+  }
+}
+
+.build.header <- function(x) {
+  if(is.null(x)){
+    character()
+  }else{
+    unlist(x)
+  }
+}
+
+#' @export
+.build.ossheader <- function(x) {
+  if(is.null(x)){
+    NULL
+  }else{
+    paste0(sprintf("%s:%s", names(x), x), collapse = '\n')
+  }
 }
 
 #' @import xml2
@@ -55,6 +79,7 @@
   warning(sprintf("%s:<%s %s> %s", RequestId, response$status_code, Code, Message))
 }
 
+#' @import httr
 .check.http_error <- function(response){
   is_error <- http_error(response)
   if(is_error){
@@ -63,3 +88,25 @@
   is_error
 }
 
+
+.get.cache.bucket.location <- function(name) {
+  location <- .state$location[[name]]
+  if(is.null(location)){
+    .get.bucket.location(name)
+  }else{
+    location
+  }
+}
+
+#' @import httr
+#' @import xml2
+.get.bucket.location <- function(name){
+  r <- GetBucketLocation(name)
+  if(r$status_code == 200){
+    location <- unlist(xml2::as_list(httr::content(r, encoding = 'UTF-8')))
+    .state$location[[name]] <- location
+  }else{
+    stop("No Such Bucket.")
+  }
+  location
+}
