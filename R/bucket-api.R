@@ -299,15 +299,13 @@ ListObject <- function(...) {
 #' @export
 #'
 #' @examples
-GetBucketAcl <- function(name, Location=.get.cache.bucket.location(name)){
-  ossresource <- sprintf("/%s/?acl", name)
-  .api.get.header.request(ossresource, name=name,
-                          Location=Location,
-                          query = c('acl'))
+GetBucketAcl <- function(bucketname){
+  ossresource <- sprintf("/%s/?acl", bucketname)
+  .api.get.header.request(ossresource, bucketname=bucketname, query = c('acl'))
 }
 
 
-#' Title
+#' GetBucketLocation
 #'
 #' @param name
 #'
@@ -315,9 +313,9 @@ GetBucketAcl <- function(name, Location=.get.cache.bucket.location(name)){
 #' @export
 #'
 #' @examples
-GetBucketLocation <- function(name) {
-  ossresource <- sprintf("/%s/?location", name)
-  .api.get.header.request(ossresource, name=name,
+GetBucketLocation <- function(bucketname) {
+  ossresource <- sprintf("/%s/?location", bucketname)
+  .api.get.header.request(ossresource, bucketname=bucketname,
                           Location='oss-cn-hangzhou',
                           query = c('location'))
 }

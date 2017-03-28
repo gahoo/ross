@@ -13,15 +13,14 @@ NULL
 .state <- new.env(parent=emptyenv())
 
 .api.header.request <- function(method, ossresource,
-                                name=NULL, Location=NULL, ...,
-                                header=NULL, body=NULL) {
-  host <- .build.host(name, Location=Location, internal=getOption('ross.internal'))
+                                bucketname=NULL, Location=NULL, ...,
+                                header=NULL) {
+  host <- .build.host(bucketname, Location=Location, internal=getOption('ross.internal'))
   .headers <- .build.header(header)
   ossheader <- .build.ossheader(header)
   response <- .sign.header(method, host, ossresource,
                            .headers=.headers,
                            ossheader=ossheader,
-                           body=body,
                            ...)
   .check.http_error(response)
   response

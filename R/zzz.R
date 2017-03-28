@@ -8,9 +8,6 @@
   toset <- !(names(op.ross) %in% names(op))
   if(any(toset)) options(op.ross[toset])
 
-  AccessKeyId=Sys.getenv("AccessKeyId")
-  AccessKeySecret=Sys.getenv("AccessKeySecret")
-
   invisible()
 }
 
@@ -34,22 +31,22 @@
 
 #' Build host
 #'
-#' @param name bucket name
+#' @param bucketname bucket name
 #' @param ...
 #'
 #' @return
 #' @export
 #'
 #' @examples
-.build.host <- function(name=NULL, Location=NULL, ...){
-  if(is.null(name)){
+.build.host <- function(bucketname=NULL, Location=NULL, ...){
+  if(is.null(bucketname)){
     "http://oss.aliyuncs.com"
   }else{
     if(is.null(Location)){
-      Location <- .get.bucket.location(name)
+      Location <- .get.cache.bucket.location(bucketname)
     }
     endpoint <- .build.endpoint(Location, ...)
-    sprintf('http://%s.%s', name, endpoint)
+    sprintf('http://%s.%s', bucketname, endpoint)
   }
 }
 
@@ -89,10 +86,10 @@
 }
 
 
-.get.cache.bucket.location <- function(name) {
-  location <- .state$location[[name]]
+.get.cache.bucket.location <- function(bucketname) {
+  location <- .state$location[[bucketname]]
   if(is.null(location)){
-    .get.bucket.location(name)
+    .get.bucket.location(bucketname)
   }else{
     location
   }
@@ -100,11 +97,11 @@
 
 #' @import httr
 #' @import xml2
-.get.bucket.location <- function(name){
-  r <- GetBucketLocation(name)
+.get.bucket.location <- function(bucketname){
+  r <- GetBucketLocation(bucketname)
   if(r$status_code == 200){
     location <- unlist(xml2::as_list(httr::content(r, encoding = 'UTF-8')))
-    .state$location[[name]] <- location
+    .state$location[[bucketname]] <- location
   }else{
     stop("No Such Bucket.")
   }
