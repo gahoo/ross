@@ -33,3 +33,7 @@ NULL
 .api.get.header.request <- function(ossresource, ...){
   .api.header.request(method = 'GET', ossresource, ...)
 }
+
+.api.delete.header.request <- function(ossresource, ...){
+  .api.header.request(method = 'DELETE', ossresource, ...)
+}
