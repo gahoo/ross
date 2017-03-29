@@ -91,6 +91,21 @@ test_that("GetBucketLifecycle", {
 })
 
 ###### Delete
+test_that("DeleteBucketLogging", {
+  r<-DeleteBucketLogging('ross-test')
+  expect_equal(r$status_code, 204)
+})
+
+test_that("DeleteBucketWebsite", {
+  r<-DeleteBucketWebsite('ross-test')
+  expect_equal(r$status_code, 204)
+})
+
+test_that("DeleteBucketLifecycle", {
+  r<-DeleteBucketLifecycle('ross-test')
+  expect_equal(r$status_code, 204)
+})
+
 test_that("DeleteBucket", {
   r <- PutBucket('ross-test')
   expect_equal(r$status_code, 200)
