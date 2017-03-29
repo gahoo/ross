@@ -11,6 +11,7 @@
 NULL
 
 .state <- new.env(parent=emptyenv())
+.state$location <- list()
 
 .api.header.request <- function(method, ossresource,
                                 bucketname=NULL, Location=NULL, ...,
