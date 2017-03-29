@@ -1,8 +1,3 @@
-test_that("Bucket", {
-  b <- Bucket$new('igenecode', '2017-03-15T07:37:06.000Z', 'oss-cn-beijing', 'Standard')
-  expect_equal(b$Name, 'igenecode')
-})
-
 ###### PUT
 test_that("PutBucket", {
   r <- PutBucket('ross-test')
