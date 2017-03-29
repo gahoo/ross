@@ -108,3 +108,46 @@
   }
   location
 }
+
+
+#' xpath2list
+#'
+#' Turn xml nodes into list, xpath is supported
+#'
+#' @param xpath
+#' @param doc
+#'
+#' @return
+#' @import xml2
+#' @export
+#'
+#' @examples
+#' r <- GetService()
+#' xpath2list(r)
+#' xpath2list(r, '/ListAllMyBucketsResult/Owner')
+#' xpath2list(r, '/ListAllMyBucketsResult/Buckets/Bucket')
+xpath2list <- function(doc, xpath=NULL){
+
+  extractNodes <- function(doc, xpath){
+    nodes <- xml_find_all(doc, xpath)
+    lst <- lapply(nodes, function(x){
+      as.list(unlist(as_list(x)))
+    })
+    if(length(lst) == 1){
+      lst[[1]]
+    }else{
+      lst
+    }
+  }
+
+  if('xml_document' %in% class(doc)){
+    if(is.null(xpath)){
+      xml2::as_list(doc)
+    }else{
+      extractNodes(doc, xpath)
+    }
+  }else{
+    list()
+  }
+
+}
