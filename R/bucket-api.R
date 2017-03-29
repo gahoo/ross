@@ -173,8 +173,7 @@ PutBucketReferer <- function(name, AllowEmptyReferer=TRUE, RefererList=c()){
 #' PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.CreatedBeforeDate = Sys.Date()+7)
 #' PutBucketLifecycle('ross-test', Prefix = 'upload_', Multpart.Days = 5)
 #' PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.Days = 30, Multpart.Days = 5)
-PutBucketLifecycle <- function(name, Location="oss-cn-beijing",
-                               Prefix, RuleID=NULL, Status='Enabled',
+PutBucketLifecycle <- function(name, Prefix, RuleID=NULL, Status='Enabled',
                                Object.CreatedBeforeDate=NULL, Object.Days=NULL,
                                Multpart.CreatedBeforeDate=NULL, Multpart.Days=NULL){
 
@@ -238,6 +237,9 @@ PutBucketLifecycle <- function(name, Location="oss-cn-beijing",
 #' @export
 #'
 #' @examples
+#' GetBucket('ross-test')
+#' GetBucket('ross-test', 'upload')
+#' GetBucket('ross-test', 'upload', 'upload/file1', '/', '10)
 #'
 # TODO: an R6 Class to hadle ListBucketResult is needed
 GetBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL){
@@ -266,6 +268,7 @@ ListObject <- function(...) {
 #' @export
 #'
 #' @examples
+#' GetBucketAcl('ross-test')
 GetBucketAcl <- function(name){
   ossresource <- sprintf("/%s/?acl", name)
   .api.get.header.request(ossresource, bucketname=name, query = c('acl'))
@@ -280,11 +283,83 @@ GetBucketAcl <- function(name){
 #' @export
 #'
 #' @examples
+#' GetBucketLocation('ross-test')
 GetBucketLocation <- function(name) {
   ossresource <- sprintf("/%s/?location", name)
   .api.get.header.request(ossresource, bucketname=name,
                           Location='oss-cn-hangzhou',
                           query = c('location'))
+}
+
+
+#' GetBucketInfo
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetBucketInfo('ross-test')
+GetBucketInfo <- function(name){
+  ossresource <- sprintf("/%s/?bucketInfo", name)
+  .api.get.header.request(ossresource, bucketname=name, query = c('bucketInfo'))
+}
+
+#' GetBucketLogging
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetBucketLogging('ross-test')
+GetBucketLogging <- function(name){
+  ossresource <- sprintf("/%s/?logging", name)
+  .api.get.header.request(ossresource, bucketname=name, query = c('logging'))
+}
+
+#' GetBucketWebsite
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetBucketWebsite('ross-test')
+GetBucketWebsite <- function(name){
+  ossresource <- sprintf("/%s/?website", name)
+  .api.get.header.request(ossresource, bucketname=name, query = c('website'))
+}
+
+#' GetBucketReferer
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetBucketReferer('ross-test')
+GetBucketReferer <- function(name){
+  ossresource <- sprintf("/%s/?referer", name)
+  .api.get.header.request(ossresource, bucketname=name, query = c('referer'))
+}
+
+#' GetBucketLifecycle
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetBucketLifecycle('ross-test')
+GetBucketLifecycle <- function(name){
+  ossresource <- sprintf("/%s/?lifecycle", name)
+  .api.get.header.request(ossresource, bucketname=name, query = c('lifecycle'))
 }
 
 
