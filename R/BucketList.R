@@ -38,7 +38,7 @@ BucketList <- R6::R6Class("BucketList",
     parseResponse = function(response) {
       self$response <- response
       self$content <- httr::content(self$response, encoding="UTF-8")
-      self$owner <- private$parseOwner(self$content)
+      self$owner <- xpath2list(self$content)
       self$buckets <- private$parseBuckets(self$content)
     },
     refresh = function() {
@@ -50,15 +50,9 @@ BucketList <- R6::R6Class("BucketList",
     }
   ),
   private = list(
-    parseOwner = function(doc) {
-      ID <- xml_text(xml_find_all(doc, "/ListAllMyBucketsResult/Owner/ID"))
-      DisplayName <- xml_text(xml_find_all(doc, "/ListAllMyBucketsResult/Owner/DisplayName"))
-      list(ID=ID, DisplayName=DisplayName)
-    },
     parseBuckets = function(doc) {
-      buckets <- xml_find_all(doc, '/ListAllMyBucketsResult/Buckets/Bucket')
+      buckets <- xpath2list(doc, '/ListAllMyBucketsResult/Buckets/Bucket')
       lapply(buckets, function(x){
-        x <- as.list(unlist(as_list(x)))
         Bucket$new(x$Name, x$CreationDate, x$Location, x$StorageClass)
         })
     }
