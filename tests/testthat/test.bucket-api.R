@@ -60,6 +60,36 @@ test_that("GetBucketAcl", {
   expect_equal(r$status_code, 200)
 })
 
+test_that("GetBucketLocation", {
+  r<-GetBucketLocation('ross-test')
+  expect_equal(r$status_code, 200)
+})
+
+test_that("GetBucketInfo", {
+  r<-GetBucketInfo('ross-test')
+  expect_equal(r$status_code, 200)
+})
+
+test_that("GetBucketLogging", {
+  r<-GetBucketLogging('ross-test')
+  expect_equal(r$status_code, 200)
+})
+
+test_that("GetBucketWebsite", {
+  r<-GetBucketWebsite('ross-test')
+  expect_equal(r$status_code, 200)
+})
+
+test_that("GetBucketReferer", {
+  r<-GetBucketReferer('ross-test')
+  expect_equal(r$status_code, 200)
+})
+
+test_that("GetBucketLifecycle", {
+  r<-GetBucketLifecycle('ross-test')
+  expect_equal(r$status_code, 200)
+})
+
 ###### Delete
 test_that("DeleteBucket", {
   r <- PutBucket('ross-test')
