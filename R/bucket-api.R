@@ -376,10 +376,51 @@ GetBucketLifecycle <- function(name){
 #'
 #' @examples
 #' DeleteBucket('ross-test')
-DeleteBucket <- function(name, Location="oss-cn-beijing") {
-  host <- .build.host(name, Location, internal=getOption('ross.internal'))
-  response <- .sign.header("DELETE", host, sprintf("/%s/", name))
-  .check.http_error(response)
-  response
+DeleteBucket <- function(name) {
+  ossresource <- sprintf("/%s/", name)
+  .api.delete.header.request(ossresource, bucketname=name)
 }
 
+#' DeleteBucketLogging
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' DeleteBucketLogging('ross-test')
+DeleteBucketLogging <- function(name){
+  ossresource <- sprintf("/%s/?logging", name)
+  .api.delete.header.request(ossresource, bucketname=name, query = c('logging'))
+}
+
+#' DeleteBucketWebsite
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' DeleteBucketWebsite('ross-test')
+DeleteBucketWebsite <- function(name){
+  ossresource <- sprintf("/%s/?website", name)
+  .api.delete.header.request(ossresource, bucketname=name, query = c('website'))
+}
+
+#' DeleteBucketLifecycle
+#'
+#' Delete all lifecycle rules for a bucket.
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' DeleteBucketLifecycle('ross-test')
+DeleteBucketLifecycle <- function(name){
+  ossresource <- sprintf("/%s/?lifecycle", name)
+  .api.delete.header.request(ossresource, bucketname=name, query = c('lifecycle'))
+}
