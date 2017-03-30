@@ -59,7 +59,9 @@ Bucket <- R6::R6Class("Bucket",
     },
     rm = function() {
       r <- DeleteBucket(self$Name)
-      .state$location[[self$Name]] <- NULL
+      if(r$status == 204){
+        .state$location[[self$Name]] <- NULL
+      }
     },
 
 #' @method list
@@ -111,6 +113,11 @@ Bucket <- R6::R6Class("Bucket",
     }
   ),
   active = list(
+#'
+#' ## acl
+#' b$acl
+#' b$acl <- "private"
+#' b$acl <- "public-read"
     acl = function(acl){
       if(missing(acl)){
         r <- GetBucketAcl(self$Name)
@@ -120,6 +127,15 @@ Bucket <- R6::R6Class("Bucket",
         PutBucket(self$Name, acl = acl)
       }
     },
+#' @examples
+#'
+#' ## logging
+#' b$logging
+#' b$logging <- list(TargetBucket='ross-test', TargetPrefix='log-')
+#' b$logging <- list(TargetBucket='ross-test')
+#' b$logging <- list(TargetPrefix='log-')
+#' b$logging <- list()
+#' b$logging <- NULL
     logging = function(conf){
       if(missing(conf)){
         r <- GetBucketLogging(self$Name)
@@ -129,16 +145,88 @@ Bucket <- R6::R6Class("Bucket",
         r <- DeleteBucketLogging(self$Name)
       }else{
         if(is.null(conf$TargetBucket)){
-          TargetBucket <- self$Name
-        }else{
-          TargetBucket <- conf$TargetBucket
+          conf$TargetBucket <- self$Name
         }
-        r <- PutBucketLogging(self$Name, conf$TargetPrefix, TargetBucket)
+        r <- PutBucketLogging(self$Name, conf$TargetPrefix, conf$TargetBucket)
       }
 
     },
-    website = function(){},
-    referer = function(){},
-    lifecycle = function(){}
+#' @examples
+#'
+#' ## website
+#' b$website
+#' b$website <- list(Suffix='index.html', Key='404.html')
+#' b$website <- list(Suffix='index.html')
+#' b$website <- list(Key='404.html')
+#' b$website <- list()
+#' b$website <- NULL
+    website = function(conf){
+      if(missing(conf)){
+        suppressWarnings(r <- GetBucketWebsite(self$Name))
+        doc <- httr::content(r, encoding = 'UTF-8')
+        conf <- xpath2list(doc, '/WebsiteConfiguration')
+        names(conf) <- gsub('.*\\.','',names(conf))
+        conf
+      }else if(is.null(conf) || identical(conf, list())){
+        r <- DeleteBucketWebsite(self$Name)
+      }else{
+        if(is.null(conf$Suffix)){
+          message("Suffix is missing index.html will be used.")
+          conf$Suffix <- 'index.html'
+        }
+        if(is.null(conf$Key)){
+          message("Key is missing 404.html will be used.")
+          conf$Key <- '404.html'
+        }
+        r <- PutBucketWebsite(self$Name, conf$Suffix, conf$Key)
+      }
+    },
+#' @examples
+#'
+#' ## referer
+#' b$referer
+#' b$referer <- list(AllowEmptyReferer=T, RefererList=c('*.igenecode.com', 'aliyun.com'))
+#' b$referer <- list(AllowEmptyReferer=T)
+#' b$referer <- list(RefererList=c('*.igenecode.com', 'aliyun.com'))
+#' b$referer <- NULL
+#' b$referer <- list()
+    referer = function(conf){
+      if(missing(conf)){
+        suppressWarnings(r <- GetBucketReferer(self$Name))
+        doc <- httr::content(r, encoding = 'UTF-8')
+        list(
+          AllowEmptyReferer = unlist(xpath2list(doc, '/RefererConfiguration/AllowEmptyReferer')),
+          RefererList = unlist(xpath2list(doc, '/RefererConfiguration/RefererList'))
+        )
+      }else if(is.null(conf) || identical(conf, list())){
+        r <- DeleteBucketWebsite(self$Name)
+      }else{
+        if(is.null(conf$AllowEmptyReferer)){
+          message("AllowEmptyReferer is missing TRUE will be used.")
+          conf$AllowEmptyReferer <- TRUE
+        }
+        r <- PutBucketReferer(self$Name, conf$AllowEmptyReferer, conf$RefererList)
+      }
+    },
+    lifecycle = function(conf){
+      if(missing(conf)){
+        suppressWarnings(r <- GetBucketLifecycle(self$Name))
+        doc <- httr::content(r, encoding = 'UTF-8')
+        xpath2list(doc, '/LifecycleConfiguration/Rule')
+      }else if(is.null(conf) || identical(conf, list())){
+        r <- DeleteBucketLifecycle(self$Name)
+      }else{
+        conf$name <- self$Name
+        r <- do.call(PutBucketLifecycle, conf)
+      }
+    }
+  )
+)
+
+BucketLifecycle <- R6::R6Class("BucketLifecycle",
+  public = list(
+    add = function(){},
+    delete = function(){},
+    print = function(){}
   )
 )
