@@ -85,6 +85,9 @@ Bucket <- R6::R6Class("Bucket",
 
       }
     },
+    read = function() {},
+    download = function() {},
+    upload = function() {},
     print = function(...) {
       bucket_text <- sprintf(paste(
           "<Bucket>",
@@ -117,7 +120,23 @@ Bucket <- R6::R6Class("Bucket",
         PutBucket(self$Name, acl = acl)
       }
     },
-    logging = function(){},
+    logging = function(conf){
+      if(missing(conf)){
+        r <- GetBucketLogging(self$Name)
+        doc <- httr::content(r, encoding = 'UTF-8')
+        xpath2list(doc, '/BucketLoggingStatus/LoggingEnabled')
+      }else if(is.null(conf) || identical(conf, list())){
+        r <- DeleteBucketLogging(self$Name)
+      }else{
+        if(is.null(conf$TargetBucket)){
+          TargetBucket <- self$Name
+        }else{
+          TargetBucket <- conf$TargetBucket
+        }
+        r <- PutBucketLogging(self$Name, conf$TargetPrefix, TargetBucket)
+      }
+
+    },
     website = function(){},
     referer = function(){},
     lifecycle = function(){}
