@@ -169,24 +169,44 @@ PutBucketReferer <- function(name, AllowEmptyReferer=TRUE, RefererList=c()){
 #'
 #'
 #' @examples
-#' PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.Days = 30)
-#' PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.CreatedBeforeDate = Sys.Date()+7)
-#' PutBucketLifecycle('ross-test', Prefix = 'upload_', Multpart.Days = 5)
-#' PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.Days = 30, Multpart.Days = 5)
-PutBucketLifecycle <- function(name, Prefix, RuleID=NULL, Status='Enabled',
-                               Object.CreatedBeforeDate=NULL, Object.Days=NULL,
-                               Multpart.CreatedBeforeDate=NULL, Multpart.Days=NULL){
+#'
+#' rules <- list()
+#'
+#' rules[[1]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Object.CreatedBeforeDate = Sys.Date()+7)
+#' rules[[2]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Multpart.Days = 5)
+#' rules[[3]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Object.Days = 30, Multpart.Days = 5)
+#' rules[[4]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Object.Days = 30)
+#'
+#' PutBucketLifecycle('ross-test', rules)
+PutBucketLifecycle <- function(name, rules){
 
-  body <- .build.xml_body.PutBucketLifecycle(Prefix, RuleID, Status,
-                                             Object.CreatedBeforeDate, Object.Days,
-                                             Multpart.CreatedBeforeDate, Multpart.Days)
-
+  body <- .build.xml_body.PutBucketLifecycle(rules)
   ossresource <- sprintf("/%s/?lifecycle", name)
   .api.put.header.request(ossresource, bucketname=name, query = c('lifecycle'), body = body)
 }
 
+.build.xml_body.PutBucketLifecycle <- function(rules) {
+  doc <- list(
+    LifecycleConfiguration=list(
+      Rule=rules
+    )
+  )
+  null_idx<-sapply(doc$LifecycleConfiguration$Rule, function(x) is.null(x[[1]]) )
+  doc$LifecycleConfiguration$Rule <- doc$LifecycleConfiguration$Rule[!null_idx]
 
-.build.xml_body.PutBucketLifecycle <- function(Prefix, RuleID=NULL, Status='Enabled',
+  doc <- xml2::as_xml_document(doc)
+  as.character(doc)
+}
+
+#' .build.xml_body.PutBucketLifecycle.Rules
+#' @param Prefix Object prefix applying the rule.
+#' @param RuleID Uid of rule
+#' @param Status Enable or Disable the rule.
+#' @param Object.CreatedBeforeDate Expires date for object.
+#' @param Object.Days Expris days for object.
+#' @param Multpart.CreatedBeforeDate Expris date for multipart upload.
+#' @param Multpart.Days Expris day for multipart upload.
+.build.xml_body.PutBucketLifecycle.Rules <- function(Prefix, RuleID=NULL, Status='Enabled',
                                                Object.CreatedBeforeDate=NULL, Object.Days=NULL,
                                                Multpart.CreatedBeforeDate=NULL, Multpart.Days=NULL) {
 
@@ -202,25 +222,20 @@ PutBucketLifecycle <- function(name, Prefix, RuleID=NULL, Status='Enabled',
     }
   }
 
-  # TODO: add multiple rule support.
+  expries <- c(Object.CreatedBeforeDate, Object.Days, Multpart.CreatedBeforeDate, Multpart.Days)
+  if(all(is.null(expries))){
+    stop('Expries must be specified.')
+  }
 
-  doc <- list(
-    LifecycleConfiguration=list(
-      Rule=list(
-        ID = list(RuleID),
-        Prefix = list(Prefix),
-        Status = list(Status),
-        Expiration = build.expir(Object.CreatedBeforeDate, Object.Days),
-        AbortMultipartUpload = build.expir(Multpart.CreatedBeforeDate, Multpart.Days)
-      )
-    )
+  rule <- list(
+    ID = list(RuleID),
+    Prefix = list(Prefix),
+    Status = list(Status),
+    Expiration = build.expir(Object.CreatedBeforeDate, Object.Days),
+    AbortMultipartUpload = build.expir(Multpart.CreatedBeforeDate, Multpart.Days)
   )
-
-  null_idx<-sapply(doc$LifecycleConfiguration$Rule, function(x) is.null(x[[1]]) )
-  doc$LifecycleConfiguration$Rule <- doc$LifecycleConfiguration$Rule[!null_idx]
-
-  doc <- xml2::as_xml_document(doc)
-  as.character(doc)
+  null_idx<-sapply(rule, function(x) is.null(x[[1]]) )
+  rule[!null_idx]
 }
 
 ######## GET
