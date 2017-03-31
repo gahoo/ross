@@ -223,10 +223,59 @@ Bucket <- R6::R6Class("Bucket",
   )
 )
 
+#' @import plyr
 BucketLifecycle <- R6::R6Class("BucketLifecycle",
   public = list(
-    add = function(){},
-    delete = function(){},
-    print = function(){}
+    rules = NULL,
+    initialize = function() {
+      self$rules <- xml_new_root('LifecycleConfiguration')
+    },
+    add = function(Prefix, ID=NULL, Status='Enabled',
+                   Object.CreatedBeforeDate=NULL, Object.Days=NULL,
+                   Multpart.CreatedBeforeDate=NULL, Multpart.Days=NULL){
+
+      self$remove(Prefix, ID)
+      rule <- .build.xml_body.PutBucketLifecycle.Rules(
+        Prefix, ID, Status, Object.CreatedBeforeDate, Object.Days, Multpart.CreatedBeforeDate, Multpart.Days)
+      xml_add_child(self$rules, as_xml_document(list(Rule=rule)))
+
+    },
+    remove = function(Prefix, ID){
+      deleteNode <- function(tag, value){
+        xpath <- sprintf('//%s[text()="%s"]', tag, value)
+        node <- xml_find_all(self$rules, xpath)
+        node <- xml_parent(node)
+        xml_remove(node)
+      }
+
+      if(!is.null(Prefix)){
+        deleteNode('Prefix', Prefix)
+      }
+      if(!is.null(ID)){
+        deleteNode('ID', ID)
+      }
+
+      if(is.null(Prefix) && is.null(ID)){
+        stop('Either Prefix or ID must be specified.')
+      }
+
+    },
+    print = function(){
+      print(self$dump.data.frame())
+    },
+    dump = function(){
+      as.character(self$rules)
+    },
+    dump.data.frame = function(){
+      rules <- xpath2list(self$rules, '/LifecycleConfiguration/Rule')
+      if("Prefix" %in% names(rules)){
+        data.frame(rules)
+      }else if(length(rules) == 0){
+        NULL
+      }else{
+        rules <- lapply(rules, as.data.frame)
+        plyr::ldply(rules)
+      }
+    }
   )
 )
