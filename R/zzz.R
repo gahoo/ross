@@ -104,7 +104,7 @@
     location <- unlist(xml2::as_list(httr::content(r, encoding = 'UTF-8')))
     .state$location[[bucketname]] <- location
   }else{
-    stop("No Such Bucket.")
+    stop(sprintf("No Bucket Named %s.", bucketname))
   }
   location
 }
@@ -126,14 +126,14 @@
 #' xpath2list(r)
 #' xpath2list(r, '/ListAllMyBucketsResult/Owner')
 #' xpath2list(r, '/ListAllMyBucketsResult/Buckets/Bucket')
-xpath2list <- function(doc, xpath=NULL){
+xpath2list <- function(doc, xpath=NULL, smart=TRUE){
 
   extractNodes <- function(doc, xpath){
     nodes <- xml_find_all(doc, xpath)
     lst <- lapply(nodes, function(x){
       as.list(unlist(as_list(x)))
     })
-    if(length(lst) == 1){
+    if(length(lst) == 1 && smart){
       lst[[1]]
     }else{
       lst
