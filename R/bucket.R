@@ -18,6 +18,12 @@ Bucket <- R6::R6Class("Bucket",
     IntranetEndpoint = NULL,
     StorageClass = NULL,
     Owner = list(),
+    lifecycle = NULL,
+#' @examples
+#' ## new Bucket
+#' b<-Bucket$new('ross-test',autoCreate=F)
+#' ## auto create when bucket not exist.
+#' b<-Bucket$new('ross-test',autoCreate=T)
     initialize = function(Name, Location='oss-cn-beijing', StorageClass="Standard", acl="private", autoCreate=FALSE) {
       self$Name = Name
       self$Location = Location
@@ -34,6 +40,12 @@ Bucket <- R6::R6Class("Bucket",
         }
       )
     },
+#' @examples
+#'
+#' ## create
+#' b<-Bucket$new('ross-test')
+#' # create bucket after init.
+#' b$create()
     create = function(Location, acl='private', StorageClass) {
       if(missing(Location)){
         Location <- self$Location
@@ -56,7 +68,12 @@ Bucket <- R6::R6Class("Bucket",
       self$Owner <- xpath2list(doc, '/BucketInfo/Bucket/Owner')
       info <- xpath2list(doc, '/BucketInfo/Bucket')
       private$setInfo(info)
+      self$lifecycle <- BucketLifecycle$new(self$Name, FALSE)
     },
+#' @examples
+#'
+#' ## rm
+#' b$rm
     rm = function() {
       r <- DeleteBucket(self$Name)
       if(r$status == 204){
@@ -88,6 +105,7 @@ Bucket <- R6::R6Class("Bucket",
       }
     },
     read = function() {},
+    write = function() {},
     download = function() {},
     upload = function() {},
     print = function(...) {
@@ -101,6 +119,7 @@ Bucket <- R6::R6Class("Bucket",
           sep = "\n"),
           self$Name, self$CreationDate, self$Location, self$ExtranetEndpoint, self$StorageClass)
       cat(bucket_text)
+      invisible(self)
     }
   ),
   private = list(
@@ -198,8 +217,6 @@ Bucket <- R6::R6Class("Bucket",
           AllowEmptyReferer = unlist(xpath2list(doc, '/RefererConfiguration/AllowEmptyReferer')),
           RefererList = unlist(xpath2list(doc, '/RefererConfiguration/RefererList'))
         )
-      }else if(is.null(conf) || identical(conf, list())){
-        r <- DeleteBucketWebsite(self$Name)
       }else{
         if(is.null(conf$AllowEmptyReferer)){
           message("AllowEmptyReferer is missing TRUE will be used.")
@@ -207,40 +224,86 @@ Bucket <- R6::R6Class("Bucket",
         }
         r <- PutBucketReferer(self$Name, conf$AllowEmptyReferer, conf$RefererList)
       }
-    },
-    lifecycle = function(conf){
-      if(missing(conf)){
-        suppressWarnings(r <- GetBucketLifecycle(self$Name))
-        doc <- httr::content(r, encoding = 'UTF-8')
-        xpath2list(doc, '/LifecycleConfiguration/Rule')
-      }else if(is.null(conf) || identical(conf, list())){
-        r <- DeleteBucketLifecycle(self$Name)
-      }else{
-        conf$name <- self$Name
-        r <- do.call(PutBucketLifecycle, conf)
-      }
     }
+#' @examples
+#'
+#'  ## lifecycle
+#'
+#'  b$lifecycle$add('upload_', Object.Days = 5)
+#'  b$lifecycle$save()
+#'  b$lifecycle
+#'  # lifecycle auto save is off to speedup by default when using Bucket class.
+#'  # Turn on
+#'  b$lifecycle$autoSave <- T
+#'  b$lifecycle$add('upload_', Object.Days = 7)
+#'  b$lifecycle
+#'
+#' @seealso \code{\link{BucketLifecycle}}
+#'
   )
 )
 
+
+#' BucketLifecycle
+#'
+#' Convenient ways to manipulate lifecycle rules
+#'
+#' @docType class
+#' @format An R6 class object.
+#' @importFrom R6 R6Class
+#' @import xml2
+#' @import httr
 #' @import plyr
+#' @export
+#' @name BucketLifecycle
+#'
+#' @examples
+#'
+#' life<-BucketLifecycle$new('ross-test', autoSave=T)
+#' life$add('upload_', Object.CreatedBeforeDate = "2017-04-01")
+#' life$add('upload_', Object.Days=5)
+#' life$add('upload_', Object.Days=7) # Modify on add
+#' life$add('backup_', ID='backup-1', Object.Days=90)
+#' life$add('Backup_', ID='backup-1', Object.Days=90) # Overwirte ID backup-1 rules
+#' life
+#' # Remove rules
+#' life$remove('upload_')
+#' life$remove(ID='backup-1') #By ID
+#' # Clean up all rules
+#' life$clear()
+#'
+#' # speedup without autoSave
+#' life<-BucketLifecycle$new('ross-test', F)
+#' life$add('backup1_', ID='backup-1', Object.Days=90)
+#' life$add('backup2_', ID='backup-2', Object.Days=90)
+#' life$add('backup3_', ID='backup-3', Object.Days=90)
+#' life$save()
+#' life
 BucketLifecycle <- R6::R6Class("BucketLifecycle",
   public = list(
+    name = NULL,
     rules = NULL,
-    initialize = function() {
-      self$rules <- xml_new_root('LifecycleConfiguration')
+    autoSave = FALSE,
+    initialize = function(name, autoSave=TRUE) {
+      self$name <- name
+      self$autoSave = autoSave
+      self$load()
     },
     add = function(Prefix, ID=NULL, Status='Enabled',
                    Object.CreatedBeforeDate=NULL, Object.Days=NULL,
                    Multpart.CreatedBeforeDate=NULL, Multpart.Days=NULL){
 
-      self$remove(Prefix, ID)
       rule <- .build.xml_body.PutBucketLifecycle.Rules(
         Prefix, ID, Status, Object.CreatedBeforeDate, Object.Days, Multpart.CreatedBeforeDate, Multpart.Days)
+      self$remove(Prefix, ID)
       xml_add_child(self$rules, as_xml_document(list(Rule=rule)))
 
+      if(self$autoSave){
+        self$save()
+      }
+
     },
-    remove = function(Prefix, ID){
+    remove = function(Prefix=NULL, ID=NULL){
       deleteNode <- function(tag, value){
         xpath <- sprintf('//%s[text()="%s"]', tag, value)
         node <- xml_find_all(self$rules, xpath)
@@ -259,23 +322,56 @@ BucketLifecycle <- R6::R6Class("BucketLifecycle",
         stop('Either Prefix or ID must be specified.')
       }
 
+      if(self$autoSave){
+        self$save()
+      }
+
+    },
+    clear = function(){
+      r <- DeleteBucketLifecycle(self$name)
+      if(r$status_code == 204){
+        self$rules <- xml_new_root('LifecycleConfiguration')
+      }
+    },
+    load = function(){
+      suppressWarnings(r <- GetBucketLifecycle(self$name))
+      if(r$status_code == 200){
+        self$rules <- httr::content(r, encoding = 'UTF-8')
+      }else if(r$status_code == 404){
+        self$rules <- xml_new_root('LifecycleConfiguration')
+      }
+    },
+    save = function(){
+      if(self$length == 0){
+        self$clear()
+      }else{
+        r <- PutBucketLifecycle(self$name, body=self$txt)
+        if(r$status_code == 200){
+          self$load()
+        }
+      }
     },
     print = function(){
-      print(self$dump.data.frame())
-    },
-    dump = function(){
+      print(self$data.frame)
+      invisible(self)
+    }
+  ),
+  active = list(
+    txt = function(){
       as.character(self$rules)
     },
-    dump.data.frame = function(){
-      rules <- xpath2list(self$rules, '/LifecycleConfiguration/Rule')
-      if("Prefix" %in% names(rules)){
-        data.frame(rules)
-      }else if(length(rules) == 0){
+    data.frame = function(){
+      rules <- xpath2list(self$rules, '/LifecycleConfiguration/Rule', F)
+      if(length(rules) == 0){
         NULL
       }else{
         rules <- lapply(rules, as.data.frame)
         plyr::ldply(rules)
       }
+    },
+    length = function(){
+      rules <- xpath2list(self$rules, '/LifecycleConfiguration/Rule', F)
+      length(rules)
     }
   )
 )
