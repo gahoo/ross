@@ -33,13 +33,15 @@ test_that("PutBucketReferer", {
 })
 
 test_that("PutBucketLifecycle", {
-  r <- PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.Days = 30)
+  rules <- list()
+  rules[[1]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Object.CreatedBeforeDate = Sys.Date()+7)
+  rules[[2]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Multpart.Days = 5)
+  rules[[3]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Object.Days = 30, Multpart.Days = 5)
+  rules[[4]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Object.Days = 30)
+
+  r <- PutBucketLifecycle('ross-test', rules)
   expect_equal(r$status_code, 200)
-  r <- PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.CreatedBeforeDate = Sys.Date()+7)
-  expect_equal(r$status_code, 200)
-  r <- PutBucketLifecycle('ross-test', Prefix = 'upload_', Multpart.Days = 5)
-  expect_equal(r$status_code, 200)
-  r <- PutBucketLifecycle('ross-test', Prefix = 'upload_', Object.Days = 30, Multpart.Days = 5)
+
 })
 
 ###### Get
