@@ -178,9 +178,11 @@ PutBucketReferer <- function(name, AllowEmptyReferer=TRUE, RefererList=c()){
 #' rules[[4]] <- .build.xml_body.PutBucketLifecycle.Rules(Prefix = 'upload_', Object.Days = 30)
 #'
 #' PutBucketLifecycle('ross-test', rules)
-PutBucketLifecycle <- function(name, rules){
+PutBucketLifecycle <- function(name, rules, body=NULL){
 
-  body <- .build.xml_body.PutBucketLifecycle(rules)
+  if(is.null(body)) {
+    body <- .build.xml_body.PutBucketLifecycle(rules)
+  }
   ossresource <- sprintf("/%s/?lifecycle", name)
   .api.put.header.request(ossresource, bucketname=name, query = c('lifecycle'), body = body)
 }
@@ -224,7 +226,7 @@ PutBucketLifecycle <- function(name, rules){
 
   expries <- c(Object.CreatedBeforeDate, Object.Days, Multpart.CreatedBeforeDate, Multpart.Days)
   if(all(is.null(expries))){
-    stop('Expries must be specified.')
+    stop('At least one expries parameter must be specified: Object.CreatedBeforeDate, Object.Days, Multpart.CreatedBeforeDate, Multpart.Days')
   }
 
   rule <- list(
