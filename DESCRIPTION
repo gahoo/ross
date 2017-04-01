@@ -14,5 +14,6 @@ Suggests: testthat
 Imports:
     httr (>= 1.2.1),
     xml2 (>= 1.1.1),
-    R6 (>= 2.2.0)
+    R6 (>= 2.2.0),
+    plyr (>= 1.8.4)
 RoxygenNote: 6.0.1
