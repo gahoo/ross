@@ -83,6 +83,7 @@ Bucket <- R6::R6Class("Bucket",
     },
 
 #' @method list
+#' @import plyr
 #' @inheritParams GetBucket
 #' @param .output output format
 #'
@@ -90,23 +91,45 @@ Bucket <- R6::R6Class("Bucket",
 #'
 #' @examples
 #' b$list()
-    list = function(prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL, .output="data.frame") {
-      list2df <- function(x) do.call(rbind, (lapply(x, as.data.frame)))
+    list = function(prefix=NULL, marker=NULL, delimiter='/', max_keys='1000', .all = TRUE, .output="data.frame") {
 
-      r <- GetBucket(self$Name, prefix, marker, delimiter, max_keys)
-      doc <- httr::content(r, encoding = 'UTF-8')
-      contents <- xpath2list(doc, '/ListBucketResult/Contents')
+      isTruncated <- function(doc){
+        xpath2list(doc, '/ListBucketResult/IsTruncated') == 'true'
+      }
+
+      parseXML <- function(doc){
+        files <- xpath2list(doc, '/ListBucketResult/Contents', F)
+        folders <- xpath2list(doc, '/ListBucketResult/CommonPrefixes', F)
+        folders <- lapply(folders, 'names<-', 'Key')
+        lapply(c(folders, files), as.data.frame, stringsAsFactors=F)
+      }
+
+      contents <- list()
+      next_marker <- marker
+      repeat{
+        r <- GetBucket(self$Name, prefix, next_marker, delimiter, max_keys)
+        doc <- httr::content(r, encoding = 'UTF-8')
+        contents <- c(contents, parseXML(doc))
+        next_marker <- xpath2list(doc, '/ListBucketResult/NextMarker')
+        message(sprintf("%s objects listed.", length(contents)))
+        if(!isTruncated(doc) || !.all){
+          break
+        }
+      }
 
       if(.output == "data.frame"){
-        list2df(contents)
+        plyr::ldply(contents)
       }else if(.output == 'list'){
         contents
       }else if(.output == 'oss-obj'){
 
+      }else if(.output == 'character'){
+        sapply(contents, function(x) x$Key)
       }
     },
     read = function() {},
     write = function() {},
+    delete = function() {},
     download = function() {},
     upload = function() {},
     print = function(...) {
