@@ -127,6 +127,10 @@ Bucket <- R6::R6Class("Bucket",
         sapply(contents, function(x) x$Key)
       }
     },
+    usage = function(prefix=NULL) {
+      files <- self$list(prefix, delimiter = '')
+      sum(as.numeric(files$Size))/1024/1024
+    },
     read = function() {},
     write = function() {},
     delete = function() {},
