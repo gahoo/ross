@@ -16,7 +16,7 @@ NULL
 .api.header.request <- function(method, ossresource,
                                 bucketname=NULL, Location=NULL, ...,
                                 header=NULL) {
-  host <- .build.host(bucketname, Location=Location, internal=getOption('ross.internal'))
+  host <- .build.host(bucketname, Location=Location, internal=getOption('ross.internal'), vpc=getOption('ross.vpc'))
   .headers <- .build.header(header)
   ossheader <- .build.ossheader(header)
   response <- .sign.header(method, host, ossresource,

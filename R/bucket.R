@@ -16,6 +16,7 @@ Bucket <- R6::R6Class("Bucket",
     Location = NULL,
     ExtranetEndpoint = NULL,
     IntranetEndpoint = NULL,
+    VpcEndpoint = NULL,
     StorageClass = NULL,
     Owner = list(),
     lifecycle = NULL,
@@ -128,6 +129,7 @@ Bucket <- R6::R6Class("Bucket",
       self$Location = bucket_info$Location
       self$ExtranetEndpoint = .build.endpoint(bucket_info$Location, internal=FALSE)
       self$IntranetEndpoint = .build.endpoint(bucket_info$Location, internal=TRUE)
+      self$VpcEndpoint = .build.endpoint(bucket_info$Location, internal=FALSE, vpc=TRUE)
       self$StorageClass = bucket_info$StorageClass
     }
   ),

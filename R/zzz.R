@@ -4,6 +4,7 @@
   op.ross <- list(
     ross.location = "beijing",
     ross.internal = FALSE,
+    ross.vpc = FALSE,
     ross.debug = FALSE
   )
   toset <- !(names(op.ross) %in% names(op))
@@ -21,11 +22,16 @@
 #' @export
 #'
 #' @examples
-.build.endpoint <- function(Location="oss-cn-beijing", internal=TRUE){
+.build.endpoint <- function(Location="oss-cn-beijing", internal=TRUE, vpc=FALSE){
   if(internal){
     domain <- "%s-internal.aliyuncs.com"
   }else{
     domain <- "%s.aliyuncs.com"
+  }
+  if(vpc && !internal){
+    domain <- "vpc100-%s.aliyuncs.com"
+  }else if(vpc && internal){
+    stop('Endpoint can not be both internal and vpc')
   }
   sprintf(domain, Location)
 }
