@@ -15,11 +15,16 @@ NULL
 
 .api.header.request <- function(method, ossresource,
                                 bucketname=NULL, Location=NULL, ...,
-                                header=NULL) {
+                                header=NULL, path=NULL) {
   host <- .build.host(bucketname, Location=Location, internal=getOption('ross.internal'), vpc=getOption('ross.vpc'))
   .headers <- .build.header(header)
   ossheader <- .build.ossheader(header)
-  response <- .sign.header(method, host, ossresource,
+  if(is.null(path)){
+    url <- host
+  }else{
+    url <- httr::modify_url(host, path=path)
+  }
+  response <- .sign.header(method, url, ossresource,
                            .headers=.headers,
                            ossheader=ossheader,
                            ...)
