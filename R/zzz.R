@@ -67,10 +67,12 @@
 
 #' @export
 .build.ossheader <- function(x) {
+  oss_idx <- grep('x-oss', names(x))
+  x <- x[oss_idx]
   if(is.null(x)){
     NULL
   }else{
-    paste0(sprintf("%s:%s", names(x), x), '\n', collapse = '\n')
+    paste0(paste(names(x), x, sep=":", collapse = '\n'), '\n')
   }
 }
 
