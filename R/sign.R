@@ -102,13 +102,19 @@ NULL
   .check.accesskey(AccessKeyId, AccessKeySecret)
 
   date <- http_date(Sys.time())
-  signature <- .build.signature(method, ossresource, expires = date, AccessKeySecret=AccessKeySecret, ...)
+  signature <- .build.signature(method, ossresource,
+                                content_md5 = .extract.header('Content-MD5', .headers),
+                                content_type = .extract.header('Content-Type', .headers),
+                                expires = date,
+                                AccessKeySecret = AccessKeySecret,
+                                ...)
   authorization <- sprintf("OSS %s:%s", AccessKeyId, signature)
   headers <- add_headers(date = date, authorization = authorization, .headers=.headers)
 
   response <- do.call(method, args = list(url, headers, query = query, body=body, user_agent("ross 0.0.1")))
   if(getOption('ross.debug') && response$status_code != 200){
-    print(httr::content(response))
+    print(xpath2list(content(response, encoding='UTF-8'), '/Error/StringToSign'))
+    #print(httr::content(response))
   }
 
   response
