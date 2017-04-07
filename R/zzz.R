@@ -58,6 +58,7 @@
 }
 
 .build.header <- function(x) {
+  x <- .rm.null(x)
   if(is.null(x)){
     character()
   }else{
@@ -67,13 +68,25 @@
 
 #' @export
 .build.ossheader <- function(x) {
-  oss_idx <- grep('x-oss', names(x))
+  oss_idx <- grep('^x-oss', names(x))
   x <- x[oss_idx]
+  x <- .rm.null(x)
   if(is.null(x)){
     NULL
   }else{
+    order_idx <- order(names(x))
+    x <- x[order_idx]
     paste0(paste(names(x), x, sep=":", collapse = '\n'), '\n')
   }
+}
+
+.rm.null <- function(x){
+  null_idx <- sapply(x, is.null)
+  x[!null_idx]
+}
+
+.extract.header <- function(x, .headers) {
+  ifelse(x %in% names(.headers), .headers[[x]], '')
 }
 
 #' @import xml2
@@ -158,4 +171,42 @@ xpath2list <- function(doc, xpath=NULL, smart=TRUE){
     list()
   }
 
+}
+
+#' Title
+#'
+#' @param x
+#' @import tools
+#'
+#' @return
+#' @export
+#'
+#' @examples
+md5 <- function(x) {
+  if(class(x) == "form_file"){
+    digested_md5 <- digest(file=x$path, serialize=F, algo = 'md5', raw=T)
+  }else if(is.character(x)){
+    digested_md5 <- digest(x, serialize=F, algo = 'md5', raw=T)
+  }else{
+    return(NULL)
+  }
+  base64encode(digested_md5)
+}
+
+#' Title
+#'
+#' @param x
+#'
+#' @return
+#' @export
+#'
+#' @examples
+body_type <- function(x){
+  if(class(x) == 'form_file'){
+    x$type
+  }else if(is.character(x)){
+    'text/plain'
+  }else{
+    NULL
+  }
 }
