@@ -71,7 +71,7 @@
   oss_idx <- grep('^x-oss', names(x))
   x <- x[oss_idx]
   x <- .rm.null(x)
-  if(is.null(x)){
+  if(is.null(x) || length(x) == 0){
     NULL
   }else{
     order_idx <- order(names(x))
@@ -176,7 +176,8 @@ xpath2list <- function(doc, xpath=NULL, smart=TRUE){
 #' Title
 #'
 #' @param x
-#' @import tools
+#' @import digest
+#' @import base64enc
 #'
 #' @return
 #' @export
@@ -184,13 +185,13 @@ xpath2list <- function(doc, xpath=NULL, smart=TRUE){
 #' @examples
 md5 <- function(x) {
   if(class(x) == "form_file"){
-    digested_md5 <- digest(file=x$path, serialize=F, algo = 'md5', raw=T)
+    digested_md5 <- digest::digest(file=x$path, serialize=F, algo = 'md5', raw=T)
   }else if(is.character(x)){
-    digested_md5 <- digest(x, serialize=F, algo = 'md5', raw=T)
+    digested_md5 <- digest::digest(x, serialize=F, algo = 'md5', raw=T)
   }else{
     return(NULL)
   }
-  base64encode(digested_md5)
+  base64enc::base64encode(digested_md5)
 }
 
 #' Title
