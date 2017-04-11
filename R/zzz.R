@@ -107,6 +107,12 @@
   is_error
 }
 
+.check.acl <- function(acl){
+  if(!acl %in% c('private', 'public-read-write', 'public-read')){
+    stop('Invalid acl, choose from public-read-write, public-read, private')
+  }
+}
+
 
 .get.cache.bucket.location <- function(bucketname) {
   location <- .state$location[[bucketname]]
