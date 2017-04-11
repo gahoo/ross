@@ -58,6 +58,31 @@ test_that("GetObject", {
   expect_equal(r$status_code, 200)
 })
 
+test_that("AppendObject", {
+  r <- PutBucket('ross-test')
+  expect_equal(r$status_code, 200)
+  r <- DeleteObject('ross-test', 'test-append.txt')
+  r <- AppendObject('ross-test', 'test-append.txt', body='1', position = 0)
+  expect_equal(r$status_code, 200)
+  r <- AppendObject('ross-test', 'test-append.txt', body='2', position = 1, acl = 'public-read', encryption = 'AES256')
+  expect_equal(r$status_code, 200)
+  r <- AppendObject('ross-test', 'test-append.txt', body='3', position = 2, .md5 = F)
+  expect_equal(r$status_code, 200)
+  r <- AppendObject('ross-test', 'test-append.txt', body='4', position = 3, .meta = list(location='beijing'))
+  expect_equal(r$status_code, 200)
+  r <- AppendObject('ross-test', 'test-append.txt', body='5', position = 4, "Content-Encoding"='UTF-8')
+  expect_equal(r$status_code, 200)
+})
+
+test_that("DeleteObject", {
+  r <- PutBucket('ross-test')
+  expect_equal(r$status_code, 200)
+  r <- PutObject('ross-test', 'test.txt')
+  expect_equal(r$status_code, 200)
+  r <- DeleteObject('ross-test', 'test.txt')
+  expect_equal(r$status_code, 204)
+})
+
 test_that("PutObjectACL", {
   r <- PutBucket('ross-test')
   expect_equal(r$status_code, 200)
