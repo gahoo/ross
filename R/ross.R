@@ -36,6 +36,10 @@ NULL
   .api.header.request(method = 'PUT', ossresource, ...)
 }
 
+.api.post.header.request <- function(ossresource, ...){
+  .api.header.request(method = 'POST', ossresource, ...)
+}
+
 .api.get.header.request <- function(ossresource, ...){
   .api.header.request(method = 'GET', ossresource, ...)
 }
