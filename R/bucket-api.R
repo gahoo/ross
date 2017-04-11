@@ -15,9 +15,7 @@
 #' @examples
 #' PutBucket('ross-test', 'public-read-write')
 PutBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private", StorageClass="Standard") {
-  if(!acl %in% c('private', 'public-read-write', 'public-read')){
-    stop('Invalid acl, choose from public-read-write, public-read, private')
-  }
+  .check.acl(acl)
 
   if(!StorageClass %in% c("Standard", "IA")){
     stop('Invalid StorageClass, choose from Standard, .')
