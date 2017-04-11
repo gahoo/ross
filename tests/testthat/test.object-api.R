@@ -39,6 +39,25 @@ test_that("CopyObject", {
   expect_equal(r$status_code, 200)
 })
 
+test_that("GetObject", {
+  r <- PutBucket('ross-test')
+  expect_equal(r$status_code, 200)
+  r <- PutObject('ross-test', 'test.txt', 'test', .meta = list(location='beijing'))
+  expect_equal(r$status_code, 200)
+  r <- GetObject('ross-test', 'test.txt')
+  expect_equal(httr::content(r, encoding = 'UTF-8'), 'test')
+  r <- GetObject('ross-test', 'test.txt', Range = '0-1')
+  expect_equal(httr::content(r, encoding = 'UTF-8'), 'te')
+  r <- GetObject('ross-test', 'test.txt', ETag = 'AAAA', ETag.match = F)
+  expect_equal(r$status_code, 200)
+  r <- GetObject('ross-test', 'test.txt', ETag = 'AAAA', ETag.match = T)
+  expect_equal(r$status_code, 412)
+  r <- GetObject('ross-test', 'test.txt', since = Sys.time(), modified.since = T)
+  expect_equal(r$status_code, 304)
+  r <- GetObject('ross-test', 'test.txt', since = Sys.time(), modified.since = F)
+  expect_equal(r$status_code, 200)
+})
+
 test_that("PutObjectACL", {
   r <- PutBucket('ross-test')
   expect_equal(r$status_code, 200)
