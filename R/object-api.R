@@ -25,7 +25,6 @@ PutObject <- function(bucketname, key, body='', encryption=NULL, acl='private', 
     header <- c(header, list(...))
 
     if(is.list(.meta)){
-      message('meta')
       names(.meta) <- paste0('x-oss-meta-', names(.meta))
       header <- c(header, .meta)
     }
@@ -37,9 +36,7 @@ PutObject <- function(bucketname, key, body='', encryption=NULL, acl='private', 
     header
   }
 
-  if(!acl %in% c('private', 'public-read-write', 'public-read')){
-    stop('Invalid acl, choose from public-read-write, public-read, private')
-  }
+  .check.acl(acl)
 
   if(missing(key) && class(body) == 'form_file'){
     key = basename(body$path)
@@ -112,7 +109,6 @@ CopyObject <- function(source, bucketname, key, encryption=NULL,
     }
 
     if(is.list(.meta)){
-      message('meta')
       names(.meta) <- paste0('x-oss-meta-', names(.meta))
       header <- c(header, .meta)
     }
@@ -126,6 +122,21 @@ CopyObject <- function(source, bucketname, key, encryption=NULL,
 }
 
 
+#' GetObject
+#'
+#' @inheritParams CopyObject
+#' @param Range The object content range, '0-99' means the first 100 bytes.
+#' @param ... avaliable headers: response-content-type, response-content-language, response-expires, response-cache-control, response-content-disposition, response-content-encoding
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetObject('ross-test', 'test.txt')
+#' GetObject('ross-test', 'test.txt', Range = '0-1')
+#' GetObject('ross-test', 'test.txt', ETag = 'AAAA', ETag.match = F)
+#' GetObject('ross-test', 'test.txt', since = Sys.time(), modified.since = T)
+#' GetObject('ross-test', 'test.txt', "response-cache-control"='no-cache')
 GetObject <- function(bucketname, key, Range=NULL,
                       ETag = NULL, ETag.match=TRUE,
                       since=NULL, modified.since=TRUE,
@@ -163,13 +174,44 @@ GetObject <- function(bucketname, key, Range=NULL,
   .api.get.header.request(ossresource, bucketname=bucketname, header=header, path=key)
 }
 
+AppendObject <- function(bucketname, key, body='', position=0, encryption=NULL, acl='private', ..., .md5=TRUE, .meta=NULL){
+  build.header <- function(){
+    header <- list(
+      'x-oss-object-acl' = acl,
+      'x-oss-server-side-encryption' = encryption)
+    header <- c(header, list(...))
+
+    if(is.list(.meta)){
+      names(.meta) <- paste0('x-oss-meta-', names(.meta))
+      header <- c(header, .meta)
+    }
+
+    if(.md5){
+      header[['Content-MD5']] <- md5(body)
+    }
+
+    header[['Content-Type']] <- body_type(body)
+    header
+  }
+
+  .check.acl(acl)
+
+  if(missing(key) && class(body) == 'form_file'){
+    key = basename(body$path)
+  }
+
+
+  header <- build.header()
+  ossresource <- sprintf("/%s/%s?append&position=%s", bucketname, key, position)
+  query <- list(append='', position=position)
+  .api.post.header.request(ossresource, bucketname=bucketname, header=header, path=key, body=body, query=query)
+}
+
 
 
 #' PutObjectACL
 #'
-#' @param bucketname
-#' @param key
-#' @param acl
+#' @inheritParams PutObject
 #'
 #' @return
 #' @export
@@ -178,9 +220,7 @@ GetObject <- function(bucketname, key, Range=NULL,
 #' PutObject('ross-test', 'test.txt', acl = 'public-read')
 PutObjectACL <- function(bucketname, key, acl='private') {
 
-  if(!acl %in% c('private', 'public-read-write', 'public-read')){
-    stop('Invalid acl, choose from public-read-write, public-read, private')
-  }
+  .check.acl(acl)
 
   header <- list('x-oss-object-acl' = acl)
   ossresource <- sprintf("/%s/%s?acl", bucketname, key)
