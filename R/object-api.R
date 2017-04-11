@@ -1,13 +1,9 @@
 #' PutObject
 #'
+#' @inheritParams .build.object.header
 #' @param bucketname The bucket name
 #' @param key The file path of object on oss.
-#' @param body The content of object, character or upload_file(file_path).
-#' @param encryption server side encryption algorithm AES256
-#' @param acl Access control: private, public-read, public-read-write
 #' @param .overwrite overwrite or not. default TRUE
-#' @param ... Headers. Cache-Control, Content-Disposition, Content-Encoding, Expires
-#' @param .meta Other meta info set to the object, < 8k.
 #'
 #' @import digest
 #' @import mime
@@ -17,25 +13,13 @@
 #' @export
 #'
 #' @examples
+#' PutObject('ross-test', 'test.txt', 'test')
+#' PutObject('ross-test', 'test.txt', 'test', encryption = 'AES256')
+#' PutObject('ross-test', 'test.txt', 'test', acl = 'public-read')
+#' PutObject('ross-test', 'test.txt', 'test', .md5 = F)
+#' PutObject('ross-test', 'test.txt', 'test', .meta = list(location='beijing', owner='igenecode.com'))
+#' PutObject('ross-test', 'test.txt', 'test', .overwrite = F)
 PutObject <- function(bucketname, key, body='', encryption=NULL, acl='private', ..., .md5=TRUE, .meta=NULL, .overwrite=TRUE) {
-  build.header <- function(){
-    header <- list(
-      'x-oss-object-acl' = acl,
-      'x-oss-server-side-encryption' = encryption)
-    header <- c(header, list(...))
-
-    if(is.list(.meta)){
-      names(.meta) <- paste0('x-oss-meta-', names(.meta))
-      header <- c(header, .meta)
-    }
-
-    if(.md5){
-      header[['Content-MD5']] <- md5(body)
-    }
-    header[['Content-Type']] <- body_type(body)
-    header
-  }
-
   .check.acl(acl)
 
   if(missing(key) && class(body) == 'form_file'){
@@ -46,24 +30,16 @@ PutObject <- function(bucketname, key, body='', encryption=NULL, acl='private', 
     HeadObject
   }
 
-  header <- build.header()
+  header <- .build.object.header(acl=acl, encryption=encryption, .md5=.md5, .meta=.meta, body=body, ...)
   ossresource <- sprintf("/%s/%s", bucketname, key)
   .api.put.header.request(ossresource, bucketname=bucketname, header=header, path=key, body=body)
 }
 
 #' CopyObject
 #'
-#' @inheritParams PutObject
-#' @param source The source object. /bucketname/objectname
+#' @inheritParams .build.object.header
 #' @param bucketname Destinate bucket
 #' @param key Destinate path on bucket
-#' @param meta.directive COPY or REPLACE meta info of object. All source meta will be ignore when this value set to REPLACE.
-#' @param ETag ETag of object.
-#' @param ETag.match Copy when ETag matches or copy when Etag not match.
-#' @param since POSIXct time.
-#' @param modified.since Copy when object was modified since a time, or copy when object was not modified since a time.
-#' @param ... Set header directly.
-#' @param .meta Other meta info about the object.
 #'
 #' @return
 #' @export
@@ -79,44 +55,13 @@ CopyObject <- function(source, bucketname, key, encryption=NULL,
                        acl='private', meta.directive = 'COPY',
                        ETag = NULL, ETag.match=TRUE,
                        since=NULL, modified.since=TRUE, ..., .meta=NULL) {
-  build.header <- function(){
-    header <- list(
-      'x-oss-copy-source' = source,
-      'x-oss-object-acl' = acl,
-      'x-oss-server-side-encryption' = encryption,
-      'x-oss-metadata-directive' = meta.directive)
-    header <- c(header, list(...))
 
-    if(!is.null(since)){
-      if(!identical(class(since), c("POSIXct", "POSIXt"))){
-        stop('The class of since is not POSIXct or POSIXt')
-      }
-      if(modified.since){
-        header_title <- 'x-oss-copy-source-if-modified-since'
-      }else{
-        header_title <- 'x-oss-copy-source-if-unmodified-since'
-      }
-      header[[header_title]] <- httr::http_date(since)
-    }
-
-    if(!is.null(ETag)){
-      if(ETag.match){
-        header_title <- 'x-oss-copy-source-if-match'
-      }else{
-        header_title <- 'x-oss-copy-source-if-none-match'
-      }
-      header[[header_title]] <- ETag
-    }
-
-    if(is.list(.meta)){
-      names(.meta) <- paste0('x-oss-meta-', names(.meta))
-      header <- c(header, .meta)
-    }
-
-    header
-  }
-
-  header <- build.header()
+  header <- .build.object.header(acl=acl, encryption=encryption,
+                                 source = source,
+                                 meta.directive = meta.directive,
+                                 ETag = ETag, ETag.match = ETag.match,
+                                 since = since, modified.since = modified.since,
+                                 .meta=.meta, ...)
   ossresource <- sprintf("/%s/%s", bucketname, key)
   .api.put.header.request(ossresource, bucketname=bucketname, header=header, path=key)
 }
@@ -141,73 +86,71 @@ GetObject <- function(bucketname, key, Range=NULL,
                       ETag = NULL, ETag.match=TRUE,
                       since=NULL, modified.since=TRUE,
                       ...) {
-  build.header <- function(){
-    header <- list('Range' = sprintf("bytes=%s", Range))
-    header <- c(header, list(...))
-
-    if(!is.null(since)){
-      if(!identical(class(since), c("POSIXct", "POSIXt"))){
-        stop('The class of since is not POSIXct or POSIXt')
-      }
-      if(modified.since){
-        header_title <- 'If-Modified-Since'
-      }else{
-        header_title <- 'If-Unmodified-Since'
-      }
-      header[[header_title]] <- httr::http_date(since)
-    }
-
-    if(!is.null(ETag)){
-      if(ETag.match){
-        header_title <- 'If-Match'
-      }else{
-        header_title <- 'If-None-Match'
-      }
-      header[[header_title]] <- ETag
-    }
-
-    header
-  }
-
-  header <- build.header()
+  header <- .build.object.header(Range = Range, ETag = ETag, ETag.match = ETag.match,
+                                 since = since, modified.since = modified.since, ...)
   ossresource <- sprintf("/%s/%s", bucketname, key)
   .api.get.header.request(ossresource, bucketname=bucketname, header=header, path=key)
 }
 
+#' AppendObject
+#'
+#' @inherit .build.object.header
+#' @inherit PutObject
+#' @param position The position of of body to append. Should be the same as existing file length.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' AppendObject('ross-test', 'test-append.txt', body='1', position = 0)
+#' AppendObject('ross-test', 'test-append.txt', body='2', position = 1, acl = 'public-read', encryption = 'AES256')
+#' AppendObject('ross-test', 'test-append.txt', body='3', position = 2, .md5 = F)
+#' AppendObject('ross-test', 'test-append.txt', body='4', position = 3, .meta = list(location='beijing'))
+#' AppendObject('ross-test', 'test-append.txt', body='5', position = 4, "Content-Encoding"='UTF-8')
 AppendObject <- function(bucketname, key, body='', position=0, encryption=NULL, acl='private', ..., .md5=TRUE, .meta=NULL){
-  build.header <- function(){
-    header <- list(
-      'x-oss-object-acl' = acl,
-      'x-oss-server-side-encryption' = encryption)
-    header <- c(header, list(...))
-
-    if(is.list(.meta)){
-      names(.meta) <- paste0('x-oss-meta-', names(.meta))
-      header <- c(header, .meta)
-    }
-
-    if(.md5){
-      header[['Content-MD5']] <- md5(body)
-    }
-
-    header[['Content-Type']] <- body_type(body)
-    header
-  }
-
-  .check.acl(acl)
 
   if(missing(key) && class(body) == 'form_file'){
     key = basename(body$path)
   }
 
-
-  header <- build.header()
+  header <- .build.object.header(acl = acl, encryption = encryption, body = body, .md5 = .md5, .meta = .meta, ...)
   ossresource <- sprintf("/%s/%s?append&position=%s", bucketname, key, position)
   query <- list(append='', position=position)
   .api.post.header.request(ossresource, bucketname=bucketname, header=header, path=key, body=body, query=query)
 }
 
+#' DeleteObject
+#'
+#' @inherit PutObject
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' PutObject('ross-test', 'test.txt', 'test')
+#' DeleteObject('ross-test', 'test.txt')
+DeleteObject <- function(bucketname, key){
+  ossresource <- sprintf("/%s/%s", bucketname, key)
+  .api.delete.header.request(ossresource, bucketname=bucketname, path=key)
+}
 
+DeleteMultipleObjects <- function(bucketname, keys, quiet=TRUE){
+  body <- .build.xml_body.DeleteMultipleObjects(keys, quiet)
+  header <- .build.object.header(body = body)
+  ossresource <- sprintf("/%s/?delete", bucketname)
+  .api.post.header.request(ossresource, bucketname=bucketname, header=header, body=body, query=c('delete'))
+}
+
+.build.xml_body.DeleteMultipleObjects <- function(keys, quiet){
+  keys_element <- lapply(keys, function(x) list(Object=list(Key=list(x))))
+  quiet <- ifelse(quiet, 'true', 'false')
+  doc <- list(
+    Delete=c(list(list(Quiet=list(quiet))),
+             keys_element)
+  )
+  doc <- xml2::as_xml_document(doc)
+  as.character(doc)
+}
 
 #' PutObjectACL
 #'
