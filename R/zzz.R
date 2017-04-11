@@ -85,6 +85,89 @@
   x[!null_idx]
 }
 
+#' .build.object.header
+#'
+#' @param encryption server side encryption algorithm AES256
+#' @param acl Access control: private, public-read, public-read-write
+#' @param source The source object. /bucketname/objectname
+#' @param meta.directive COPY or REPLACE meta info of object. All source meta will be ignore when this value set to REPLACE.
+#' @param Range The object content range, '0-99' means the first 100 bytes.
+#' @param ETag ETag of object.
+#' @param ETag.match Copy when ETag matches or copy when Etag not match.
+#' @param since POSIXct time.
+#' @param modified.since Copy when object was modified since a time, or copy when object was not modified since a time.
+#' @param ... Set header directly. Cache-Control, Content-Disposition, Content-Encoding, Expires, ...
+#' @param .md5 boolean Calculate body md5sum automatically or not.
+#' @param .meta Other meta info set to the object, < 8k.
+#' @param body The content of object, character or upload_file(file_path).
+#'
+#' @return
+#' @export
+#'
+#' @examples
+.build.object.header <- function(acl=NULL, encryption=NULL,
+                                 source=NULL, meta.directive=NULL,
+                                 Range = NULL,
+                                 ETag=NULL, ETag.match=NULL,
+                                 since=NULL, modified.since=TRUE,
+                                 ..., .md5=TRUE, .meta=NULL,
+                                 body=NULL){
+
+  if(!is.null(acl)){
+    .check.acl(acl)
+  }
+
+  header <- list(
+    'x-oss-object-acl' = acl,
+    'x-oss-server-side-encryption' = encryption,
+    'x-oss-copy-source' = source,
+    'x-oss-metadata-directive' = meta.directive,
+    'Range' = sprintf("bytes=%s", Range))
+  header <- c(header, list(...))
+
+  if(!is.null(ETag)){
+    if(ETag.match){
+      header_title <- 'If-Match'
+    }else{
+      header_title <- 'If-None-Match'
+    }
+    if(!is.null(source)){
+      header_title <- paste0('x-oss-copy-source-', tolower(header_title))
+    }
+    header[[header_title]] <- ETag
+  }
+
+  if(!is.null(since)){
+    if(!identical(class(since), c("POSIXct", "POSIXt"))){
+      stop('The class of since is not POSIXct or POSIXt')
+    }
+    if(modified.since){
+      header_title <- 'If-Modified-Since'
+    }else{
+      header_title <- 'If-Unmodified-Since'
+    }
+    if(!is.null(source)){
+      header_title <- paste0('x-oss-copy-source-', tolower(header_title))
+    }
+    header[[header_title]] <- httr::http_date(since)
+  }
+
+  if(is.list(.meta)){
+    names(.meta) <- paste0('x-oss-meta-', names(.meta))
+    header <- c(header, .meta)
+  }
+
+  if(.md5 && !is.null(body)){
+    header[['Content-MD5']] <- md5(body)
+  }
+
+  if(is.null(header[['Content-Type']])){
+    header[['Content-Type']] <- body_type(body)
+  }
+
+  .rm.null(header)
+}
+
 .extract.header <- function(x, .headers) {
   ifelse(x %in% names(.headers), .headers[[x]], '')
 }
@@ -112,7 +195,6 @@
     stop('Invalid acl, choose from public-read-write, public-read, private')
   }
 }
-
 
 .get.cache.bucket.location <- function(bucketname) {
   location <- .state$location[[bucketname]]
