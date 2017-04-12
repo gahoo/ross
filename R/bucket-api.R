@@ -247,6 +247,7 @@ PutBucketLifecycle <- function(name, rules, body=NULL){
 #' @param marker Which index to start with.
 #' @param max_keys Max number of buckets.
 #' @param delimiter Single character grouping the object name.
+#' @param encoding_type For those control characters not supported in xml 1.0 should set this to `url`.
 #'
 #' @return
 #' @export
@@ -257,9 +258,9 @@ PutBucketLifecycle <- function(name, rules, body=NULL){
 #' GetBucket('ross-test', 'upload', 'upload/file1', '/', '10)
 #'
 # TODO: an R6 Class to hadle ListBucketResult is needed
-GetBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL){
+GetBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL, encoding_type=NULL){
   ossresource <- sprintf("/%s/", bucketname)
-  query <- list(prefix=prefix, marker=marker, delimiter=delimiter, "max-keys"=max_keys)
+  query <- list(prefix=prefix, marker=marker, delimiter=delimiter, "max-keys"=max_keys, "encoding-type"=encoding_type)
   .api.get.header.request(ossresource, bucketname=bucketname, query = query)
 }
 
