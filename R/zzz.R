@@ -111,10 +111,14 @@
                                  ETag=NULL, ETag.match=NULL,
                                  since=NULL, modified.since=TRUE,
                                  ..., .md5=TRUE, .meta=NULL,
-                                 body=NULL){
+                                 body=NULL, target=NULL){
 
   if(!is.null(acl)){
     .check.acl(acl)
+  }
+
+  if(!is.null(Range)){
+    Range <- sprintf("bytes=%s", Range)
   }
 
   header <- list(
@@ -122,7 +126,8 @@
     'x-oss-server-side-encryption' = encryption,
     'x-oss-copy-source' = source,
     'x-oss-metadata-directive' = meta.directive,
-    'Range' = sprintf("bytes=%s", Range))
+    'x-oss-symlink-target' = target,
+    'Range' = Range)
   header <- c(header, list(...))
 
   if(!is.null(ETag)){
@@ -175,6 +180,9 @@
 #' @import xml2
 .except.http_error <- function(response){
   doc <- content(response, encoding = 'UTF-8')
+  if(is.null(doc)){
+    return(NULL)
+  }
   Code <- xml_text(xml_find_all(doc, '/Error/Code'))
   Message <- xml_text(xml_find_all(doc, '/Error/Message'))
   RequestId <- xml_text(xml_find_all(doc, '/Error/RequestId'))
