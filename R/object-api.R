@@ -27,7 +27,10 @@ PutObject <- function(bucketname, key, body='', encryption=NULL, acl='private', 
   }
 
   if(!.overwrite){
-    HeadObject
+    r <- HeadObject(bucketname, key)
+    if(r$status_code != 404){
+      stop(sprintf(".overwrite=FALSE and </%s/%s> exists.", bucketname, key))
+    }
   }
 
   header <- .build.object.header(acl=acl, encryption=encryption, .md5=.md5, .meta=.meta, body=body, ...)
@@ -134,7 +137,23 @@ DeleteObject <- function(bucketname, key){
   .api.delete.header.request(ossresource, bucketname=bucketname, path=key)
 }
 
+#' DeleteMultipleObjects
+#'
+#' @param bucketname The bucketname
+#' @param keys Object keys to be deleted. Should less than 1000 once.
+#' @param quiet Return deleted keys or not. When TRUE, only return keys with errors.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' r<-GetBucket('ross-test')
+#' keys<-unlist(xpath2list(httr::content(r), '/ListBucketResult/Contents/Key'))
+#' DeleteMultipleObjects('ross-test', keys, FALSE)
 DeleteMultipleObjects <- function(bucketname, keys, quiet=TRUE){
+  if(is.null(keys)){
+    stop("Keys should not be NULL.")
+  }
   body <- .build.xml_body.DeleteMultipleObjects(keys, quiet)
   header <- .build.object.header(body = body)
   ossresource <- sprintf("/%s/?delete", bucketname)
@@ -152,6 +171,47 @@ DeleteMultipleObjects <- function(bucketname, keys, quiet=TRUE){
   as.character(doc)
 }
 
+
+#' HeadObject
+#'
+#' @inherit .build.object.header
+#' @inherit PutObject
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' r <- PutObject('ross-test', 'test.txt')
+#' HeadObject('ross-test', 'test.txt')
+#' etag <- gsub('"', '', r$headers$etag)
+#' HeadObject('ross-test', 'test.txt', ETag=etag, ETag.match=T)
+#' HeadObject('ross-test', 'test.txt', ETag=etag, ETag.match=F)
+HeadObject <- function(bucketname, key,
+                       ETag = NULL, ETag.match=TRUE,
+                       since=NULL, modified.since=TRUE){
+  ossresource <- sprintf("/%s/%s", bucketname, key)
+  header <- .build.object.header(ETag = ETag, ETag.match = ETag.match,
+                                 since = since, modified.since = modified.since)
+  .api.head.header.request(ossresource, bucketname=bucketname, header=header, path=key)
+}
+
+
+#' GetObjectMeta
+#'
+#' @inheritParams PutObject
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' PutObject('ross-test', 'test.txt')
+#' GetObjectMeta('ross-test', 'test.txt')
+GetObjectMeta <- function(bucketname, key){
+  ossresource <- sprintf("/%s/%s?objectMeta", bucketname, key)
+  .api.get.header.request(ossresource, bucketname=bucketname, path=key, query='objectMeta')
+}
+
+
 #' PutObjectACL
 #'
 #' @inheritParams PutObject
@@ -160,12 +220,61 @@ DeleteMultipleObjects <- function(bucketname, keys, quiet=TRUE){
 #' @export
 #'
 #' @examples
-#' PutObject('ross-test', 'test.txt', acl = 'public-read')
+#' PutObjectACL('ross-test', 'test.txt', acl = 'public-read')
 PutObjectACL <- function(bucketname, key, acl='private') {
 
   .check.acl(acl)
 
-  header <- list('x-oss-object-acl' = acl)
+  header <- .build.object.header(acl = acl)
   ossresource <- sprintf("/%s/%s?acl", bucketname, key)
   .api.put.header.request(ossresource, bucketname=bucketname, header=header, path=key, query="acl")
+}
+
+#' GetObjectACL
+#'
+#' @inheritParams PutObject
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetObjectACL('ross-test', 'test.txt')
+GetObjectACL <- function(bucketname, key){
+  ossresource <- sprintf("/%s/%s?acl", bucketname, key)
+  .api.get.header.request(ossresource, bucketname=bucketname, path=key, query='acl')
+}
+
+#' PutSymlink
+#'
+#' @param bucketname
+#' @param key
+#' @param target
+#' @param .meta
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' PutObject('ross-test', 'test.txt')
+#' PutSymlink('ross-test', 'test-linked.txt', 'test.txt')
+PutSymlink <- function(bucketname, key, target, .meta=NULL){
+  ossresource <- sprintf("/%s/%s?symlink", bucketname, key)
+  header <- .build.object.header(target = target, .meta = .meta)
+  .api.put.header.request(ossresource, bucketname=bucketname, header=header, path=key, query='symlink')
+}
+
+#' GetSymlink
+#'
+#' @param bucketname
+#' @param key
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetSymlink('ross-test', 'test-linked.txt')
+#' GetSymlink('ross-test', 'test.txt')
+GetSymlink <- function(bucketname, key){
+  ossresource <- sprintf("/%s/%s?symlink", bucketname, key)
+  .api.get.header.request(ossresource, bucketname=bucketname, path=key, query='symlink')
 }
