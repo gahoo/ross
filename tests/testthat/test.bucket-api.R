@@ -106,6 +106,11 @@ test_that("DeleteBucketLifecycle", {
 test_that("DeleteBucket", {
   r <- PutBucket('ross-test')
   expect_equal(r$status_code, 200)
+  r<-GetBucket('ross-test')
+  expect_equal(r$status_code, 200)
+  keys<-unlist(xpath2list(httr::content(r), '/ListBucketResult/Contents/Key'))
+  r<-DeleteMultipleObjects('ross-test', keys, FALSE)
+  expect_equal(r$status_code, 200)
   r <- DeleteBucket('ross-test')
   expect_equal(r$status_code, 204)
 })
