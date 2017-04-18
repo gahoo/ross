@@ -1,7 +1,7 @@
 Package: ross
 Type: Package
 Title: Aliyun OSS API
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: person("Gahoo", "Lee", email = "gahoolee@gmail.com", role = c("aut", "cre"))
 Maintainer: lijiaping <gahoo@gmail.com>
 Description: Ross is an aliyun OSS API Wrapper for R.
