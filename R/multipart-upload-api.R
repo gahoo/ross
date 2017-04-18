@@ -81,6 +81,9 @@ CompleteMultipartUpload <- function(bucketname, key, uploadId, Etags=NULL){
 }
 
 .build.xml_body.CompleteMultipartUpload <- function(Etags){
+  if(is.null(Etags)){
+    stop("No ETags. ETags should not be NULL.")
+  }
   part_numbers <- names(Etags)
   if(is.null(part_numbers)){
     part_numbers <- 1:length(Etags)
