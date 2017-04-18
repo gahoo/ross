@@ -404,3 +404,107 @@ BucketLifecycle <- R6::R6Class("BucketLifecycle",
     }
   )
 )
+
+#' BucketCORS
+#'
+#' Convenient ways to manipulate CORS rules
+#'
+#' @docType class
+#' @format An R6 class object.
+#' @importFrom R6 R6Class
+#' @import xml2
+#' @import httr
+#' @import plyr
+#' @export
+#' @name BucketLifecycle
+#'
+#' @examples
+#'
+BucketCORS <- R6::R6Class("BucketCORS",
+  public=list(
+    name = NULL,
+    rules = NULL,
+    autoSave = FALSE,
+    initialize = function(name, autoSave=TRUE) {
+      self$name <- name
+      self$autoSave = autoSave
+      self$load()
+    },
+    add = function(AllowedOrigin=NULL, AllowedMethod=NULL,
+                   AllowedHeader=NULL, ExposeHeader=NULL,
+                   MaxAgeSeconds=NULL){
+
+      rule <- .build.xml_body.PutBucketcors.Rules(
+        AllowedOrigin, AllowedMethod, AllowedHeader, ExposeHeader,MaxAgeSeconds)
+      self$remove(AllowedOrigin, AllowedMethod)
+      xml_add_child(self$rules, as_xml_document(list(CORSRule=rule)))
+
+      if(self$autoSave){
+        self$save()
+      }
+
+    },
+    remove = function(AllowedOrigin, AllowedMethod){
+      makeXpathAttr <- function(name){
+        xpath_attr <- sprintf('%s/text()="%s"', name, get(name))
+        paste(xpath_attr, collapse = ' and ')
+      }
+      xpath <- sprintf('//CORSRule[%s and %s]',
+                       makeXpathAttr('AllowedOrigin'),
+                       makeXpathAttr('AllowedMethod'))
+      node <- xml_find_all(self$rules, xpath)
+      xml_remove(node)
+
+      if(self$autoSave){
+        self$save()
+      }
+
+    },
+    clear = function(){
+      r <- DeleteBucketcors(self$name)
+      if(r$status_code == 204){
+        self$rules <- xml_new_root('CORSConfiguration')
+      }
+    },
+    load = function(){
+      suppressWarnings(r <- GetBucketcors(self$name))
+      if(r$status_code == 200){
+        self$rules <- httr::content(r, encoding = 'UTF-8')
+      }else if(r$status_code == 404){
+        self$rules <- xml_new_root('CORSConfiguration')
+      }
+    },
+    save = function(){
+      if(self$length == 0){
+        self$clear()
+      }else{
+        r <- PutBucketcors(self$name, body=self$txt)
+        if(r$status_code == 200){
+          self$load()
+        }
+      }
+    },
+    print = function(){
+      print(self$data.frame)
+      invisible(self)
+    }
+  ),
+  active = list(
+    txt = function(){
+      as.character(self$rules)
+    },
+    data.frame = function(){
+      rules <- xpath2list(self$rules, '/CORSConfiguration/CORSRule', F)
+      if(length(rules) == 0){
+        NULL
+      }else{
+        rules <- lapply(rules, as.data.frame)
+        plyr::ldply(rules)
+      }
+    },
+    length = function(){
+      rules <- xpath2list(self$rules, '/CORSConfiguration/CORSRule', F)
+      length(rules)
+    }
+  )
+)
