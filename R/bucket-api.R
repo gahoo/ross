@@ -286,7 +286,7 @@ PutBucketcors <- function(name, rules, body=NULL){
 #' rules[[2]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="igenecode.com", AllowedMethod=c('GET', 'PUT'))
 #' rules[[3]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="www.igenecode.com", AllowedMethod='GET',
 #'  AllowedHeader='Authorization', ExposeHeader=c('x-oss-meta1', 'x-oss-meta2'), , MaxAgeSeconds=100)
-.build.xml_body.PutBucketcors.Rules <- function(AllowedOrigin=NULL, AllowedMethod=NULL,
+.build.xml_body.PutBucketcors.Rules <- function(AllowedOrigin, AllowedMethod,
                                                 AllowedHeader=NULL, ExposeHeader=NULL,
                                                 MaxAgeSeconds=NULL){
   toList <- function(name, values){
