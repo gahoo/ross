@@ -117,17 +117,12 @@
     .check.acl(acl)
   }
 
-  if(!is.null(Range)){
-    Range <- sprintf("bytes=%s", Range)
-  }
-
   header <- list(
     'x-oss-object-acl' = acl,
     'x-oss-server-side-encryption' = encryption,
     'x-oss-copy-source' = source,
     'x-oss-metadata-directive' = meta.directive,
-    'x-oss-symlink-target' = target,
-    'Range' = Range)
+    'x-oss-symlink-target' = target)
   header <- c(header, list(...))
 
   if(!is.null(ETag)){
@@ -168,6 +163,15 @@
 
   if(is.null(header[['Content-Type']])){
     header[['Content-Type']] <- body_type(body)
+  }
+
+  if(!is.null(Range)){
+    header_title <- 'Range'
+    if(!is.null(source)){
+      header_title <- paste0('x-oss-copy-source-', tolower(header_title))
+    }
+    Range <- sprintf("bytes=%s", Range)
+    header[[header_title]] <- Range
   }
 
   .rm.null(header)
