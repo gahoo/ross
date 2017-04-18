@@ -44,6 +44,16 @@ test_that("PutBucketLifecycle", {
 
 })
 
+test_that("PutBucketcors", {
+  rules <- list()
+  rules[[1]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="*", AllowedMethod='GET')
+  rules[[2]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="igenecode.com", AllowedMethod=c('GET', 'PUT'))
+  rules[[3]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="www.igenecode.com", AllowedMethod='GET',
+                                                    AllowedHeader='Authorization',
+                                                    ExposeHeader=c('x-oss-meta1', 'x-oss-meta2'), MaxAgeSeconds=100)
+  PutBucketcors('ross-test', rules)
+})
+
 ###### Get
 test_that("GetBucket", {
   r <- GetBucket('ross-test')
@@ -87,6 +97,11 @@ test_that("GetBucketLifecycle", {
   expect_equal(r$status_code, 200)
 })
 
+test_that("GetBucketcors", {
+  r<-GetBucketcors('ross-test')
+  expect_equal(r$status_code, 200)
+})
+
 ###### Delete
 test_that("DeleteBucketLogging", {
   r<-DeleteBucketLogging('ross-test')
@@ -100,6 +115,11 @@ test_that("DeleteBucketWebsite", {
 
 test_that("DeleteBucketLifecycle", {
   r<-DeleteBucketLifecycle('ross-test')
+  expect_equal(r$status_code, 204)
+})
+
+test_that("DeleteBucketcors", {
+  r<-DeleteBucketcors('ross-test')
   expect_equal(r$status_code, 204)
 })
 

@@ -154,13 +154,8 @@ PutBucketReferer <- function(name, AllowEmptyReferer=TRUE, RefererList=c()){
 #' Config bucket object life cycle rules.
 #'
 #' @inheritParams PutBucket
-#' @param Prefix Object prefix applying the rule.
-#' @param RuleID Uid of rule
-#' @param Status Enable or Disable the rule.
-#' @param Object.CreatedBeforeDate Expires date for object.
-#' @param Object.Days Expris days for object.
-#' @param Multpart.CreatedBeforeDate Expris date for multipart upload.
-#' @param Multpart.Days Expris day for multipart upload.
+#' @param rules list Rules created by `.build.xml_body.PutBucketLifecycle.Rules`. Will be ignore when body parameter is specified.
+#' @param body charactor XML content of rules.
 #'
 #' @return
 #' @export
@@ -233,6 +228,79 @@ PutBucketLifecycle <- function(name, rules, body=NULL){
     Status = list(Status),
     Expiration = build.expir(Object.CreatedBeforeDate, Object.Days),
     AbortMultipartUpload = build.expir(Multpart.CreatedBeforeDate, Multpart.Days)
+  )
+  null_idx<-sapply(rule, function(x) is.null(x[[1]]) )
+  rule[!null_idx]
+}
+
+#' PutBucketcors
+#'
+#' @inheritParams PutBucket
+#' @param rules list Rules created by `.build.xml_body.PutBucketLifecycle.Rules`. Will be ignore when body parameter is specified.
+#' @param body charactor XML content of rules.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' rules <- list()
+#' rules[[1]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="*", AllowedMethod='GET')
+#' rules[[2]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="igenecode.com", AllowedMethod=c('GET', 'PUT'))
+#' rules[[3]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="www.igenecode.com", AllowedMethod='GET',
+#'  AllowedHeader='Authorization', ExposeHeader=c('x-oss-meta1', 'x-oss-meta2'), MaxAgeSeconds=100)
+#' PutBucketcors('ross-test', rules)
+PutBucketcors <- function(name, rules, body=NULL){
+  if(is.null(body)) {
+    body <- .build.xml_body.PutBucketcors(rules)
+  }
+  ossresource <- sprintf("/%s/?cors", name)
+  .api.put.header.request(ossresource, bucketname=name, query = c('cors'), body = body)
+}
+
+.build.xml_body.PutBucketcors <- function(rules){
+  names(rules) <- rep('CORSRule', length(rules))
+  doc <- list(
+    CORSConfiguration=rules
+  )
+  null_idx<-sapply(doc$CORSConfiguration$Rule, function(x) is.null(x[[1]]) )
+  doc$CORSConfiguration$Rule <- doc$CORSConfiguration$Rule[!null_idx]
+
+  doc <- xml2::as_xml_document(doc)
+  as.character(doc)
+}
+
+#' .build.xml_body.PutBucketcors.Rules
+#'
+#' @param AllowedOrigin The source of CORS. charactor vector is acceptable for multiple elements. Only one "*" is permitted. "*" means accept all CORS.
+#' @param AllowedMethod Methods for CORS. GET,PUT,DELETE,POST,HEAD
+#' @param AllowedHeader Allowed headers in OPTIONS preflight Access-Control-Request-Headers
+#' @param ExposeHeader Headers that users could access.
+#' @param MaxAgeSeconds OPTIONS preflight cache time. in seconds.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' rules <- list()
+#' rules[[1]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="*", AllowedMethod='GET')
+#' rules[[2]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="igenecode.com", AllowedMethod=c('GET', 'PUT'))
+#' rules[[3]] <- .build.xml_body.PutBucketcors.Rules(AllowedOrigin="www.igenecode.com", AllowedMethod='GET',
+#'  AllowedHeader='Authorization', ExposeHeader=c('x-oss-meta1', 'x-oss-meta2'), , MaxAgeSeconds=100)
+.build.xml_body.PutBucketcors.Rules <- function(AllowedOrigin=NULL, AllowedMethod=NULL,
+                                                AllowedHeader=NULL, ExposeHeader=NULL,
+                                                MaxAgeSeconds=NULL){
+  toList <- function(name, values){
+    values <- lapply(values, list)
+    names(values) <- rep(name, length(values))
+    values
+  }
+
+  rule <- c(
+    toList('AllowedOrigin', AllowedOrigin),
+    toList('AllowedMethod', AllowedMethod),
+    toList('AllowedHeader', AllowedHeader),
+    toList('ExposeHeader', ExposeHeader),
+    list(MaxAgeSeconds=list(MaxAgeSeconds))
   )
   null_idx<-sapply(rule, function(x) is.null(x[[1]]) )
   rule[!null_idx]
@@ -378,6 +446,19 @@ GetBucketLifecycle <- function(name){
   .api.get.header.request(ossresource, bucketname=name, query = c('lifecycle'))
 }
 
+#' GetBucketcors
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' GetBucketcors('ross-test')
+GetBucketcors <- function(name){
+  ossresource <- sprintf("/%s/?cors", name)
+  .api.get.header.request(ossresource, bucketname=name, query = c('cors'))
+}
 
 ######## DELETE
 
@@ -439,4 +520,18 @@ DeleteBucketWebsite <- function(name){
 DeleteBucketLifecycle <- function(name){
   ossresource <- sprintf("/%s/?lifecycle", name)
   .api.delete.header.request(ossresource, bucketname=name, query = c('lifecycle'))
+}
+
+#' DeleteBucketcors
+#'
+#' @param name
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' DeleteBucketcors('ross-test')
+DeleteBucketcors <- function(name){
+  ossresource <- sprintf("/%s/?cors", name)
+  .api.delete.header.request(ossresource, bucketname=name, query = c('cors'))
 }
