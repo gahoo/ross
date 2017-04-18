@@ -7,7 +7,6 @@ test_that("Bucket", {
   # create
   expect_message(b$create(acl='public-read', StorageClass = 'IA'))
   expect_silent(b$refresh())
-  expect_silent(b$list())
   expect_silent(b$rm())
 
 })
@@ -87,4 +86,42 @@ test_that("BucketLifecycle", {
   expect_silent(life$save())
   expect_equal(life$length, 3)
   r <- DeleteBucket('ross-test')
+})
+
+test_that("BucketCORS", {
+  r <- PutBucket('ross-test')
+  expect_silent(cors <- BucketCORS$new('ross-test'))
+  expect_silent(cors$add('*', 'GET'))
+  expect_equal(cors$length, 1)
+  expect_silent(cors$add('*', 'GET'))
+  expect_equal(cors$length, 1)
+  expect_silent(cors$add('igenecode.com', c('GET', 'PUT')))
+  expect_equal(cors$length, 2)
+  expect_silent(cors$add('www.igenecode.com', c('GET', 'PUT'),
+           AllowedHeader='Authorization',
+           ExposeHeader=c('x-oss-meta1', 'x-oss-meta2'),
+           MaxAgeSeconds=100))
+  expect_equal(cors$length, 3)
+  expect_silent(cors$remove('*', 'GET'))
+  expect_equal(cors$length, 2)
+  expect_silent(cors$remove('igenecode.com', c('GET', 'PUT')))
+  expect_equal(cors$length, 1)
+  expect_silent(cors$clear())
+  expect_equal(cors$length, 0)
+  # autoSave=F
+  expect_silent(cors <- BucketCORS$new('ross-test', F))
+  expect_silent(cors$add('*', 'GET'))
+  expect_equal(cors$length, 1)
+  expect_silent(cors$add('*', 'GET'))
+  expect_equal(cors$length, 1)
+  expect_silent(cors$add('igenecode.com', c('GET', 'PUT')))
+  expect_equal(cors$length, 2)
+  expect_silent(cors$save)
+  expect_equal(cors$length, 2)
+  expect_silent(cors$clear())
+  expect_equal(cors$length, 0)
+})
+
+test_that("Bucket$list", {
+  expect_silent(b$list())
 })
