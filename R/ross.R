@@ -13,7 +13,7 @@ NULL
 .state <- new.env(parent=emptyenv())
 .state$location <- list()
 
-.api.header.request <- function(method, ossresource,
+.api.request <- function(sign.func, method, ossresource,
                                 bucketname=NULL, Location=NULL, ...,
                                 header=NULL, path=NULL) {
   host <- .build.host(bucketname, Location=Location, internal=getOption('ross.internal'), vpc=getOption('ross.vpc'))
@@ -24,12 +24,15 @@ NULL
   }else{
     url <- httr::modify_url(host, path=path)
   }
-  response <- .sign.header(method, url, ossresource,
-                           .headers=.headers,
-                           ossheader=ossheader,
-                           ...)
-  .check.http_error(response)
-  response
+
+  sign.func(method, url, ossresource,
+            .headers=.headers,
+            ossheader=ossheader,
+            ...)
+}
+
+.api.header.request <- function(...) {
+  .api.request(.sign.header, ...)
 }
 
 .api.put.header.request <- function(ossresource, ...){
@@ -50,4 +53,12 @@ NULL
 
 .api.delete.header.request <- function(ossresource, ...){
   .api.header.request(method = 'DELETE', ossresource, ...)
+}
+
+.api.url.request <- function(...) {
+  .api.request(.sign.url, ...)
+}
+
+.api.get.url.request <- function(ossresource, ...){
+  .api.url.request(method = 'GET', ossresource, ...)
 }
