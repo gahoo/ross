@@ -112,11 +112,7 @@ NULL
   headers <- add_headers(date = date, authorization = authorization, .headers=.headers)
 
   response <- do.call(method, args = list(url, headers, query = query, body=body, user_agent("ross 0.0.1")))
-  if(getOption('ross.debug') && response$status_code != 200){
-    print(xpath2list(content(response, encoding='UTF-8'), '/Error/StringToSign'))
-    #print(httr::content(response))
-  }
-
+  .check.http_error(response)
   response
 }
 
@@ -126,6 +122,7 @@ NULL
 #' @inheritParams .sign.header
 #' @param expires How long will the url expires in seconds.
 #' @param ...
+#' @param .url boolean Only URL will return when TRUE.
 #'
 #' @return response of requests
 #' @export
@@ -136,18 +133,32 @@ NULL
 .sign.url <- function(method, url, ossresource, expires = 60,
                       AccessKeyId = Sys.getenv("AccessKeyId"),
                       AccessKeySecret = Sys.getenv("AccessKeySecret"),
-                      ...){
+                      query = NULL,
+                      body = NULL,
+                      .headers = character(),
+                      ..., .url=FALSE){
   .check.accesskey(AccessKeyId, AccessKeySecret)
 
   expires <- as.integer(Sys.time()) + expires
-  signature <- .build.signature(method, ossresource, expires = expires, AccessKeySecret=AccessKeySecret, ...)
+  signature <- .build.signature(method, ossresource,
+                                content_md5 = .extract.header('Content-MD5', .headers),
+                                content_type = .extract.header('Content-Type', .headers),
+                                expires = expires,
+                                AccessKeySecret = AccessKeySecret,
+                                ...)
 
-  do.call(method, args = list(
-    url = url,
-    query = list(
-      OSSAccessKeyId = AccessKeyId,
-      Expires = expires,
-      Signature = signature))
-    )
+  query <- list(
+    OSSAccessKeyId = AccessKeyId,
+    Expires = expires,
+    Signature = signature)
+
+  if(.url){
+    modify_url(url, query=query)
+  }else{
+    response <- do.call(method, args = list(url = url, query = query))
+    .check.http_error(response)
+    response
+  }
+
 }
 
