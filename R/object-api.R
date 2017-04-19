@@ -73,6 +73,7 @@ CopyObject <- function(source, bucketname, key, encryption=NULL,
 #' GetObject
 #'
 #' @inheritParams CopyObject
+#' @inheritParams .sign.url
 #' @param Range The object content range, '0-99' means the first 100 bytes.
 #' @param ... avaliable headers: response-content-type, response-content-language, response-expires, response-cache-control, response-content-disposition, response-content-encoding
 #'
@@ -85,14 +86,21 @@ CopyObject <- function(source, bucketname, key, encryption=NULL,
 #' GetObject('ross-test', 'test.txt', ETag = 'AAAA', ETag.match = F)
 #' GetObject('ross-test', 'test.txt', since = Sys.time(), modified.since = T)
 #' GetObject('ross-test', 'test.txt', "response-cache-control"='no-cache')
+#' GetObject('ross-test', 'test.txt', .url=T)
+#' GetObject('ross-test', 'test.txt', expires=3600, .url=T)
 GetObject <- function(bucketname, key, Range=NULL,
                       ETag = NULL, ETag.match=TRUE,
                       since=NULL, modified.since=TRUE,
-                      ...) {
+                      ..., expires=60, .url=FALSE) {
   header <- .build.object.header(Range = Range, ETag = ETag, ETag.match = ETag.match,
                                  since = since, modified.since = modified.since, ...)
   ossresource <- sprintf("/%s/%s", bucketname, key)
-  .api.get.header.request(ossresource, bucketname=bucketname, header=header, path=key)
+
+  if(.url){
+    .api.get.url.request(ossresource, bucketname=bucketname, header=header, path=key, expires=expires, .url=.url)
+  }else{
+    .api.get.header.request(ossresource, bucketname=bucketname, header=header, path=key)
+  }
 }
 
 #' AppendObject
