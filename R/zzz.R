@@ -198,8 +198,15 @@
   is_error <- http_error(response)
   if(is_error){
     .except.http_error(response)
+    .print.debug(response)
   }
   is_error
+}
+
+.print.debug <- function(response){
+  if(getOption('ross.debug')){
+    print(xpath2list(content(response, encoding='UTF-8'), '/Error/StringToSign'))
+  }
 }
 
 .check.acl <- function(acl){
