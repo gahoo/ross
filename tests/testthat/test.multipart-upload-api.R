@@ -1,4 +1,5 @@
 test_that("UploadPartCopy,AbortMultipartUpload", {
+  PutBucket('ross-test')
   r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
   expect_equal(r$status, 200)
   uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
@@ -13,6 +14,7 @@ test_that("UploadPartCopy,AbortMultipartUpload", {
 })
 
 test_that("UploadPart,CompleteMultipartUpload", {
+  PutBucket('ross-test')
   r <- InitiateMultipartUpload('ross-test', 'multi-test.txt', encryption = 'AES256')
   expect_equal(r$status, 200)
   uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
@@ -23,6 +25,7 @@ test_that("UploadPart,CompleteMultipartUpload", {
 })
 
 test_that("UploadPart,ListParts", {
+  PutBucket('ross-test')
   r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
   uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
   r <- UploadPart('ross-test', 'multi-test.txt', uploadId, 1, 'test1')
@@ -39,6 +42,7 @@ test_that("UploadPart,ListParts", {
 })
 
 test_that("ListMultipartUploads", {
+  PutBucket('ross-test')
   r <- InitiateMultipartUpload('ross-test', 'multi/test.txt', encryption = 'AES256')
   expect_equal(r$status, 200)
   r <- InitiateMultipartUpload('ross-test', 'multi/test2.txt')

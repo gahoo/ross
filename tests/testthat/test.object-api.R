@@ -142,7 +142,7 @@ test_that("GetObjectACL", {
   r <- PutObject('ross-test', 'test.txt', 'test', acl = 'public-read')
   expect_equal(r$status_code, 200)
   r <- GetObjectACL('ross-test', 'test.txt')
-  grant <- unlist(xpath2list(content(r, encoding = 'UTF-8'), '/AccessControlPolicy/AccessControlList/Grant'))
+  grant <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '/AccessControlPolicy/AccessControlList/Grant'))
   expect_equal(grant, 'public-read')
 })
 

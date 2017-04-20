@@ -126,6 +126,8 @@ test_that("DeleteBucketcors", {
 test_that("DeleteBucket", {
   r <- PutBucket('ross-test')
   expect_equal(r$status_code, 200)
+  r <- PutObject('ross-test', 'test.txt')
+  expect_equal(r$status_code, 200)
   r<-GetBucket('ross-test')
   expect_equal(r$status_code, 200)
   keys<-unlist(xpath2list(httr::content(r), '/ListBucketResult/Contents/Key'))

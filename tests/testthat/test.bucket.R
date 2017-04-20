@@ -90,6 +90,7 @@ test_that("BucketLifecycle", {
 
 test_that("BucketCORS", {
   r <- PutBucket('ross-test')
+  r <- DeleteBucketcors('ross-test')
   expect_silent(cors <- BucketCORS$new('ross-test'))
   expect_silent(cors$add('*', 'GET'))
   expect_equal(cors$length, 1)
