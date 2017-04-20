@@ -20,6 +20,7 @@ Bucket <- R6::R6Class("Bucket",
     StorageClass = NULL,
     Owner = list(),
     lifecycle = NULL,
+    cors = NULL,
 #' @examples
 #' ## new Bucket
 #' b<-Bucket$new('ross-test',autoCreate=F)
@@ -70,6 +71,7 @@ Bucket <- R6::R6Class("Bucket",
       info <- xpath2list(doc, '/BucketInfo/Bucket')
       private$setInfo(info)
       self$lifecycle <- BucketLifecycle$new(self$Name, FALSE)
+      self$cors <- BucketCORS$new(self$Name, FALSE)
     },
 #' @examples
 #'
@@ -127,9 +129,10 @@ Bucket <- R6::R6Class("Bucket",
         sapply(contents, function(x) x$Key)
       }
     },
-    usage = function(prefix=NULL) {
+    usage = function(prefix=NULL, unit='MB') {
+      conversion <- list(B=1, KB=1024, MB=1024^2, GB=1024^3)
       files <- self$list(prefix, delimiter = '')
-      sum(as.numeric(files$Size)) / 1024 / 1024
+      sum(as.numeric(files$Size)) / conversion[[unit]]
     },
     read = function() {},
     write = function() {},
@@ -269,6 +272,21 @@ Bucket <- R6::R6Class("Bucket",
 #'
 #' @seealso \code{\link{BucketLifecycle}}
 #'
+#' @examples
+#'
+#'  ## CORS
+#'
+#'  b$cors$add('*', 'GET')
+#'  b$cors$save()
+#'  b$cors
+#'  # cors auto save is off to speedup by default when using Bucket class.
+#'  # Turn on
+#'  b$cors$autoSave <- T
+#'  b$cors$add('*', 'GET')
+#'  b$cors
+#'
+#' @seealso \code{\link{BucketLifecycle}}
+#''
   )
 )
 
