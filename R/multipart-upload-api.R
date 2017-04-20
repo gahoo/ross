@@ -11,8 +11,7 @@
 #' InitiateMultipartUpload('ross-test', 'multi-test.txt')
 InitiateMultipartUpload <- function(bucketname, key, encryption=NULL, ...){
   header <- .build.object.header(encryption=encryption, ...)
-  ossresource <- sprintf("/%s/%s?uploads", bucketname, key)
-  .api.post.header.request(ossresource, bucketname=bucketname, path=key, header=header, query='uploads')
+  .api.post.header.request(bucketname=bucketname, path=key, header=header, query='uploads')
 }
 
 #' UploadPart
@@ -27,16 +26,16 @@ InitiateMultipartUpload <- function(bucketname, key, encryption=NULL, ...){
 #' @export
 #'
 #' @examples
-#' InitiateMultipartUpload('ross-test', 'multi-test.txt')
-#' UploadPart('ross-test', 'multi-test.txt', 'F7376AAB033344C1922A588D15CE56A2', 1, 'test')
+#' r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
+#' uploadId <- unlist(xpath2list(httr::content(r), '//UploadId'))
+#' UploadPart('ross-test', 'multi-test.txt', uploadId, 1, 'test')
 UploadPart <- function(bucketname, key, uploadId, partNumber, body=NULL, ..., .md5=TRUE){
   if(partNumber < 1 || partNumber > 10000){
     stop('Invalid partNumber.')
   }
   header <- .build.object.header(.md5=.md5, body=body, ...)
-  ossresource <- sprintf("/%s/%s?partNumber=%s&uploadId=%s", bucketname, key, partNumber, uploadId)
   query <- list(partNumber=partNumber, uploadId=uploadId)
-  .api.put.header.request(ossresource, bucketname=bucketname, path=key, header=header, query=query, body=body)
+  .api.put.header.request(bucketname=bucketname, path=key, header=header, query=query, body=body)
 }
 
 #' UploadPartCopy
@@ -51,7 +50,9 @@ UploadPart <- function(bucketname, key, uploadId, partNumber, body=NULL, ..., .m
 #'
 #' @examples
 #' PutObject('ross-test', 'test.txt', 'test')
-#' UploadPartCopy('/ross-test/test.txt', 'ross-test', 'multi-test.txt', '300C834B2037432E871D62B848087139', 2, Range = '0-1')
+#' r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
+#' uploadId <- unlist(xpath2list(httr::content(r), '//UploadId'))
+#' UploadPartCopy('/ross-test/test.txt', 'ross-test', 'multi-test.txt', uploadId, 2, Range = '0-1')
 UploadPartCopy <- function(source, bucketname, key, uploadId, partNumber, Range=NULL,
                            ETag = NULL, ETag.match=TRUE, since=NULL, modified.since=TRUE){
   UploadPart(bucketname, key, uploadId, partNumber,
@@ -69,15 +70,14 @@ UploadPartCopy <- function(source, bucketname, key, uploadId, partNumber, Range=
 #' @export
 #'
 #' @examples
-#' CompleteMultipartUpload('ross-test', 'multi-test.txt', '300C834B2037432E871D62B848087139')
+#' CompleteMultipartUpload('ross-test', 'multi-test.txt', uploadId)
 CompleteMultipartUpload <- function(bucketname, key, uploadId, Etags=NULL){
-  ossresource <- sprintf("/%s/%s?uploadId=%s", bucketname, key, uploadId)
-  query <- list(uploadId=uploadId)
   if(is.null(Etags)){
     Etags <- getAllPartETags(bucketname, key, uploadId)
   }
+  query <- list(uploadId=uploadId)
   body <- .build.xml_body.CompleteMultipartUpload(Etags)
-  .api.post.header.request(ossresource, bucketname=bucketname, path=key, query=query, body=body)
+  .api.post.header.request(bucketname=bucketname, path=key, query=query, body=body)
 }
 
 .build.xml_body.CompleteMultipartUpload <- function(Etags){
@@ -122,11 +122,12 @@ getAllPartETags <- function(bucketname, key, uploadId){
 #' @export
 #'
 #' @examples
-#' AbortMultipartUpload('ross-test', 'multi-test.txt', 'F7376AAB033344C1922A588D15CE56A2')
+#' r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
+#' uploadId <- unlist(xpath2list(httr::content(r), '//UploadId'))
+#' AbortMultipartUpload('ross-test', 'multi-test.txt', uploadId)
 AbortMultipartUpload <- function(bucketname, key, uploadId){
-  ossresource <- sprintf("/%s/%s?uploadId=%s", bucketname, key, uploadId)
   query <- list(uploadId=uploadId)
-  .api.delete.header.request(ossresource, bucketname=bucketname, path=key, query=query)
+  .api.delete.header.request(bucketname=bucketname, path=key, query=query)
 }
 
 #' ListMultipartUploads
@@ -148,7 +149,7 @@ ListMultipartUploads <- function(bucketname, prefix=NULL, delimiter=NULL, max=10
   ossresource <- sprintf("/%s/?uploads", bucketname)
   query <- list(uploads='', prefix=prefix, 'key-marker'=marker, 'upload-id-marker'=id_marker,
                 delimiter=delimiter, "max-uploads"=max, "encoding-type"=encoding_type)
-  .api.get.header.request(ossresource, bucketname=bucketname, query=query)
+  .api.get.header.request(ossresource=ossresource, bucketname=bucketname, query=query)
 }
 
 #' ListParts
@@ -162,7 +163,7 @@ ListMultipartUploads <- function(bucketname, prefix=NULL, delimiter=NULL, max=10
 #'
 #' @examples
 #' r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
-#' uploadId <- unlist(xpath2list(content(r), '//UploadId'))
+#' uploadId <- unlist(xpath2list(httr::content(r), '//UploadId'))
 #' UploadPart('ross-test', 'multi-test.txt', uploadId, 1, 'test1')
 #' UploadPart('ross-test', 'multi-test.txt', uploadId, 2, 'test2')
 #' ListParts('ross-test', 'multi-test.txt', uploadId)
@@ -172,5 +173,5 @@ ListMultipartUploads <- function(bucketname, prefix=NULL, delimiter=NULL, max=10
 ListParts <- function(bucketname, key, uploadId, max=1000, marker=NULL){
   ossresource <- sprintf("/%s/%s?uploadId=%s", bucketname, key, uploadId)
   query <- list(uploadId=uploadId, 'max-parts'=max, 'part-number-marker'=marker)
-  .api.get.header.request(ossresource, bucketname=bucketname, path=key, query=query)
+  .api.get.header.request(ossresource=ossresource, bucketname=bucketname, path=key, query=query)
 }

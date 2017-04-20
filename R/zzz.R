@@ -85,6 +85,26 @@
   x[!null_idx]
 }
 
+.build.ossresource <- function(bucketname, key=NULL, query=NULL){
+  if(is.null(key)){
+    path <- sprintf("/%s/", bucketname)
+  }else{
+    path <- sprintf("/%s/%s", bucketname, key)
+  }
+  is_empty_query <- all(sapply(query, is.null))
+  if(!is_empty_query){
+    path <- paste0(path, .build.query(query))
+  }
+  path
+}
+
+.build.query <- function(query){
+  q <- list(query=query)
+  class(q) <- 'url'
+  q <- gsub(':///', '', httr::build_url(q))
+  gsub('=&', '&', q)
+}
+
 #' .build.object.header
 #'
 #' @param encryption server side encryption algorithm AES256

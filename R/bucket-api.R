@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @examples
-#' PutBucket('ross-test', 'public-read-write')
+#' PutBucket('ross-test', acl='public-read-write')
 PutBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private", StorageClass="Standard") {
   .check.acl(acl)
 
@@ -23,8 +23,7 @@ PutBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private", St
 
   body <- .build.xml_body.PutBucket(StorageClass)
   header <- list('x-oss-acl' = acl)
-  ossresource <- sprintf("/%s/", bucketname)
-  .api.put.header.request(ossresource, bucketname=bucketname, Location=Location, header=header, body=body)
+  .api.put.header.request(bucketname=bucketname, Location=Location, header=header, body=body)
 }
 
 .build.xml_body.PutBucket <- function(StorageClass="Standard"){
@@ -53,8 +52,7 @@ PutBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private", St
 #' r <- PutBucketLogging('ross-test', 'log-')
 PutBucketLogging <- function(name, prefix, target=name, on=TRUE) {
   body <- .build.xml_body.PutBucketLogging(name, prefix, target, on)
-  ossresource <- sprintf("/%s/?logging", name)
-  .api.put.header.request(ossresource, bucketname=name, query = c('logging'), body=body)
+  .api.put.header.request(bucketname=name, query = 'logging', body=body)
 }
 
 .build.xml_body.PutBucketLogging <- function(name, prefix, target=name, on=TRUE){
@@ -91,8 +89,7 @@ PutBucketLogging <- function(name, prefix, target=name, on=TRUE) {
 #' PutBucketWebsite('ross-test', key='error.html', suffix='index.html')
 PutBucketWebsite <- function(name, suffix='index.html', key='404.html'){
   body <- .build.xml_body.PutBucketWebsite(suffix, key)
-  ossresource <- sprintf("/%s/?website", name)
-  .api.put.header.request(ossresource, bucketname=name, query = c('website'), body=body)
+  .api.put.header.request(bucketname=name, query = 'website', body=body)
 }
 
 .build.xml_body.PutBucketWebsite <- function(suffix='index.html', key='404.html'){
@@ -126,8 +123,7 @@ PutBucketWebsite <- function(name, suffix='index.html', key='404.html'){
 #' PutBucketReferer('ross-test', AllowEmptyReferer=FALSE, RefererList='http://*.aliyun.com')
 PutBucketReferer <- function(name, AllowEmptyReferer=TRUE, RefererList=c()){
   body <- .build.xml_body.PutBucketReferer(AllowEmptyReferer, RefererList)
-  ossresource <- sprintf("/%s/?referer", name)
-  .api.put.header.request(ossresource, bucketname=name, query = c('referer'), body=body)
+  .api.put.header.request(bucketname=name, query = 'referer', body=body)
 }
 
 .build.xml_body.PutBucketReferer <- function(AllowEmptyReferer=TRUE, RefererList=c()) {
@@ -176,8 +172,7 @@ PutBucketLifecycle <- function(name, rules, body=NULL){
   if(is.null(body)) {
     body <- .build.xml_body.PutBucketLifecycle(rules)
   }
-  ossresource <- sprintf("/%s/?lifecycle", name)
-  .api.put.header.request(ossresource, bucketname=name, query = c('lifecycle'), body = body)
+  .api.put.header.request(bucketname=name, query = 'lifecycle', body = body)
 }
 
 .build.xml_body.PutBucketLifecycle <- function(rules) {
@@ -253,8 +248,7 @@ PutBucketcors <- function(name, rules, body=NULL){
   if(is.null(body)) {
     body <- .build.xml_body.PutBucketcors(rules)
   }
-  ossresource <- sprintf("/%s/?cors", name)
-  .api.put.header.request(ossresource, bucketname=name, query = c('cors'), body = body)
+  .api.put.header.request(bucketname=name, query = 'cors', body = body)
 }
 
 .build.xml_body.PutBucketcors <- function(rules){
@@ -326,10 +320,10 @@ PutBucketcors <- function(name, rules, body=NULL){
 #' GetBucket('ross-test', 'upload', 'upload/file1', '/', '10)
 #'
 # TODO: an R6 Class to hadle ListBucketResult is needed
-GetBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL, encoding_type=NULL){
-  ossresource <- sprintf("/%s/", bucketname)
+GetBucket <- function(name, prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL, encoding_type=NULL){
+  ossresource <- sprintf("/%s/", name)
   query <- list(prefix=prefix, marker=marker, delimiter=delimiter, "max-keys"=max_keys, "encoding-type"=encoding_type)
-  .api.get.header.request(ossresource, bucketname=bucketname, query = query)
+  .api.get.header.request(ossresource=ossresource, bucketname=name, query = query)
 }
 
 #' Title
@@ -354,8 +348,7 @@ ListObject <- function(...) {
 #' @examples
 #' GetBucketAcl('ross-test')
 GetBucketAcl <- function(name){
-  ossresource <- sprintf("/%s/?acl", name)
-  .api.get.header.request(ossresource, bucketname=name, query = c('acl'))
+  .api.get.header.request(bucketname=name, query = 'acl')
 }
 
 
@@ -369,10 +362,7 @@ GetBucketAcl <- function(name){
 #' @examples
 #' GetBucketLocation('ross-test')
 GetBucketLocation <- function(name) {
-  ossresource <- sprintf("/%s/?location", name)
-  .api.get.header.request(ossresource, bucketname=name,
-                          Location='oss-cn-hangzhou',
-                          query = c('location'))
+  .api.get.header.request(bucketname=name, Location='oss-cn-hangzhou', query = 'location')
 }
 
 
@@ -386,8 +376,7 @@ GetBucketLocation <- function(name) {
 #' @examples
 #' GetBucketInfo('ross-test')
 GetBucketInfo <- function(name){
-  ossresource <- sprintf("/%s/?bucketInfo", name)
-  .api.get.header.request(ossresource, bucketname=name, query = c('bucketInfo'))
+  .api.get.header.request(bucketname=name, query = 'bucketInfo')
 }
 
 #' GetBucketLogging
@@ -400,8 +389,7 @@ GetBucketInfo <- function(name){
 #' @examples
 #' GetBucketLogging('ross-test')
 GetBucketLogging <- function(name){
-  ossresource <- sprintf("/%s/?logging", name)
-  .api.get.header.request(ossresource, bucketname=name, query = c('logging'))
+  .api.get.header.request(bucketname=name, query = 'logging')
 }
 
 #' GetBucketWebsite
@@ -414,8 +402,7 @@ GetBucketLogging <- function(name){
 #' @examples
 #' GetBucketWebsite('ross-test')
 GetBucketWebsite <- function(name){
-  ossresource <- sprintf("/%s/?website", name)
-  .api.get.header.request(ossresource, bucketname=name, query = c('website'))
+  .api.get.header.request(bucketname=name, query = 'website')
 }
 
 #' GetBucketReferer
@@ -428,8 +415,7 @@ GetBucketWebsite <- function(name){
 #' @examples
 #' GetBucketReferer('ross-test')
 GetBucketReferer <- function(name){
-  ossresource <- sprintf("/%s/?referer", name)
-  .api.get.header.request(ossresource, bucketname=name, query = c('referer'))
+  .api.get.header.request(bucketname=name, query = 'referer')
 }
 
 #' GetBucketLifecycle
@@ -442,8 +428,7 @@ GetBucketReferer <- function(name){
 #' @examples
 #' GetBucketLifecycle('ross-test')
 GetBucketLifecycle <- function(name){
-  ossresource <- sprintf("/%s/?lifecycle", name)
-  .api.get.header.request(ossresource, bucketname=name, query = c('lifecycle'))
+  .api.get.header.request(bucketname=name, query = 'lifecycle')
 }
 
 #' GetBucketcors
@@ -456,8 +441,7 @@ GetBucketLifecycle <- function(name){
 #' @examples
 #' GetBucketcors('ross-test')
 GetBucketcors <- function(name){
-  ossresource <- sprintf("/%s/?cors", name)
-  .api.get.header.request(ossresource, bucketname=name, query = c('cors'))
+  .api.get.header.request(bucketname=name, query = 'cors')
 }
 
 ######## DELETE
@@ -474,8 +458,7 @@ GetBucketcors <- function(name){
 #' @examples
 #' DeleteBucket('ross-test')
 DeleteBucket <- function(name) {
-  ossresource <- sprintf("/%s/", name)
-  .api.delete.header.request(ossresource, bucketname=name)
+  .api.delete.header.request(bucketname=name)
 }
 
 #' DeleteBucketLogging
@@ -488,8 +471,7 @@ DeleteBucket <- function(name) {
 #' @examples
 #' DeleteBucketLogging('ross-test')
 DeleteBucketLogging <- function(name){
-  ossresource <- sprintf("/%s/?logging", name)
-  .api.delete.header.request(ossresource, bucketname=name, query = c('logging'))
+  .api.delete.header.request(bucketname=name, query = 'logging')
 }
 
 #' DeleteBucketWebsite
@@ -502,8 +484,7 @@ DeleteBucketLogging <- function(name){
 #' @examples
 #' DeleteBucketWebsite('ross-test')
 DeleteBucketWebsite <- function(name){
-  ossresource <- sprintf("/%s/?website", name)
-  .api.delete.header.request(ossresource, bucketname=name, query = c('website'))
+  .api.delete.header.request(bucketname=name, query = 'website')
 }
 
 #' DeleteBucketLifecycle
@@ -518,8 +499,7 @@ DeleteBucketWebsite <- function(name){
 #' @examples
 #' DeleteBucketLifecycle('ross-test')
 DeleteBucketLifecycle <- function(name){
-  ossresource <- sprintf("/%s/?lifecycle", name)
-  .api.delete.header.request(ossresource, bucketname=name, query = c('lifecycle'))
+  .api.delete.header.request(bucketname=name, query = 'lifecycle')
 }
 
 #' DeleteBucketcors
@@ -532,6 +512,5 @@ DeleteBucketLifecycle <- function(name){
 #' @examples
 #' DeleteBucketcors('ross-test')
 DeleteBucketcors <- function(name){
-  ossresource <- sprintf("/%s/?cors", name)
-  .api.delete.header.request(ossresource, bucketname=name, query = c('cors'))
+  .api.delete.header.request(bucketname=name, query = 'cors')
 }

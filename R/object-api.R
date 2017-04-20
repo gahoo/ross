@@ -34,8 +34,7 @@ PutObject <- function(bucketname, key, body='', encryption=NULL, acl='private', 
   }
 
   header <- .build.object.header(acl=acl, encryption=encryption, .md5=.md5, .meta=.meta, body=body, ...)
-  ossresource <- sprintf("/%s/%s", bucketname, key)
-  .api.put.header.request(ossresource, bucketname=bucketname, header=header, path=key, body=body)
+  .api.put.header.request(bucketname=bucketname, header=header, path=key, body=body)
 }
 
 #' CopyObject
@@ -48,12 +47,12 @@ PutObject <- function(bucketname, key, body='', encryption=NULL, acl='private', 
 #' @export
 #'
 #' @examples
-#' CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt')
-#' CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', encryption = 'AES256')
-#' CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', acl = 'public-read')
-#' CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', meta.directive = 'REPLACE', .meta = list(owner='igenecode.com'))
-#' CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', ETag = 'AAAA', ETag.match = F)
-#' CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', since = Sys.time(), modified.since = F)
+#' CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt')
+#' CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', encryption = 'AES256')
+#' CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', acl = 'public-read')
+#' CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', meta.directive = 'REPLACE', .meta = list(owner='igenecode.com'))
+#' CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', ETag = 'AAAA', ETag.match = F)
+#' CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', since = Sys.time(), modified.since = F)
 CopyObject <- function(source, bucketname, key, encryption=NULL,
                        acl='private', meta.directive = 'COPY',
                        ETag = NULL, ETag.match=TRUE,
@@ -65,8 +64,7 @@ CopyObject <- function(source, bucketname, key, encryption=NULL,
                                  ETag = ETag, ETag.match = ETag.match,
                                  since = since, modified.since = modified.since,
                                  .meta=.meta, ...)
-  ossresource <- sprintf("/%s/%s", bucketname, key)
-  .api.put.header.request(ossresource, bucketname=bucketname, header=header, path=key)
+  .api.put.header.request(bucketname=bucketname, header=header, path=key)
 }
 
 
@@ -94,12 +92,10 @@ GetObject <- function(bucketname, key, Range=NULL,
                       ..., expires=60, .url=FALSE) {
   header <- .build.object.header(Range = Range, ETag = ETag, ETag.match = ETag.match,
                                  since = since, modified.since = modified.since, ...)
-  ossresource <- sprintf("/%s/%s", bucketname, key)
-
   if(.url){
-    .api.get.url.request(ossresource, bucketname=bucketname, header=header, path=key, expires=expires, .url=.url)
+    .api.get.url.request(bucketname=bucketname, header=header, path=key, expires=expires, .url=.url)
   }else{
-    .api.get.header.request(ossresource, bucketname=bucketname, header=header, path=key)
+    .api.get.header.request(bucketname=bucketname, header=header, path=key)
   }
 }
 
@@ -125,9 +121,8 @@ AppendObject <- function(bucketname, key, body='', position=0, encryption=NULL, 
   }
 
   header <- .build.object.header(acl = acl, encryption = encryption, body = body, .md5 = .md5, .meta = .meta, ...)
-  ossresource <- sprintf("/%s/%s?append&position=%s", bucketname, key, position)
   query <- list(append='', position=position)
-  .api.post.header.request(ossresource, bucketname=bucketname, header=header, path=key, body=body, query=query)
+  .api.post.header.request(bucketname=bucketname, header=header, path=key, body=body, query=query)
 }
 
 #' DeleteObject
@@ -141,8 +136,7 @@ AppendObject <- function(bucketname, key, body='', position=0, encryption=NULL, 
 #' PutObject('ross-test', 'test.txt', 'test')
 #' DeleteObject('ross-test', 'test.txt')
 DeleteObject <- function(bucketname, key){
-  ossresource <- sprintf("/%s/%s", bucketname, key)
-  .api.delete.header.request(ossresource, bucketname=bucketname, path=key)
+  .api.delete.header.request(bucketname=bucketname, path=key)
 }
 
 #' DeleteMultipleObjects
@@ -164,8 +158,7 @@ DeleteMultipleObjects <- function(bucketname, keys, quiet=TRUE){
   }
   body <- .build.xml_body.DeleteMultipleObjects(keys, quiet)
   header <- .build.object.header(body = body)
-  ossresource <- sprintf("/%s/?delete", bucketname)
-  .api.post.header.request(ossresource, bucketname=bucketname, header=header, body=body, query=c('delete'))
+  .api.post.header.request(bucketname=bucketname, header=header, body=body, query='delete')
 }
 
 .build.xml_body.DeleteMultipleObjects <- function(keys, quiet){
@@ -197,10 +190,9 @@ DeleteMultipleObjects <- function(bucketname, keys, quiet=TRUE){
 HeadObject <- function(bucketname, key,
                        ETag = NULL, ETag.match=TRUE,
                        since=NULL, modified.since=TRUE){
-  ossresource <- sprintf("/%s/%s", bucketname, key)
   header <- .build.object.header(ETag = ETag, ETag.match = ETag.match,
                                  since = since, modified.since = modified.since)
-  .api.head.header.request(ossresource, bucketname=bucketname, header=header, path=key)
+  .api.head.header.request(bucketname=bucketname, header=header, path=key)
 }
 
 
@@ -215,8 +207,7 @@ HeadObject <- function(bucketname, key,
 #' PutObject('ross-test', 'test.txt')
 #' GetObjectMeta('ross-test', 'test.txt')
 GetObjectMeta <- function(bucketname, key){
-  ossresource <- sprintf("/%s/%s?objectMeta", bucketname, key)
-  .api.get.header.request(ossresource, bucketname=bucketname, path=key, query='objectMeta')
+  .api.get.header.request(bucketname=bucketname, path=key, query='objectMeta')
 }
 
 
@@ -234,8 +225,7 @@ PutObjectACL <- function(bucketname, key, acl='private') {
   .check.acl(acl)
 
   header <- .build.object.header(acl = acl)
-  ossresource <- sprintf("/%s/%s?acl", bucketname, key)
-  .api.put.header.request(ossresource, bucketname=bucketname, header=header, path=key, query="acl")
+  .api.put.header.request(bucketname=bucketname, header=header, path=key, query="acl")
 }
 
 #' GetObjectACL
@@ -248,8 +238,7 @@ PutObjectACL <- function(bucketname, key, acl='private') {
 #' @examples
 #' GetObjectACL('ross-test', 'test.txt')
 GetObjectACL <- function(bucketname, key){
-  ossresource <- sprintf("/%s/%s?acl", bucketname, key)
-  .api.get.header.request(ossresource, bucketname=bucketname, path=key, query='acl')
+  .api.get.header.request(bucketname=bucketname, path=key, query='acl')
 }
 
 #' PutSymlink
@@ -266,9 +255,8 @@ GetObjectACL <- function(bucketname, key){
 #' PutObject('ross-test', 'test.txt')
 #' PutSymlink('ross-test', 'test-linked.txt', 'test.txt')
 PutSymlink <- function(bucketname, key, target, .meta=NULL){
-  ossresource <- sprintf("/%s/%s?symlink", bucketname, key)
   header <- .build.object.header(target = target, .meta = .meta)
-  .api.put.header.request(ossresource, bucketname=bucketname, header=header, path=key, query='symlink')
+  .api.put.header.request(bucketname=bucketname, header=header, path=key, query='symlink')
 }
 
 #' GetSymlink
@@ -283,6 +271,5 @@ PutSymlink <- function(bucketname, key, target, .meta=NULL){
 #' GetSymlink('ross-test', 'test-linked.txt')
 #' GetSymlink('ross-test', 'test.txt')
 GetSymlink <- function(bucketname, key){
-  ossresource <- sprintf("/%s/%s?symlink", bucketname, key)
-  .api.get.header.request(ossresource, bucketname=bucketname, path=key, query='symlink')
+  .api.get.header.request(bucketname=bucketname, path=key, query='symlink')
 }
