@@ -105,20 +105,9 @@ Bucket <- R6::R6Class("Bucket",
 #' b$rm(confirm=T)
 #' b$rm('test-', confirm=T)
     rm = function(prefix=NULL, confirm=FALSE, ...) {
-      if(!confirm){
-        if(is.null(prefix)){
-          question <- "Are you sure to delete all objects in this bucket?(yes/no): "
-        }else{
-          question <- sprintf("Are you sure to delete %s in this bucket?(yes/no): ", prefix)
-        }
-        confirm<-readline(question)
-        if(confirm != 'yes'){
-          return(message('Abort!'))
-        }
-      }
       keys <- self$list(prefix, .all=T, .output = 'character')
       if(length(keys)>0){
-        removeObjects(self$Name, keys, ...)
+        removeObjects(self$Name, keys, confirm, ...)
       }
     },
     read = function() {},

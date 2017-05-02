@@ -51,7 +51,19 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
   }
 }
 
-removeObjects <- function(bucketname, keys, step=1000){
+removeObjects <- function(bucketname, keys, confirm=FALSE, step=1000){
+  if(!confirm){
+    if(is.null(prefix)){
+      question <- "Are you sure to delete all objects in this bucket?(yes/no): "
+    }else{
+      question <- sprintf("Are you sure to delete %s in this bucket?(yes/no): ", prefix)
+    }
+    confirm<-readline(question)
+    if(confirm != 'yes'){
+      return(message('Abort!'))
+    }
+  }
+
   cnt <- ceiling(length(keys)/step)
   response <- list()
   for(i in 1:cnt){
