@@ -1,23 +1,23 @@
 test_that("Bucket", {
-  expect_message(b <- Bucket$new('ross-test', autoCreate=T))
-  expect_silent(b$rm())
+  b <- Bucket$new('ross-test', autoCreate=T)
+  expect_message(b$rm(confirm=T))
+  expect_silent(b$delete())
   # autoCreate=F
   expect_error(b <- Bucket$new('ross-test', autoCreate=F))
-  expect_warning(expect_error(b$rm()))
+  expect_error(b$delete())
   # create
   expect_message(b$create(acl='public-read', StorageClass = 'IA'))
   expect_silent(b$refresh())
-  expect_silent(b$rm())
-
+  expect_silent(b$delete())
 })
 
 
 test_that("Bucket$acl", {
-  expect_message(b<-Bucket$new('ross-test', acl='public-read', autoCreate=T))
+  b<-Bucket$new('ross-test', acl='public-read', autoCreate=T)
   expect_equal(b$acl, 'public-read')
   expect_silent(b$acl<-"private")
   expect_equal(b$acl, "private")
-  expect_silent(b$rm())
+  expect_silent(b$delete())
 })
 
 
@@ -30,7 +30,7 @@ test_that("Bucket$logging", {
   expect_silent(b$logging <- list(TargetPrefix='log-'))
   expect_equal(b$logging, conf)
   expect_silent(b$logging <- NULL)
-  expect_silent(b$rm())
+  expect_silent(b$delete())
 })
 
 test_that("Bucket$website", {
@@ -44,7 +44,7 @@ test_that("Bucket$website", {
   expect_silent(b$website <- list())
   expect_silent(b$website <- NULL)
   expect_equal(length(b$website), 0)
-  expect_silent(b$rm())
+  expect_silent(b$delete())
 })
 
 test_that("Bucket$referer", {
@@ -57,7 +57,7 @@ test_that("Bucket$referer", {
   expect_equal(b$referer$RefererList, c(Referer='*.igenecode.com', Referer='aliyun.com'))
   b$referer <- NULL
   b$referer <- list()
-  expect_silent(b$rm())
+  expect_silent(b$delete())
 })
 
 test_that("BucketLifecycle", {
