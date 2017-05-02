@@ -1,5 +1,7 @@
 #' GetService
 #'
+#' Equals to ListObject
+#'
 #' @param prefix The prefix of buckets to filter.
 #' @param marker Which index to start with.
 #' @param max_keys Max number of buckets.
@@ -17,18 +19,4 @@ GetService <- function(prefix=NULL, marker=NULL, max_keys=100){
   .check.http_error(response)
 
   response
-}
-
-#' ListBucket
-#'
-#' @inheritParams GetService
-#'
-#' @describeIn GetService
-#'
-#' @return
-#' @export
-#'
-#' @examples
-listBucket <- function(...) {
-  GetService(...)
 }
