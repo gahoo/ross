@@ -105,10 +105,7 @@ Bucket <- R6::R6Class("Bucket",
 #' b$rm(confirm=T)
 #' b$rm('test-', confirm=T)
     rm = function(prefix=NULL, confirm=FALSE, ...) {
-      keys <- self$list(prefix, .all=T, .output = 'character')
-      if(length(keys)>0){
-        removeObjects(self$Name, keys, confirm, ...)
-      }
+      removeObjects(self$Name, prefix, confirm, ...)
     },
     read = function() {},
     write = function() {},

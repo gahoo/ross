@@ -1,3 +1,16 @@
+#' createBucket
+#'
+#' @param bucketname
+#' @param Location
+#' @param acl
+#' @param StorageClass
+#' @inheritParams PutBucket
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' createBucket('ross-test')
 createBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private", StorageClass="Standard"){
   r <- PutBucket(bucketname, Location, acl, StorageClass)
   if(r$status_code == 200){
@@ -7,6 +20,15 @@ createBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private",
   invisible(r)
 }
 
+#' deleteBucket
+#'
+#' @inherit DeleteBucket
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' deleteBucket('ross-test')
 deleteBucket <- function(bucketname){
   r <- DeleteBucket(bucketname)
   if(r$status == 204){
@@ -15,6 +37,19 @@ deleteBucket <- function(bucketname){
   invisible(r)
 }
 
+#' listBucket
+#'
+#' @inheritParams GetBucket
+#' @param .all No Paging
+#' @param .output output format, choose from data.frame, list, oss, character. default is data.frame
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' listBucket('ross-test')
+#' listBucket('ross-test', 'upload')
+#' listBucket('ross-test', 'upload', 'upload/file1', '/', '10')
 listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_keys='1000', .all = TRUE, .output="data.frame"){
   isTruncated <- function(doc){
     xpath2list(doc, '/ListBucketResult/IsTruncated') == 'true'
@@ -44,14 +79,28 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
     plyr::ldply(contents)
   }else if(.output == 'list'){
     contents
-  }else if(.output == 'oss-obj'){
+  }else if(.output == 'oss'){
 
   }else if(.output == 'character'){
     sapply(contents, function(x) x$Key)
   }
 }
 
-removeObjects <- function(bucketname, keys, confirm=FALSE, step=1000){
+#' removeObjects
+#'
+#' @param bucketname
+#' @param keys Objects to delete.
+#' @param confirm Auto confirm deletion or not.
+#' @param step How much to delete at a time.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' removeObjects('ross-test')
+#' removeObjects('ross-test', 'upload/')
+#' removeObjects('ross-test', 'upload/', confirm=TRUE)
+removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
   if(!confirm){
     if(is.null(prefix)){
       question <- "Are you sure to delete all objects in this bucket?(yes/no): "
@@ -64,12 +113,31 @@ removeObjects <- function(bucketname, keys, confirm=FALSE, step=1000){
     }
   }
 
-  cnt <- ceiling(length(keys)/step)
-  response <- list()
-  for(i in 1:cnt){
-    start = (cnt - 1 ) * step + 1
-    end = ifelse(length(keys) < cnt * step, length(keys), cnt * step)
-    response[[i]] <- DeleteMultipleObjects(bucketname, keys, quiet = T)
+  deleteMultipleObjects <- function(keys){
+    cnt <- ceiling(length(keys)/step)
+    response <- list()
+    for(i in 1:cnt){
+      start = (cnt - 1 ) * step + 1
+      end = ifelse(length(keys) < cnt * step, length(keys), cnt * step)
+      response[[i]] <- DeleteMultipleObjects(bucketname, keys, quiet = T)
+    }
+    response
   }
-  invisible(response)
+
+  if(grepl("/$", prefix)){
+    keys <- listBucket(bucketname, prefix, .all=T, .output = 'character')
+  }else{
+    keys <- prefix
+  }
+
+  if(length(keys) > 1){
+    r <- deleteMultipleObjects(keys)
+  }else if(length(keys) == 1){
+    r <- DeleteObject(bucketname, keys)
+  }else{
+    warning(sprintf("No Such Keys: %s", prefix))
+    r <- NULL
+  }
+
+  invisible(r)
 }
