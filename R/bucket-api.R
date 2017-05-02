@@ -317,7 +317,7 @@ PutBucketcors <- function(name, rules, body=NULL){
 #' @examples
 #' GetBucket('ross-test')
 #' GetBucket('ross-test', 'upload')
-#' GetBucket('ross-test', 'upload', 'upload/file1', '/', '10)
+#' GetBucket('ross-test', 'upload', 'upload/file1', '/', '10')
 #'
 # TODO: an R6 Class to hadle ListBucketResult is needed
 GetBucket <- function(name, prefix=NULL, marker=NULL, delimiter=NULL, max_keys=NULL, encoding_type=NULL){
