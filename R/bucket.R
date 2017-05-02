@@ -57,10 +57,8 @@ Bucket <- R6::R6Class("Bucket",
         StorageClass <- self$StorageClass
       }
 
-      r <- PutBucket(self$Name, Location, acl, StorageClass)
+      r <- createBucket(self$Name, Location, acl, StorageClass)
       if(r$status_code == 200){
-        message(sprintf("New Bucket %s with %s access and %s storage is created on %s.", self$Name, acl, StorageClass, Location))
-        .state$location[[self$Name]] <- Location
         self$refresh()
       }
     },
@@ -75,13 +73,10 @@ Bucket <- R6::R6Class("Bucket",
     },
 #' @examples
 #'
-#' ## rm
-#' b$rm
-    rm = function() {
-      r <- DeleteBucket(self$Name)
-      if(r$status == 204){
-        .state$location[[self$Name]] <- NULL
-      }
+#' ## delete
+#' b$delete
+    delete = function() {
+      deleteBucket(self$Name)
     },
 
 #' @method list
@@ -94,49 +89,40 @@ Bucket <- R6::R6Class("Bucket",
 #' @examples
 #' b$list()
     list = function(prefix=NULL, marker=NULL, delimiter='/', max_keys='1000', .all = TRUE, .output="data.frame") {
-
-      isTruncated <- function(doc){
-        xpath2list(doc, '/ListBucketResult/IsTruncated') == 'true'
-      }
-
-      parseXML <- function(doc){
-        files <- xpath2list(doc, '/ListBucketResult/Contents', F)
-        folders <- xpath2list(doc, '/ListBucketResult/CommonPrefixes', F)
-        folders <- lapply(folders, 'names<-', 'Key')
-        lapply(c(folders, files), as.data.frame, stringsAsFactors=F)
-      }
-
-      contents <- list()
-      next_marker <- marker
-      repeat{
-        r <- GetBucket(self$Name, prefix, next_marker, delimiter, max_keys)
-        doc <- httr::content(r, encoding = 'UTF-8')
-        contents <- c(contents, parseXML(doc))
-        next_marker <- xpath2list(doc, '/ListBucketResult/NextMarker')
-        message(sprintf("%s objects listed.", length(contents)))
-        if(!isTruncated(doc) || !.all){
-          break
-        }
-      }
-
-      if(.output == "data.frame"){
-        plyr::ldply(contents)
-      }else if(.output == 'list'){
-        contents
-      }else if(.output == 'oss-obj'){
-
-      }else if(.output == 'character'){
-        sapply(contents, function(x) x$Key)
-      }
+      listBucket(self$Name, prefix, marker, delimiter, max_keys, .all, .output)
     },
     usage = function(prefix=NULL, unit='MB') {
       conversion <- list(B=1, KB=1024, MB=1024^2, GB=1024^3)
       files <- self$list(prefix, delimiter = '')
       sum(as.numeric(files$Size)) / conversion[[unit]]
     },
+#' @method rm
+#'
+#' @return
+#'
+#' @examples
+#' b$rm()
+#' b$rm(confirm=T)
+#' b$rm('test-', confirm=T)
+    rm = function(prefix=NULL, confirm=FALSE, ...) {
+      if(!confirm){
+        if(is.null(prefix)){
+          question <- "Are you sure to delete all objects in this bucket?(yes/no): "
+        }else{
+          question <- sprintf("Are you sure to delete %s in this bucket?(yes/no): ", prefix)
+        }
+        confirm<-readline(question)
+        if(confirm != 'yes'){
+          return(message('Abort!'))
+        }
+      }
+      keys <- self$list(prefix, .all=T, .output = 'character')
+      if(length(keys)>0){
+        removeObjects(self$Name, keys, ...)
+      }
+    },
     read = function() {},
     write = function() {},
-    delete = function() {},
     download = function() {},
     upload = function() {},
     print = function(...) {
