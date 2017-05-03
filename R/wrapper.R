@@ -103,9 +103,9 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
 removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
   if(!confirm){
     if(is.null(prefix)){
-      question <- "Are you sure to delete all objects in this bucket?(yes/no): "
+      question <- sprintf("Are you sure to delete all objects in bucket %s?(yes/no): ", bucketname)
     }else{
-      question <- sprintf("Are you sure to delete %s in this bucket?(yes/no): ", prefix)
+      question <- sprintf("Are you sure to delete `%s` in bucket `%s`?(yes/no): ", prefix, bucketname)
     }
     confirm<-readline(question)
     if(confirm != 'yes'){
@@ -124,8 +124,8 @@ removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
     response
   }
 
-  if(grepl("/$", prefix)){
-    keys <- listBucket(bucketname, prefix, .all=T, .output = 'character')
+  if(is.null(prefix) || grepl("/$", prefix)){
+    keys <- suppressMessages(listBucket(bucketname, prefix, .all=T, .output = 'character'))
   }else{
     keys <- prefix
   }
@@ -135,9 +135,51 @@ removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
   }else if(length(keys) == 1){
     r <- DeleteObject(bucketname, keys)
   }else{
-    warning(sprintf("No Such Keys: %s", prefix))
+#    warning(sprintf("No Such Keys: %s", prefix))
     r <- NULL
   }
 
   invisible(r)
 }
+
+#' usageBucket
+#'
+#' @param bucketname
+#' @param prefix
+#' @param unit
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' usageBucket('ross-test')
+#' usageBucket('ross-test', 'upload/')
+usageBucket <- function(bucketname, prefix=NULL, unit='MB'){
+  conversion <- list(B=1, KB=1024, MB=1024^2, GB=1024^3)
+  files <- listBucket(bucketname, prefix, delimiter = '')
+  sum(as.numeric(files$Size)) / conversion[[unit]]
+}
+
+#' aclBucket
+#'
+#' @param bucketname
+#' @param acl
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' aclBucket('ross-test')
+#' aclBucket('ross-test', 'public-read')
+aclBucket <- function(bucketname, acl){
+  if(missing(acl)){
+    r <- GetBucketAcl(bucketname)
+    doc <- httr::content(r, encoding = 'UTF-8')
+    unlist(xpath2list(doc, '/AccessControlPolicy/AccessControlList/Grant'))
+  }else{
+    r <- PutBucket(bucketname, acl = acl)
+    invisible(r)
+  }
+}
+
+
