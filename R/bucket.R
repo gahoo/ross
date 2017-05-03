@@ -92,9 +92,7 @@ Bucket <- R6::R6Class("Bucket",
       listBucket(self$Name, prefix, marker, delimiter, max_keys, .all, .output)
     },
     usage = function(prefix=NULL, unit='MB') {
-      conversion <- list(B=1, KB=1024, MB=1024^2, GB=1024^3)
-      files <- self$list(prefix, delimiter = '')
-      sum(as.numeric(files$Size)) / conversion[[unit]]
+      usageBucket(self$Name, prefix, unit)
     },
 #' @method rm
 #'
@@ -111,6 +109,7 @@ Bucket <- R6::R6Class("Bucket",
     write = function() {},
     download = function() {},
     upload = function() {},
+    cp = function() {},
     print = function(...) {
       bucket_text <- sprintf(paste(
           "<Bucket>",
@@ -142,13 +141,7 @@ Bucket <- R6::R6Class("Bucket",
 #' b$acl <- "private"
 #' b$acl <- "public-read"
     acl = function(acl){
-      if(missing(acl)){
-        r <- GetBucketAcl(self$Name)
-        doc <- httr::content(r, encoding = 'UTF-8')
-        unlist(xpath2list(doc, '/AccessControlPolicy/AccessControlList/Grant'))
-      }else{
-        PutBucket(self$Name, acl = acl)
-      }
+      aclBucket(self$Name, acl)
     },
 #' @examples
 #'
