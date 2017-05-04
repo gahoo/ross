@@ -182,4 +182,95 @@ aclBucket <- function(bucketname, acl){
   }
 }
 
+#' uploadObject
+#'
+#' @param bucketname
+#' @param src
+#' @param dest
+#' @param split
+#' @param ...
+#' @param maxPartSize
+#'
+#' @return
+#' @export
+#'
+#' @examples
+uploadObject <- function(bucketname, src, dest=NULL, split=10, maxPartSize = 20 * 1024^2, ...){
+  uploadPart <- function(src, key, uploadId, partPosition, partSize, partNumber){
+    raw_conn<-file(src, 'rb', raw = T)
+    seek(raw_conn, partPosition)
+    src_content<-readBin(raw_conn, what='raw', n=partSize)
+    tryCatch(
+      r <- UploadPart(bucketname, key, uploadId, partNumber, src_content),
+      finally = function(){
+        close(raw_conn)
+      }
+    )
+    r$status_code
+  }
 
+  multiPartUpload <- function(bucketname, src, key){
+    r <- InitiateMultipartUpload(bucketname, key, ...)
+    uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
+    task_params <- makePartParams(file_size, split, maxPartSize)
+    cl <- parallel::makeForkCluster(split)
+    status_codes <- parallel::parLapply(cl, task_params, function(x) {
+      uploadPart(src, key, uploadId, x$partPosition, x$partSize, x$partNumber)
+    })
+    parallel::stopCluster(cl)
+    if(all(status_codes == 200)){
+      CompleteMultipartUpload(bucketname, key, uploadId)
+    }else{
+      warning("Some Part Failed.")
+      which(status_codes != 200)
+    }
+
+  }
+
+  makePartParams <- function(file_size, split, maxPartSize){
+    part_size <- ceiling(file_size / split)
+    if(part_size > maxPartSize){
+      part_size <- maxPartSize
+      split <- ceiling(file_size / maxPartSize)
+    }
+    last_part_size <- file_size - (split-1) * part_size
+    lapply(1:split, function(i){list(
+      partNumber = i,
+      partPosition = (i-1) * part_size,
+      partSize = ifelse(i==split, part_size, last_part_size)
+    )})
+  }
+
+  if(file.exists(src) && !dir.exists(src)){
+    file_size <- file.size(src)
+  }else{
+    stop(sprintf('File not exists! %s', src))
+  }
+
+  if(is.null(dest)){
+    key = src
+  }else{
+    key = dest
+  }
+  if(file_size < 10 * 1024^2){
+    r <- PutObject(bucketname, key, body=httr::upload_file(src), ...)
+  }else{
+    r <- multiPartUpload(bucketname, src, key)
+  }
+  invisible(r)
+}
+
+uploadMultipleObjects <- function(){}
+
+abortAllMultipartUpload <- function(bucketname){
+  r <- ListMultipartUploads(bucketname)
+  doc <- httr::content(r, encoding = 'UTF-8')
+  keys <- unlist(xpath2list(doc, '//Key'))
+  uploadIds <- unlist(xpath2list(doc, '//UploadId'))
+  if(!is.null(keys)){
+    for(i in 1:length(keys)){
+      message("Aborting", keys[i], ":", uploadIds[i])
+      AbortMultipartUpload(bucketname, keys[i], uploadIds[i])
+    }
+  }
+}
