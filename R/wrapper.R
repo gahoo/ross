@@ -195,6 +195,8 @@ aclBucket <- function(bucketname, acl){
 #' @export
 #'
 #' @examples
+#' uploadObject('ross-test', 'test.zip')
+#' uploadObject('ross-test', 'test.zip', 'test/test.zip')
 uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, ...){
   uploadPart <- function(src, key, uploadId, partPosition, partSize, partNumber){
     raw_conn<-file(src, 'rb', raw = T)
@@ -202,7 +204,7 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
     src_content<-readBin(raw_conn, what='raw', n=partSize)
     tryCatch(
       r <- UploadPart(bucketname, key, uploadId, partNumber, src_content),
-      error = function(){
+      error = function(e){
         r <- list(status_code=404)
       },
       finally = function(){
@@ -274,7 +276,7 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
   }else{
     key = dest
   }
-  if(file_size < 1 * 1024^2){
+  if(file_size < 10 * 1024^2){
     r <- PutObject(bucketname, key, body=httr::upload_file(src), ...)
   }else{
     r <- multiPartUpload(bucketname, src, key, ...)
@@ -282,7 +284,94 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
   invisible(r)
 }
 
-uploadMultipleObjects <- function(){}
+uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=10, ..., .parallel = TRUE){
+  prepareSrc <- function(src, pattern=NULL){
+    if(length(src) != 1){
+      stop('src length not equals to 1.')
+    }
+    if(resume){
+      files <- getMultiUploadState(bucketname, src, prefix, pattern)
+      if(!is.null(files)){
+        return(files)
+      }
+    }
+
+    if(dir.exists(src)){
+      files <- list.files(src, pattern, recursive = T, full.names = T)
+    }else if(file.exists(src)){
+      files <- src
+    }else{
+      stop(sprintf("%s not exist!\n", files[!is_exist]))
+    }
+    gsub("/+", "/", files)
+  }
+
+  prepareDest <- function(files, src, prefix='.'){
+    if(grepl('/$', prefix)){
+      path_fix <- dirname(src)
+      if(path_fix == '.'){
+        path_fix <- ""
+      }
+    }else{
+      path_fix <- src
+    }
+
+    dest <- gsub(sprintf("^%s", path_fix), '', files)
+    dest <- file.path(prefix, dest)
+    dest <- gsub("/+", "/", dest)
+    dest <- gsub('\\./+', '', dest)
+    dest <- gsub('^/', '', dest)
+    dest <- gsub('/$', '', dest)
+    dest
+  }
+
+  makeTaskParams <- function(files, dests){
+    if(length(files) == 0){
+      return(invisible())
+    }
+    lapply(1:length(files), function(i){
+      list(src = files[i],
+           dest = dests[i])
+    })
+  }
+
+  uploadEachFile <- function(task) {
+    # tryCatch(
+    #   r <- uploadObject(bucketname, task$src, task$dest, resume, split, ...),
+    #   error = function(e){
+    #     r <- list(status_code = 404)
+    #   }
+    # )
+    r <- try(uploadObject(bucketname, task$src, task$dest, resume, split, ...))
+    if(class(r) == 'try-error'){
+      r <- list(status_code = 404)
+    }
+    r$status_code
+  }
+
+  files <- prepareSrc(src, pattern)
+  dests <- prepareDest(files, src, prefix)
+  message(length(files), ' files to upload')
+  task_params <- makeTaskParams(files, dests)
+  if(.parallel){
+    cl <- parallel::makeForkCluster(split)
+    status_codes <- parallel::parLapply(cl, task_params, uploadEachFile)
+    parallel::stopCluster(cl)
+  }else{
+    status_codes <- lapply(task_params, uploadEachFile)
+  }
+
+  status_codes <- unlist(status_codes)
+  names(status_codes) <- files
+  failed <- names(status_codes)[status_codes != 200]
+  if(length(failed) > 0){
+    saveMultiUploadState(bucketname, src, prefix, pattern, failed)
+    invisible(failed)
+  }else{
+    invisible(status_codes)
+  }
+
+}
 
 abortAllMultipartUpload <- function(bucketname, prefix=NULL){
   r <- ListMultipartUploads(bucketname, prefix)

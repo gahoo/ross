@@ -346,3 +346,13 @@ saveMultiPartUploadState <- function(bucketname, key, state=NULL){
 getMultiPartUploadState <- function(bucketname, key){
   .state$multipart_upload[[paste0(bucketname, ':', key)]]
 }
+
+saveMultiUploadState <- function(bucketname, src, prefix, pattern, state=NULL){
+  idx <- paste(bucketname, src, prefix, pattern, sep=':')
+  .state$upload_multi_files[[idx]] <- state
+}
+
+getMultiUploadState <- function(bucketname, src, prefix, pattern){
+  idx <- paste(bucketname, src, prefix, pattern, sep=':')
+  .state$upload_multi_files[[idx]]
+}
