@@ -195,34 +195,56 @@ aclBucket <- function(bucketname, acl){
 #' @export
 #'
 #' @examples
-uploadObject <- function(bucketname, src, dest=NULL, split=10, maxPartSize = 20 * 1024^2, ...){
+uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, ...){
   uploadPart <- function(src, key, uploadId, partPosition, partSize, partNumber){
     raw_conn<-file(src, 'rb', raw = T)
     seek(raw_conn, partPosition)
     src_content<-readBin(raw_conn, what='raw', n=partSize)
     tryCatch(
       r <- UploadPart(bucketname, key, uploadId, partNumber, src_content),
+      error = function(){
+        r <- list(status_code=404)
+      },
       finally = function(){
         close(raw_conn)
       }
     )
+    names(r$status_code)<-partNumber
     r$status_code
   }
 
-  multiPartUpload <- function(bucketname, src, key){
-    r <- InitiateMultipartUpload(bucketname, key, ...)
-    uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
+  multiPartUpload <- function(bucketname, src, key, ...){
+    uploadId <- getMultiPartUploadState(bucketname, key)$uploadId
     task_params <- makePartParams(file_size, split, maxPartSize)
+
+    if(resume && !is.null(uploadId)){
+      failed <- getMultiPartUploadState(bucketname, key)$failed
+      task_params <- task_params[failed]
+    }else{
+      r <- InitiateMultipartUpload(bucketname, key, ...)
+      uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
+    }
+
     cl <- parallel::makeForkCluster(split)
     status_codes <- parallel::parLapply(cl, task_params, function(x) {
       uploadPart(src, key, uploadId, x$partPosition, x$partSize, x$partNumber)
     })
     parallel::stopCluster(cl)
+    status_codes <- unlist(status_codes)
     if(all(status_codes == 200)){
+      saveMultiPartUploadState(bucketname, key)
       CompleteMultipartUpload(bucketname, key, uploadId)
     }else{
-      warning("Some Part Failed.")
-      which(status_codes != 200)
+      failed_idx <- which(status_codes != 200)
+      failed_partNumber <- names(status_codes[failed_idx])
+      failed_partNumber <- as.numeric(failed_partNumber)
+      warning(sprintf("Part %s Failed.", paste0(failed_partNumber, collapse = ', ')))
+      saveMultiPartUploadState(
+        bucketname, key,
+        list(uploadId=uploadId,
+             failed = failed_partNumber)
+        )
+      failed_partNumber
     }
 
   }
@@ -252,18 +274,18 @@ uploadObject <- function(bucketname, src, dest=NULL, split=10, maxPartSize = 20 
   }else{
     key = dest
   }
-  if(file_size < 10 * 1024^2){
+  if(file_size < 1 * 1024^2){
     r <- PutObject(bucketname, key, body=httr::upload_file(src), ...)
   }else{
-    r <- multiPartUpload(bucketname, src, key)
+    r <- multiPartUpload(bucketname, src, key, ...)
   }
   invisible(r)
 }
 
 uploadMultipleObjects <- function(){}
 
-abortAllMultipartUpload <- function(bucketname){
-  r <- ListMultipartUploads(bucketname)
+abortAllMultipartUpload <- function(bucketname, prefix=NULL){
+  r <- ListMultipartUploads(bucketname, prefix)
   doc <- httr::content(r, encoding = 'UTF-8')
   keys <- unlist(xpath2list(doc, '//Key'))
   uploadIds <- unlist(xpath2list(doc, '//UploadId'))

@@ -338,3 +338,11 @@ body_type <- function(x){
     NULL
   }
 }
+
+saveMultiPartUploadState <- function(bucketname, key, state=NULL){
+  .state$multipart_upload[[paste0(bucketname, ':', key)]] <- state
+}
+
+getMultiPartUploadState <- function(bucketname, key){
+  .state$multipart_upload[[paste0(bucketname, ':', key)]]
+}
