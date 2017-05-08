@@ -228,9 +228,9 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
     }
 
     cl <- parallel::makeForkCluster(split)
-    status_codes <- parallel::parLapply(cl, task_params, function(x) {
+    status_codes <- pbapply::pblapply(task_params, function(x) {
       uploadPart(src, key, uploadId, x$partPosition, x$partSize, x$partNumber)
-    })
+    }, cl=cl)
     parallel::stopCluster(cl)
     status_codes <- unlist(status_codes)
     if(all(status_codes == 200)){
@@ -284,7 +284,28 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
   invisible(r)
 }
 
-uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=10, ..., .parallel = TRUE){
+#' uploadMultipleObjects
+#'
+#' @param bucketname
+#' @param src
+#' @param prefix
+#' @param pattern
+#' @param resume
+#' @param split
+#' @param ...
+#' @param .parallel
+#'
+#' @import pbapply
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' uploadMultipleObjects('ross-test', 'R',  .parallel = F)
+#' uploadMultipleObjects('ross-test', 'R', 'test', .parallel = F)
+#' uploadMultipleObjects('ross-test', 'R', 'test/', .parallel = T)
+
+uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=10, quiet=T, ..., .parallel = TRUE){
   prepareSrc <- function(src, pattern=NULL){
     if(length(src) != 1){
       stop('src length not equals to 1.')
@@ -301,7 +322,7 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
     }else if(file.exists(src)){
       files <- src
     }else{
-      stop(sprintf("%s not exist!\n", files[!is_exist]))
+      stop(sprintf("%s not exist!\n", files))
     }
     gsub("/+", "/", files)
   }
@@ -342,6 +363,7 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
     #     r <- list(status_code = 404)
     #   }
     # )
+#    message(task$src, ' => ', task$dest)
     r <- try(uploadObject(bucketname, task$src, task$dest, resume, split, ...))
     if(class(r) == 'try-error'){
       r <- list(status_code = 404)
@@ -353,13 +375,22 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
   dests <- prepareDest(files, src, prefix)
   message(length(files), ' files to upload')
   task_params <- makeTaskParams(files, dests)
+  if(is.null(task_params)){
+    return(invisible())
+  }
+  if(quiet){
+    op <- pbapply::pboptions(type = "none")
+  }else{
+    op <- pbapply::pboptions(type = "timer")
+  }
   if(.parallel){
     cl <- parallel::makeForkCluster(split)
-    status_codes <- parallel::parLapply(cl, task_params, uploadEachFile)
+    status_codes <- pbapply::pblapply(task_params, uploadEachFile, cl=cl)
     parallel::stopCluster(cl)
   }else{
-    status_codes <- lapply(task_params, uploadEachFile)
+    status_codes <- pbapply::pblapply(task_params, uploadEachFile)
   }
+  pbapply::pboptions(op)
 
   status_codes <- unlist(status_codes)
   names(status_codes) <- files
@@ -373,6 +404,17 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
 
 }
 
+#' abortAllMultipartUpload
+#'
+#' @param bucketname
+#' @param prefix
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' abortAllMultipartUpload('ross-test', 'some-failed-multipart.gz')
+#' abortAllMultipartUpload('ross-test')
 abortAllMultipartUpload <- function(bucketname, prefix=NULL){
   r <- ListMultipartUploads(bucketname, prefix)
   doc <- httr::content(r, encoding = 'UTF-8')
@@ -384,4 +426,24 @@ abortAllMultipartUpload <- function(bucketname, prefix=NULL){
       AbortMultipartUpload(bucketname, keys[i], uploadIds[i])
     }
   }
+}
+
+
+downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, method='wget', quiet=T, extra="", .parallel=T){
+  url <- GetObject(bucketname, src, expires = 1200, .url = T)
+
+  if(method == 'aria2' || split > 1){
+    dir_dest <- dirname(dest)
+    base_dest <- basename(dest)
+    if(split) extra <- c(extra, " -s ", split)
+    if(quiet) extra <- c(extra, " -q ")
+    if(resume) extra <- c(extra, "-c ")
+    r <- system(paste("aria2c", paste(extra, collapse = " "),
+                      shQuote(url), "-d", shQuote(dir_dest),
+                      "--allow-overwrite",
+                      "-o", shQuote(base_dest)))
+  }else{
+    r <- download.file(url, dest, method=method, quiet = quiet, extra = extra)
+  }
+  invisible(r)
 }
