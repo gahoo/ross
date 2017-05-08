@@ -129,6 +129,7 @@ rm.Bucket <- function(x, ...){
 }
 #####
 oss.cp <- function(){}
+oss.ln <- function(){}
 ##### acl
 #' oss.acl
 #'
