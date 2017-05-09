@@ -356,3 +356,13 @@ getMultiUploadState <- function(bucketname, src, prefix, pattern){
   idx <- paste(bucketname, src, prefix, pattern, sep=':')
   .state$upload_multi_files[[idx]]
 }
+
+saveDownloadState <- function(bucketname, src, dest, pattern, state=NULL){
+  idx <- paste(bucketname, src, dest, pattern, sep=':')
+  .state$download_state[[idx]] <- state
+}
+
+getDownloadState <- function(bucketname, src, dest, pattern){
+  idx <- paste(bucketname, src, dest, pattern, sep=':')
+  .state$download_state[[idx]]
+}
