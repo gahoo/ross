@@ -197,7 +197,7 @@ aclBucket <- function(bucketname, acl){
 #' @examples
 #' uploadObject('ross-test', 'test.zip')
 #' uploadObject('ross-test', 'test.zip', 'test/test.zip')
-uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, quiet=FALSE, ...){
+uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, quiet=FALSE, ...){
   uploadPart <- function(src, key, uploadId, partPosition, partSize, partNumber){
     raw_conn<-file(src, 'rb', raw = T)
     seek(raw_conn, partPosition)
@@ -316,7 +316,7 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
 #' uploadMultipleObjects('ross-test', 'R', 'test', .parallel = F)
 #' uploadMultipleObjects('ross-test', 'R', 'test/', .parallel = T)
 
-uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=10, quiet=FALSE, ..., .parallel = TRUE){
+uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=5, quiet=FALSE, ..., .parallel = TRUE){
   prepareSrc <- function(src, pattern=NULL){
     if(length(src) != 1){
       stop('src length not equals to 1.')
@@ -382,6 +382,7 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
     r$status_code
   }
 
+  src <- path.expand(src)
   files <- prepareSrc(src, pattern)
   dests <- prepareDest(files, src, prefix)
   message(length(files), ' files to upload')
@@ -439,9 +440,35 @@ abortAllMultipartUpload <- function(bucketname, prefix=NULL){
 }
 
 
-downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, method='wget', quiet=FALSE, extra="", .parallel=T){
+#' downloadObject
+#'
+#' @param bucketname
+#' @param src
+#' @param dest
+#' @param resume
+#' @param split
+#' @param maxPartSize
+#' @param method
+#' @param quiet
+#' @param extra
+#' @param .parallel
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' downloadObject('ross-test', 'jingyi.pdf')
+#' downloadObject('ross-test', 'jingyi.pdf', '~')
+#' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = F, method = 'aria2', quiet = T)
+#' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = T, method = 'wget', quiet = F)
+downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, method='wget', quiet=FALSE, extra=""){
   if(is.null(dest)){
     dest <- file.path(getwd(), basename(src))
+  }else{
+    dest <- path.expand(dest)
+    if(dir.exists(dest)){
+      dest <- file.path(dest, basename(src))
+    }
   }
 
   url <- GetObject(bucketname, src, expires = 1200, .url = T)
