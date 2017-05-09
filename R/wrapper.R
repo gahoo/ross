@@ -197,7 +197,7 @@ aclBucket <- function(bucketname, acl){
 #' @examples
 #' uploadObject('ross-test', 'test.zip')
 #' uploadObject('ross-test', 'test.zip', 'test/test.zip')
-uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, quiet=FALSE, ...){
+uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, .progressbar=TRUE, ...){
   uploadPart <- function(src, key, uploadId, partPosition, partSize, partNumber){
     raw_conn<-file(src, 'rb', raw = T)
     seek(raw_conn, partPosition)
@@ -227,10 +227,10 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPa
       uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
     }
 
-    if(quiet){
-      op <- pbapply::pboptions(type = "none")
-    }else{
+    if(.progressbar){
       op <- pbapply::pboptions(type = "timer")
+    }else{
+      op <- pbapply::pboptions(type = "none")
     }
 
     cl <- parallel::makeForkCluster(split)
@@ -316,7 +316,7 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPa
 #' uploadMultipleObjects('ross-test', 'R', 'test', .parallel = F)
 #' uploadMultipleObjects('ross-test', 'R', 'test/', .parallel = T)
 
-uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=5, quiet=FALSE, ..., .parallel = TRUE){
+uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=5, .progressbar=TRUE, ..., .parallel = TRUE){
   prepareSrc <- function(src, pattern=NULL){
     if(length(src) != 1){
       stop('src length not equals to 1.')
@@ -375,7 +375,7 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
     #   }
     # )
 #    message(task$src, ' => ', task$dest)
-    r <- try(uploadObject(bucketname, task$src, task$dest, resume, split, quiet=quiet, ...))
+    r <- try(uploadObject(bucketname, task$src, task$dest, resume, split, .progressbar=.progressbar, ...))
     if(class(r) == 'try-error'){
       r <- list(status_code = 404)
     }
@@ -390,17 +390,17 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
   if(is.null(task_params)){
     return(invisible())
   }
-  if(quiet){
-    op <- pbapply::pboptions(type = "none")
-  }else{
+  if(.progressbar){
     op <- pbapply::pboptions(type = "timer")
+  }else{
+    op <- pbapply::pboptions(type = "none")
   }
   if(.parallel){
     cl <- parallel::makeForkCluster(split)
     status_codes <- pbapply::pbsapply(task_params, uploadEachFile, cl=cl)
     parallel::stopCluster(cl)
   }else{
-    status_codes <- pbapply::pblapply(task_params, uploadEachFile)
+    status_codes <- pbapply::pbsapply(task_params, uploadEachFile)
   }
   pbapply::pboptions(op)
 
@@ -461,7 +461,7 @@ abortAllMultipartUpload <- function(bucketname, prefix=NULL){
 #' downloadObject('ross-test', 'jingyi.pdf', '~')
 #' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = F, method = 'aria2', quiet = T)
 #' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = T, method = 'wget', quiet = F)
-downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, method='wget', quiet=FALSE, extra="", .md5=T){
+downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, method='aria2', quiet=FALSE, extra="", .md5=T){
   if(is.null(dest)){
     dest <- file.path(getwd(), basename(src))
   }else{
@@ -473,7 +473,7 @@ downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, max
 
   url <- GetObject(bucketname, src, expires = 1200, .url = T)
 
-  if(method == 'aria2' || split > 1){
+  if(method == 'aria2'){
     dir_dest <- dirname(dest)
     base_dest <- basename(dest)
     if(split) extra <- c(extra, " -s ", split)
@@ -500,3 +500,94 @@ downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, max
   invisible(r)
 }
 
+downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL, resume=TRUE, split=5, method='aria2', quiet=FALSE, ..., .progressbar=TRUE, .parallel = TRUE){
+  prepareSrc <- function(bucketname, src, pattern){
+    keys <- suppressMessages(listBucket(bucketname, prefix=src, delimiter = '', .output='character'))
+    if(length(keys) == 0){
+      stop('No such key: ', src)
+    }
+    if(!grepl("/$", src)){
+      if(src %in% keys){
+        keys <- src
+      }else{
+        keys <- keys[grep(paste0('^', src, '/'), keys)]
+      }
+    }
+    if(!is.null(pattern)){
+      keys <- keys[grep(pattern, keys)]
+    }
+    keys
+  }
+
+  prepareDirs <- function(src, keys){
+    dirs <- dirname(keys)
+    prefix <- dirname(src)
+    if(prefix != '.'){
+      dirs <- gsub(paste0('^', prefix), '', dirs)
+    }
+    dirs <- file.path(path.expand(dest), dirs)
+    dirs <- gsub('/+', '/', dirs)
+    dirs <- gsub('/\\.$', '/', dirs)
+
+    dirs
+  }
+
+  mkdirs <- function(dirs){
+    sapply(unique(dirs), dir.create, recursive=T, showWarnings=F)
+  }
+
+  makeTaskParams <- function(keys, dirs){
+    lapply(1:length(keys), function(i){
+      list(src = keys[i],
+           dest = dirs[i])
+    })
+  }
+
+  downloadEachFile <- function(x){
+    r <- try(downloadObject(bucketname, x$src, x$dest, resume, split, method, quiet, ...))
+    r
+  }
+
+  failed <- getDownloadState(bucketname, src, dest, pattern)
+  if(is.null(failed)){
+    keys <- prepareSrc(bucketname, src, pattern)
+  }else{
+    keys <- failed
+  }
+
+  message(length(keys), ' files to download')
+
+  if(length(keys) > 0){
+    dirs <- prepareDirs(src, keys)
+    mkdirs(dirs)
+  }else{
+    stop('No such key: ', src)
+  }
+
+  task_params <- makeTaskParams(keys, dirs)
+
+  if(.progressbar){
+    op <- pbapply::pboptions(type = "timer")
+  }else{
+    op <- pbapply::pboptions(type = "none")
+  }
+  if(.parallel){
+    cl <- parallel::makeForkCluster(split)
+    status_codes <- pbapply::pbsapply(task_params, downloadEachFile, cl=cl)
+    parallel::stopCluster(cl)
+  }else{
+    status_codes <- pbapply::pbsapply(task_params, downloadEachFile)
+  }
+  pbapply::pboptions(op)
+
+  names(status_codes) <- keys
+  failed <- names(status_codes)[status_codes != 0]
+  if(length(failed) > 0){
+    saveDownloadState(bucketname, src, dest, pattern, failed)
+    invisible(failed)
+  }else{
+    invisible(status_codes)
+  }
+
+
+}
