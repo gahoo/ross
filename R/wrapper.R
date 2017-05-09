@@ -197,7 +197,7 @@ aclBucket <- function(bucketname, acl){
 #' @examples
 #' uploadObject('ross-test', 'test.zip')
 #' uploadObject('ross-test', 'test.zip', 'test/test.zip')
-uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, ...){
+uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, quiet=FALSE, ...){
   uploadPart <- function(src, key, uploadId, partPosition, partSize, partNumber){
     raw_conn<-file(src, 'rb', raw = T)
     seek(raw_conn, partPosition)
@@ -227,12 +227,19 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
       uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
     }
 
+    if(quiet){
+      op <- pbapply::pboptions(type = "none")
+    }else{
+      op <- pbapply::pboptions(type = "timer")
+    }
+
     cl <- parallel::makeForkCluster(split)
-    status_codes <- pbapply::pblapply(task_params, function(x) {
+    status_codes <- pbapply::pbsapply(task_params, function(x) {
       uploadPart(src, key, uploadId, x$partPosition, x$partSize, x$partNumber)
     }, cl=cl)
     parallel::stopCluster(cl)
-    status_codes <- unlist(status_codes)
+    pbapply::pboptions(op)
+
     if(all(status_codes == 200)){
       saveMultiPartUploadState(bucketname, key)
       CompleteMultipartUpload(bucketname, key, uploadId)
@@ -272,7 +279,11 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
   }
 
   if(is.null(dest)){
-    key = src
+    if(grepl("^/", src)){
+      key = basename(src)
+    }else{
+      key = src
+    }
   }else{
     key = dest
   }
@@ -305,7 +316,7 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxP
 #' uploadMultipleObjects('ross-test', 'R', 'test', .parallel = F)
 #' uploadMultipleObjects('ross-test', 'R', 'test/', .parallel = T)
 
-uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=10, quiet=T, ..., .parallel = TRUE){
+uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, resume=TRUE, split=10, quiet=FALSE, ..., .parallel = TRUE){
   prepareSrc <- function(src, pattern=NULL){
     if(length(src) != 1){
       stop('src length not equals to 1.')
@@ -364,7 +375,7 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
     #   }
     # )
 #    message(task$src, ' => ', task$dest)
-    r <- try(uploadObject(bucketname, task$src, task$dest, resume, split, ...))
+    r <- try(uploadObject(bucketname, task$src, task$dest, resume, split, quiet=quiet, ...))
     if(class(r) == 'try-error'){
       r <- list(status_code = 404)
     }
@@ -385,14 +396,13 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
   }
   if(.parallel){
     cl <- parallel::makeForkCluster(split)
-    status_codes <- pbapply::pblapply(task_params, uploadEachFile, cl=cl)
+    status_codes <- pbapply::pbsapply(task_params, uploadEachFile, cl=cl)
     parallel::stopCluster(cl)
   }else{
     status_codes <- pbapply::pblapply(task_params, uploadEachFile)
   }
   pbapply::pboptions(op)
 
-  status_codes <- unlist(status_codes)
   names(status_codes) <- files
   failed <- names(status_codes)[status_codes != 200]
   if(length(failed) > 0){
@@ -429,7 +439,11 @@ abortAllMultipartUpload <- function(bucketname, prefix=NULL){
 }
 
 
-downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, method='wget', quiet=T, extra="", .parallel=T){
+downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, maxPartSize = 20 * 1024^2, method='wget', quiet=FALSE, extra="", .parallel=T){
+  if(is.null(dest)){
+    dest <- file.path(getwd(), basename(src))
+  }
+
   url <- GetObject(bucketname, src, expires = 1200, .url = T)
 
   if(method == 'aria2' || split > 1){
@@ -447,3 +461,4 @@ downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=10, ma
   }
   invisible(r)
 }
+
