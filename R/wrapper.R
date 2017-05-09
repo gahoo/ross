@@ -461,7 +461,7 @@ abortAllMultipartUpload <- function(bucketname, prefix=NULL){
 #' downloadObject('ross-test', 'jingyi.pdf', '~')
 #' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = F, method = 'aria2', quiet = T)
 #' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = T, method = 'wget', quiet = F)
-downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, method='wget', quiet=FALSE, extra=""){
+downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, method='wget', quiet=FALSE, extra="", .md5=T){
   if(is.null(dest)){
     dest <- file.path(getwd(), basename(src))
   }else{
@@ -485,6 +485,17 @@ downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, max
                       "-o", shQuote(base_dest)))
   }else{
     r <- download.file(url, dest, method=method, quiet = quiet, extra = extra)
+  }
+
+  if(.md5){
+    r_head <- HeadObject(bucketname, src)
+    remote_md5 <- httr::headers(r_head)$`content-md5`
+    if(!is.null(remote_md5)){
+      local_md5 <- md5(curl::form_file(dest))
+      if(!identical(remote_md5, local_md5)){
+        stop('md5sum mismatch ', dest)
+      }
+    }
   }
   invisible(r)
 }
