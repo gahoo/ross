@@ -339,30 +339,24 @@ body_type <- function(x){
   }
 }
 
-saveMultiPartUploadState <- function(bucketname, key, state=NULL){
-  .state$multipart_upload[[paste0(bucketname, ':', key)]] <- state
+states <- function(name, ..., state){
+  idx <- paste(..., sep=":")
+  if(missing(state)){
+    .state[[name]][[idx]]
+  }else{
+    .state[[name]][[idx]] <- state
+  }
 }
 
-getMultiPartUploadState <- function(bucketname, key){
-  .state$multipart_upload[[paste0(bucketname, ':', key)]]
+multiPartUploadState <- function(bucketname, key, state){
+  states('multipart', bucketname, key, state=state)
 }
 
-saveMultiUploadState <- function(bucketname, src, prefix, pattern, state=NULL){
-  idx <- paste(bucketname, src, prefix, pattern, sep=':')
-  .state$upload_multi_files[[idx]] <- state
+uploadState <- function(bucketname, src, prefix, pattern, state){
+  states('upload', bucketname, src, prefix, pattern, state=state)
 }
 
-getMultiUploadState <- function(bucketname, src, prefix, pattern){
-  idx <- paste(bucketname, src, prefix, pattern, sep=':')
-  .state$upload_multi_files[[idx]]
+downloadState <- function(bucketname, src, dest, pattern, state){
+  states('download', bucketname, src, dest, pattern, state=state)
 }
 
-saveDownloadState <- function(bucketname, src, dest, pattern, state=NULL){
-  idx <- paste(bucketname, src, dest, pattern, sep=':')
-  .state$download_state[[idx]] <- state
-}
-
-getDownloadState <- function(bucketname, src, dest, pattern){
-  idx <- paste(bucketname, src, dest, pattern, sep=':')
-  .state$download_state[[idx]]
-}

@@ -12,8 +12,10 @@ NULL
 
 .state <- new.env(parent=emptyenv())
 .state$location <- list()
-.state$multipart_upload <- list()
-.state$upload_multi_files <- list()
+.state$multipart <- list()
+.state$upload <- list()
+.state$download <- list()
+
 
 .api.request <- function(sign.func, method, ossresource=NULL,
                                 bucketname=NULL, Location=NULL, ...,
