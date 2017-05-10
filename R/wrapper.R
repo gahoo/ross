@@ -1,9 +1,5 @@
 #' createBucket
 #'
-#' @param bucketname
-#' @param Location
-#' @param acl
-#' @param StorageClass
 #' @inheritParams PutBucket
 #'
 #' @return
@@ -22,7 +18,6 @@ createBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private",
 
 #' deleteBucket
 #'
-#' @inherit DeleteBucket
 #'
 #' @return
 #' @export
@@ -89,9 +84,9 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
 #' removeObjects
 #'
 #' @param bucketname
-#' @param keys Objects to delete.
+#' @param prefix The prefix of objects to be deleted. NULL means all objects in the bucket. Prefix ended with "/" means it's a folder.
 #' @param confirm Auto confirm deletion or not.
-#' @param step How much to delete at a time.
+#' @param step How many to delete at a time.
 #'
 #' @return
 #' @export
@@ -146,9 +141,11 @@ removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
 
 #' usageBucket
 #'
+#' Check disk usage of buckets or "folder".
+#'
 #' @param bucketname
-#' @param prefix
-#' @param unit
+#' @param prefix The prefix of objects. NULL means the whole bucket.
+#' @param unit return in which unit, B, KB, MB, GB, TB
 #'
 #' @return
 #' @export
@@ -157,7 +154,7 @@ removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
 #' usageBucket('ross-test')
 #' usageBucket('ross-test', 'upload/')
 usageBucket <- function(bucketname, prefix=NULL, unit='MB'){
-  conversion <- list(B=1, KB=1024, MB=1024^2, GB=1024^3)
+  conversion <- list(B=1, KB=1024, MB=1024^2, GB=1024^3, TB=1024^4)
   files <- listBucket(bucketname, prefix, delimiter = '')
   sum(as.numeric(files$Size)) / conversion[[unit]]
 }
@@ -166,6 +163,7 @@ usageBucket <- function(bucketname, prefix=NULL, unit='MB'){
 #'
 #' @param bucketname
 #' @param acl
+#' @inheritParams PutBucket
 #'
 #' @return
 #' @export
@@ -187,11 +185,17 @@ aclBucket <- function(bucketname, acl){
 #' uploadObject
 #'
 #' @param bucketname
-#' @param src
-#' @param dest
-#' @param split
-#' @param ...
-#' @param maxPartSize
+#' @param src Path to the local file to be uploaded.
+#' @param dest Destination path on bucket. Ended with "/" means its a folder.
+#' @param split How many parts to be splited. Will be recacluated along with maxPartSize.
+#' @param maxPartSize The max size of each part.
+#' @param minMultiSize File szie greater than minMultiSize will be splited automatically.
+#' @param ... Other arguments pass to InitiateMultipartUpload.
+#' @param resume Auto resume from last failed upload or not.
+#' @param .progressbar Show progress bar or not. progress bar only work with multipart upload.
+#'
+#' @import pbapply
+#' @import parallel
 #'
 #' @return
 #' @export
@@ -304,17 +308,19 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPa
 #' uploadMultipleObjects
 #'
 #' @param bucketname
-#' @param src
-#' @param prefix
-#' @param pattern
-#' @param resume
-#' @param split
-#' @param ...
-#' @param .parallel
+#' @inheritParams uploadObject
+#' @param src Path to local file or dir to be uploaded.
+#' @param prefix Destination on Bucket. Ended with "/" means folder, files will place under "prefix/src/*". otherwise will be "prefix/*".
+#' @param pattern Filter which files to be uploaded.
+#' @param split How many upload progress at the same time.
+#' @param ... Arguments pass to uploadObject.
+#' @param .parallel Parallel multiple upload or not. When False, split will be disable too.
+#' @param .progressbar Show progress bar or not.
 #'
 #' @import pbapply
+#' @import parallel
 #'
-#' @return
+#' @return named status_codes indicates failed or success.
 #' @export
 #'
 #' @examples
@@ -422,18 +428,20 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
 
 }
 
-#' abortAllMultipartUpload
+#' abortMultipartUpload
+#'
+#' Abort failed multipart uploads.
 #'
 #' @param bucketname
-#' @param prefix
+#' @param prefix The prefix of objects on bucket.
 #'
 #' @return
 #' @export
 #'
 #' @examples
-#' abortAllMultipartUpload('ross-test', 'some-failed-multipart.gz')
-#' abortAllMultipartUpload('ross-test')
-abortAllMultipartUpload <- function(bucketname, prefix=NULL){
+#' abortMultipartUpload('ross-test', 'some-failed-multipart.gz')
+#' abortMultipartUpload('ross-test')
+abortMultipartUpload <- function(bucketname, prefix=NULL){
   r <- ListMultipartUploads(bucketname, prefix)
   doc <- httr::content(r, encoding = 'UTF-8')
   keys <- unlist(xpath2list(doc, '//Key'))
@@ -450,15 +458,16 @@ abortAllMultipartUpload <- function(bucketname, prefix=NULL){
 #' downloadObject
 #'
 #' @param bucketname
-#' @param src
-#' @param dest
-#' @param resume
-#' @param split
-#' @param maxPartSize
-#' @param method
-#' @param quiet
-#' @param extra
-#' @param .parallel
+#' @param src The object path on bucket to be downloaded.
+#' @param dest Local destination of file or folder.
+#' @param resume Auto resume from failed download or not.
+#' @param split How many parts to be split.
+#' @param method Same argument in download.file. Supports aria2 if installed.
+#' @param quiet Suppress status messages or not.
+#' @param .md5 Check md5 after download or not.
+#' @param rpc aria2 rpc
+#' @param extra additional command-line arguments for the "wget", "curl" and "aria2" methods.
+#' @param ... Arguments pass to download.file
 #'
 #' @return
 #' @export
@@ -470,7 +479,7 @@ abortAllMultipartUpload <- function(bucketname, prefix=NULL){
 #' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = T, method = 'wget', quiet = F)
 downloadObject <- function(bucketname, src, dest=NULL,
                            resume=TRUE, split=5, method='aria2',
-                           quiet=FALSE, extra="", .md5=T, rpc=NULL){
+                           quiet=FALSE, extra="", .md5=T, rpc=NULL, ...){
   if(is.null(dest)){
     dest <- file.path(getwd(), basename(src))
   }else{
@@ -493,7 +502,7 @@ downloadObject <- function(bucketname, src, dest=NULL,
                       "--allow-overwrite",
                       "-o", shQuote(base_dest)))
   }else{
-    r <- download.file(url, dest, method=method, quiet = quiet, extra = extra)
+    r <- download.file(url, dest, method=method, quiet = quiet, extra = extra, ...)
   }
 
   if(.md5){
@@ -512,18 +521,17 @@ downloadObject <- function(bucketname, src, dest=NULL,
 #' downloadMultipleObjects
 #'
 #' @param bucketname
-#' @param src
-#' @param dest
-#' @param pattern
-#' @param resume
-#' @param split
-#' @param method
-#' @param quiet
-#' @param ...
-#' @param .progressbar
-#' @param .parallel
+#' @param src The objects to be downloaded. Ended with "/" means the whold "folder" will be download.
+#' @param dest Local destination to save the files.
+#' @param pattern Filter which files to be uploaded.
+#' @param resume Auto resume from last failed download or not.
+#' @param split How many download progress at the same time.
+#' @param ... Arguments pass to downloadObject.
 #'
-#' @return
+#' @inheritParams downloadObject
+#' @inheritParams uploadMultipleObjects
+#'
+#' @return named status_codes indicates failed or success.
 #' @export
 #'
 #' @examples
