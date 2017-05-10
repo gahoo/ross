@@ -216,11 +216,11 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPa
   }
 
   multiPartUpload <- function(bucketname, src, key, ...){
-    uploadId <- getMultiPartUploadState(bucketname, key)$uploadId
+    uploadId <- multiPartUploadState(bucketname, key)$uploadId
     task_params <- makePartParams(file_size, split, maxPartSize)
 
     if(resume && !is.null(uploadId)){
-      failed <- getMultiPartUploadState(bucketname, key)$failed
+      failed <- multiPartUploadState(bucketname, key)$failed
       task_params <- task_params[failed]
     }else{
       r <- InitiateMultipartUpload(bucketname, key, ...)
@@ -241,17 +241,17 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPa
     pbapply::pboptions(op)
 
     if(all(status_codes == 200)){
-      saveMultiPartUploadState(bucketname, key)
+      multiPartUploadState(bucketname, key, state=NULL)
       CompleteMultipartUpload(bucketname, key, uploadId)
     }else{
       failed_idx <- which(status_codes != 200)
       failed_partNumber <- names(status_codes[failed_idx])
       failed_partNumber <- as.numeric(failed_partNumber)
       warning(sprintf("Part %s Failed.", paste0(failed_partNumber, collapse = ', ')))
-      saveMultiPartUploadState(
+      multiPartUploadState(
         bucketname, key,
-        list(uploadId=uploadId,
-             failed = failed_partNumber)
+        state = list(uploadId=uploadId,
+                     failed = failed_partNumber)
         )
       failed_partNumber
     }
@@ -322,7 +322,7 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
       stop('src length not equals to 1.')
     }
     if(resume){
-      files <- getMultiUploadState(bucketname, src, prefix, pattern)
+      files <- uploadState(bucketname, src, prefix, pattern)
       if(!is.null(files)){
         return(files)
       }
@@ -407,11 +407,12 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
   names(status_codes) <- files
   failed <- names(status_codes)[status_codes != 200]
   if(length(failed) > 0){
-    saveMultiUploadState(bucketname, src, prefix, pattern, failed)
-    invisible(failed)
+    uploadState(bucketname, src, prefix, pattern, state=failed)
+    message("Some files failed to upload:\n", paste0(failed, collapse = '\n'))
   }else{
-    invisible(status_codes)
+    uploadState(bucketname, src, prefix, pattern, state=NULL)
   }
+  invisible(status_codes)
 
 }
 
@@ -461,7 +462,9 @@ abortAllMultipartUpload <- function(bucketname, prefix=NULL){
 #' downloadObject('ross-test', 'jingyi.pdf', '~')
 #' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = F, method = 'aria2', quiet = T)
 #' downloadObject('ross-test', 'jingyi.pdf', '~/jingyi2.pdf', resume = T, method = 'wget', quiet = F)
-downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, method='aria2', quiet=FALSE, extra="", .md5=T){
+downloadObject <- function(bucketname, src, dest=NULL,
+                           resume=TRUE, split=5, method='aria2',
+                           quiet=FALSE, extra="", .md5=T, rpc=NULL){
   if(is.null(dest)){
     dest <- file.path(getwd(), basename(src))
   }else{
@@ -500,9 +503,37 @@ downloadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, met
   invisible(r)
 }
 
-downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL, resume=TRUE, split=5, method='aria2', quiet=FALSE, ..., .progressbar=TRUE, .parallel = TRUE){
+#' downloadMultipleObjects
+#'
+#' @param bucketname
+#' @param src
+#' @param dest
+#' @param pattern
+#' @param resume
+#' @param split
+#' @param method
+#' @param quiet
+#' @param ...
+#' @param .progressbar
+#' @param .parallel
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' downloadMultipleObjects('ross-test', 'test/tmp')
+#' r<-downloadMultipleObjects('ross-test', 'test/tmp/cache2/')
+#' r<-downloadMultipleObjects('ross-test', 'test', '~/asdf')
+#' r<-downloadMultipleObjects('ross-test', 'test', '/Volumes/RamDisk/asdf', pattern="tmp", .parallel = F, quiet = F, split=20, .progressbar = F)
+downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
+                                    resume=TRUE, split=5, method='aria2', quiet=TRUE,
+                                    ..., .progressbar=TRUE, .parallel = TRUE){
   prepareSrc <- function(bucketname, src, pattern){
-    keys <- suppressMessages(listBucket(bucketname, prefix=src, delimiter = '', .output='character'))
+    keys <- downloadState(bucketname, src, dest, pattern)
+    if(is.null(keys)){
+      keys <- suppressMessages(listBucket(bucketname, prefix=src, delimiter = '', .output='character'))
+    }
+
     if(length(keys) == 0){
       stop('No such key: ', src)
     }
@@ -520,6 +551,10 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL, res
   }
 
   prepareDirs <- function(src, keys){
+    if(length(keys) == 0){
+      stop('No such key: ', src)
+    }
+
     dirs <- dirname(keys)
     prefix <- dirname(src)
     if(prefix != '.'){
@@ -528,6 +563,8 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL, res
     dirs <- file.path(path.expand(dest), dirs)
     dirs <- gsub('/+', '/', dirs)
     dirs <- gsub('/\\.$', '/', dirs)
+
+    mkdirs(dirs)
 
     dirs
   }
@@ -548,21 +585,9 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL, res
     r
   }
 
-  failed <- getDownloadState(bucketname, src, dest, pattern)
-  if(is.null(failed)){
-    keys <- prepareSrc(bucketname, src, pattern)
-  }else{
-    keys <- failed
-  }
-
+  keys <- prepareSrc(bucketname, src, pattern)
+  dirs <- prepareDirs(src, keys)
   message(length(keys), ' files to download')
-
-  if(length(keys) > 0){
-    dirs <- prepareDirs(src, keys)
-    mkdirs(dirs)
-  }else{
-    stop('No such key: ', src)
-  }
 
   task_params <- makeTaskParams(keys, dirs)
 
@@ -583,11 +608,11 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL, res
   names(status_codes) <- keys
   failed <- names(status_codes)[status_codes != 0]
   if(length(failed) > 0){
-    saveDownloadState(bucketname, src, dest, pattern, failed)
-    invisible(failed)
+    downloadState(bucketname, src, dest, pattern, state=failed)
+    message('Some files failed:\n', paste0(failed, collapse = '\n'))
   }else{
-    invisible(status_codes)
+    downloadState(bucketname, src, dest, pattern, state=NULL)
   }
 
-
+  invisible(status_codes)
 }
