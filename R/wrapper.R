@@ -428,33 +428,6 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
 
 }
 
-#' abortMultipartUpload
-#'
-#' Abort failed multipart uploads.
-#'
-#' @param bucketname
-#' @param prefix The prefix of objects on bucket.
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' abortMultipartUpload('ross-test', 'some-failed-multipart.gz')
-#' abortMultipartUpload('ross-test')
-abortMultipartUpload <- function(bucketname, prefix=NULL){
-  r <- ListMultipartUploads(bucketname, prefix)
-  doc <- httr::content(r, encoding = 'UTF-8')
-  keys <- unlist(xpath2list(doc, '//Key'))
-  uploadIds <- unlist(xpath2list(doc, '//UploadId'))
-  if(!is.null(keys)){
-    for(i in 1:length(keys)){
-      message("Aborting", keys[i], ":", uploadIds[i])
-      AbortMultipartUpload(bucketname, keys[i], uploadIds[i])
-    }
-  }
-}
-
-
 #' downloadObject
 #'
 #' @param bucketname
@@ -631,3 +604,55 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
 
   invisible(status_codes)
 }
+
+#' listMultipartUploads
+#'
+#' @inheritParams ListMultipartUploads
+#' @import tibble
+#'
+#' @return
+#' @export
+#'
+#' @examples
+listMultipartUploads <- function(bucketname, prefix=NULL, delimiter=NULL, max=1000,
+                                 marker=NULL, id_marker=NULL, encoding_type=NULL){
+
+  r <- ListMultipartUploads(bucketname, prefix=prefix, delimiter=delimiter, max=max,
+                            marker=marker, id_marker=id_marker, encoding_type=encoding_type)
+  doc <- httr::content(r, encoding = 'UTF-8')
+  keys <- unlist(xpath2list(doc, '//Key'))
+  uploadIds <- unlist(xpath2list(doc, '//UploadId'))
+  StorageClass <- unlist(xpath2list(doc, '//StorageClass'))
+  Initiated <- unlist(xpath2list(doc, '//Initiated'))
+  if(!is.null(keys)){
+    tibble::tibble(keys=keys, uploadIds=uploadIds, StorageClass=StorageClass, Initiated)
+  }else{
+    tibble::tibble()
+  }
+
+}
+
+
+#' abortMultipartUpload
+#'
+#' Abort failed multipart uploads.
+#'
+#' @param bucketname
+#' @param prefix The prefix of objects on bucket.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' abortMultipartUpload('ross-test', 'some-failed-multipart.gz')
+#' abortMultipartUpload('ross-test')
+abortMultipartUpload <- function(bucketname, prefix=NULL){
+  res <- listMultipartUploads(bucketname, prefix)
+  if(!is.null(res$keys)){
+    for(i in 1:nrow(res)){
+      message("Aborting", res$keys[i], ":", res$uploadIds[i])
+      AbortMultipartUpload(bucketname, res$keys[i], res$uploadIds[i])
+    }
+  }
+}
+
