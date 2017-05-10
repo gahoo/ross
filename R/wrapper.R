@@ -124,7 +124,9 @@ removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
     response
   }
 
-  if(is.null(prefix) || grepl("/$", prefix)){
+  if(is.null(prefix)){
+    keys <- suppressMessages(listBucket(bucketname, prefix, delimiter = '', .all=T, .output = 'character'))
+  }else if(grepl("/$", prefix)){
     keys <- suppressMessages(listBucket(bucketname, prefix, .all=T, .output = 'character'))
   }else{
     keys <- prefix
@@ -197,7 +199,7 @@ aclBucket <- function(bucketname, acl){
 #' @examples
 #' uploadObject('ross-test', 'test.zip')
 #' uploadObject('ross-test', 'test.zip', 'test/test.zip')
-uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, .progressbar=TRUE, ...){
+uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPartSize = 20 * 1024^2, minMultiSize = 10 * 1024^2, .progressbar=TRUE, ...){
   uploadPart <- function(src, key, uploadId, partPosition, partSize, partNumber){
     raw_conn<-file(src, 'rb', raw = T)
     seek(raw_conn, partPosition)
@@ -285,9 +287,13 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPa
       key = src
     }
   }else{
-    key = dest
+    if(grepl("/$", dest)){
+      key = gsub('/+', '/', file.path(dest, basename(src)))
+    }else{
+      key = dest
+    }
   }
-  if(file_size < 10 * 1024^2){
+  if(file_size < minMultiSize){
     r <- PutObject(bucketname, key, body=httr::upload_file(src), ...)
   }else{
     r <- multiPartUpload(bucketname, src, key, ...)
@@ -408,7 +414,7 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
   failed <- names(status_codes)[status_codes != 200]
   if(length(failed) > 0){
     uploadState(bucketname, src, prefix, pattern, state=failed)
-    message("Some files failed to upload:\n", paste0(failed, collapse = '\n'))
+    warning("Some files failed to upload:\n", paste0(failed, collapse = '\n'))
   }else{
     uploadState(bucketname, src, prefix, pattern, state=NULL)
   }
@@ -475,13 +481,13 @@ downloadObject <- function(bucketname, src, dest=NULL,
   }
 
   url <- GetObject(bucketname, src, expires = 1200, .url = T)
+  if(resume) extra <- c(extra, " -c")
 
   if(method == 'aria2'){
     dir_dest <- dirname(dest)
     base_dest <- basename(dest)
     if(split) extra <- c(extra, " -s ", split)
     if(quiet) extra <- c(extra, " -q ")
-    if(resume) extra <- c(extra, "-c ")
     r <- system(paste("aria2c", paste(extra, collapse = " "),
                       shQuote(url), "-d", shQuote(dir_dest),
                       "--allow-overwrite",
@@ -524,7 +530,8 @@ downloadObject <- function(bucketname, src, dest=NULL,
 #' downloadMultipleObjects('ross-test', 'test/tmp')
 #' r<-downloadMultipleObjects('ross-test', 'test/tmp/cache2/')
 #' r<-downloadMultipleObjects('ross-test', 'test', '~/asdf')
-#' r<-downloadMultipleObjects('ross-test', 'test', '/Volumes/RamDisk/asdf', pattern="tmp", .parallel = F, quiet = F, split=20, .progressbar = F)
+#' r<-downloadMultipleObjects('ross-test', 'test', '~/asdf', resume=F, .parallel = F)
+#' r<-downloadMultipleObjects('ross-test', 'test', '/Volumes/RamDisk/asdf', pattern="tmp", quiet = F, split=10, .progressbar = F)
 downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
                                     resume=TRUE, split=5, method='aria2', quiet=TRUE,
                                     ..., .progressbar=TRUE, .parallel = TRUE){
@@ -609,7 +616,7 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
   failed <- names(status_codes)[status_codes != 0]
   if(length(failed) > 0){
     downloadState(bucketname, src, dest, pattern, state=failed)
-    message('Some files failed:\n', paste0(failed, collapse = '\n'))
+    warning('Some files failed:\n', paste0(failed, collapse = '\n'))
   }else{
     downloadState(bucketname, src, dest, pattern, state=NULL)
   }
