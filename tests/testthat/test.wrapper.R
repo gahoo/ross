@@ -161,3 +161,18 @@ test_that("mulitple upload/download", {
   removeObjects('ross-test', confirm=TRUE)
   deleteBucket('ross-test')
 })
+
+test_that("listMultipartUploads, abortMultipartUpload",{
+  createBucket('ross-test')
+  r <- InitiateMultipartUpload('ross-test', 'abort-test')
+  r <- InitiateMultipartUpload('ross-test', 'abort-test2')
+  r <- InitiateMultipartUpload('ross-test', 'abort-test')
+  r <- InitiateMultipartUpload('ross-test', 'abort-test2')
+  expect_equal(nrow(listMultipartUploads('ross-test')), 4)
+  expect_message(abortMultipartUpload('ross-test', 'abort-test2'))
+  expect_equal(nrow(listMultipartUploads('ross-test')), 2)
+  expect_message(abortMultipartUpload('ross-test'))
+  expect_equal(nrow(listMultipartUploads('ross-test')), 0)
+  removeObjects('ross-test', confirm=TRUE)
+  deleteBucket('ross-test')
+})
