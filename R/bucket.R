@@ -107,8 +107,19 @@ Bucket <- R6::R6Class("Bucket",
     },
     read = function() {},
     write = function() {},
-    download = function() {},
-    upload = function() {},
+    download = function(src, dest='.', pattern=NULL, resume=TRUE,
+                        split=5, method='aria2', quiet=TRUE,
+                         ..., .progressbar=TRUE, .parallel = TRUE) {
+
+      downloadMultipleObjects(self$Name, src=src, dest=dest, pattern=pattern, resume=resume, split=split,
+                              method=method, quiet=quiet, ..., .progressbar=.progressbar, .parallel=.parallel)
+    },
+    upload = function(src, prefix='/', pattern=NULL, resume=TRUE, split=5,
+                      .progressbar=TRUE, ..., .parallel = TRUE) {
+
+      uploadMultipleObjects(self$Name, src=src, prefix=prefix, pattern=pattern, resume=pattern, split=split,
+                            .progressbar=.progressbar, ..., .parallel=.parallel)
+    },
     cp = function() {},
     print = function(...) {
       bucket_text <- sprintf(paste(
