@@ -3,6 +3,7 @@ test_that("aclBucket", {
   expect_equal(aclBucket('ross-test'), 'private')
   expect_silent(aclBucket('ross-test', 'public-read'))
   expect_equal(aclBucket('ross-test'), 'public-read')
+  removeObjects('ross-test', confirm=TRUE)
   deleteBucket('ross-test')
 })
 
@@ -175,4 +176,20 @@ test_that("listMultipartUploads, abortMultipartUpload",{
   expect_equal(nrow(listMultipartUploads('ross-test')), 0)
   removeObjects('ross-test', confirm=TRUE)
   deleteBucket('ross-test')
+})
+
+test_that("copyObjects", {
+  # Upload
+  expect_output(r<-copyObjects('tests/test_upload/multiplefiles/will_success/', 'success', dest_bucket = 'ross-test'), "100%")
+  r <- HeadObject('ross-test', 'success/1/1.txt')
+  expect_equal(r$status_code, 200)
+  # Download
+  expect_output(r<-copyObjects('success', '/Volumes/RamDisk/', src_bucket = 'ross-test'), "100%")
+  expect_true(file.exists('/Volumes/RamDisk/success/1/1.txt'))
+  # Online Copy
+  expect_slient(copyObjects('success/1/1.txt', 'cp/1/1.txt', 'ross-test', 'ross-test'))
+  r <- HeadObject('ross-test', 'cp/1/1.txt')
+  expect_equal(r$status_code, 200)
+  # Local Copy
+  expect_silent(copyObjects('/Volumes/RamDisk/success/1/1.txt', '/Volumes/RamDisk/1.txt'))
 })
