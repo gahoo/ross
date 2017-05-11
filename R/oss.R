@@ -1,4 +1,7 @@
 oss <- function(x){
+  if('oss' %in% class(x)){
+    return(x)
+  }
   if(!grepl("^oss://", x)){
     stop("Invalid oss path")
   }
@@ -146,17 +149,17 @@ oss.cp <- function(from, to, ...){
   #copyObjects()
   if(is.oss(from) && !is.oss(to)){
     # Download
-    from <- to.oss(from)
+    from <- oss(from)
     r <- downloadMultipleObjects(from$bucket, from$key, to, ...)
   }else if(!is.oss(from) && is.oss(to)){
     # Upload
-    to <- to.oss(to)
+    to <- oss(to)
     if(is.null(to$key)) to$key <- "/"
     r <- uploadMultipleObjects(to$bucket, from, to$key, ...)
   }else if(is.oss(from) && is.oss(to)){
     # Copy
-    from <- to.oss(from)
-    to <- to.oss(to)
+    from <- oss(from)
+    to <- oss(to)
     if(is.null(to$key)) to$key <- basename(from$key)
     source <- sprintf("/%s/%s", from$bucket, from$key)
     r <- CopyObject(source, to$bucket, to$key, ...)
@@ -219,12 +222,4 @@ usage.character <- function(x, ...){
 #####
 is.oss <- function(x){
   "oss" %in% class(x) || grepl('^oss://', x)
-}
-
-to.oss <- function(x){
-  if(class(x) == 'character'){
-    oss(x)
-  }else{
-    x
-  }
 }
