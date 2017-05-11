@@ -57,20 +57,38 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
     lapply(c(folders, files), as.data.frame, stringsAsFactors=F)
   }
 
-  contents <- list()
-  next_marker <- marker
-  repeat{
-    r <- GetBucket(bucketname, prefix, next_marker, delimiter, max_keys)
-    doc <- httr::content(r, encoding = 'UTF-8')
-    contents <- c(contents, parseXML(doc))
-    next_marker <- xpath2list(doc, '/ListBucketResult/NextMarker')
-    message(sprintf("%s objects listed.", length(contents)))
-    if(!isTruncated(doc) || !.all){
-      break
+  getBucketContents <- function(){
+    contents <- list()
+    next_marker <- marker
+    repeat{
+      r <- GetBucket(bucketname, prefix, next_marker, delimiter, max_keys)
+      doc <- httr::content(r, encoding = 'UTF-8')
+      contents <- c(contents, parseXML(doc))
+      next_marker <- xpath2list(doc, '/ListBucketResult/NextMarker')
+      message(sprintf("%s objects listed.", length(contents)))
+      if(!isTruncated(doc) || !.all){
+        break
+      }
     }
+
+    contents
   }
 
-  if(.output == "data.frame"){
+  getBucketList <- function(){
+    r <- GetService(prefix, marker)
+    doc <- httr::content(r, encoding = 'UTF-8')
+    entries <- xpath2list(doc, '/ListAllMyBucketsResult/Buckets/Bucket', smart = F)
+    entries <- lapply(entries, as.data.frame)
+    entries
+  }
+
+  if(missing(bucketname)){
+    contents <- getBucketList()
+  }else{
+    contents <- getBucketContents()
+  }
+
+  if(.output == "data.frame" || missing(bucketname)){
     plyr::ldply(contents)
   }else if(.output == 'list'){
     contents
