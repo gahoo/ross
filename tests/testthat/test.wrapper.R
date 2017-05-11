@@ -159,7 +159,46 @@ test_that("mulitple upload/download", {
   r <- HeadObject('ross-test', 'success/will_success/1/1.txt')
   expect_equal(r$status_code, 404)
 
+  # download
+  expect_output(r <- uploadMultipleObjects('ross-test', 'tests/test_upload/multiplefiles/will_success/', split=10), '100%')
+  old <- getwd()
+  dir.create('/Volumes/RamDisk/ross')
+  setwd('/Volumes/RamDisk/ross')
+  expect_output(r<-downloadMultipleObjects('ross-test', 'will_success'), '100%')
+  expect_true(file.exists('will_success/1/1.txt'))
+
+  expect_output(r<-downloadMultipleObjects('ross-test', 'will_success', 'success'), '100%')
+  expect_true(file.exists('success/1/1.txt'))
+
+  expect_output(r<-downloadMultipleObjects('ross-test', 'will_success', 'success/'), '100%')
+  expect_true(file.exists('success/will_success/1/1.txt'))
+
+  expect_output(r<-downloadMultipleObjects('ross-test', 'will_success/1/', '/Volumes/RamDisk/ross/', resume = F, .parallel = T), '100%')
+  expect_true(file.exists('1/1.txt'))
+
+  expect_message(r<-downloadMultipleObjects('ross-test', 'will_success/', '/Volumes/RamDisk/ross/pattern', pattern='a-.*.txt$', .progressbar = F), '6 files to download')
+  expect_true(file.exists('pattern/1/a-1.txt'))
+
+  expect_message(r<-downloadMultipleObjects('ross-test', 'will_success/2', '/Volumes/RamDisk/ross/', split=10, .progressbar = F))
+  expect_true(file.exists('2/a-2.txt'))
+
+  expect_output(r<-downloadMultipleObjects('ross-test', 'will_success/1', '/Volumes/RamDisk/ross/'), '100%')
+  expect_true(!file.exists('11/a-1.txt'))
+
+  expect_silent(r<-PutObject('ross-test', 'will_success/2'))
+  expect_output(r<-downloadMultipleObjects('ross-test', 'will_success/2', '/Volumes/RamDisk/ross/22'), '100%')
+  expect_true(!dir.exists('22') && file.exists('22'))
+
+  expect_silent(r<-PutObject('ross-test', 'will_success/6'))
+  expect_output(r<-downloadMultipleObjects('ross-test', 'will_success/6'), '100%')
+  expect_true(file.exists('6'))
+
+  expect_output(r<-downloadMultipleObjects('ross-test', 'will_success/2', '21/'), '100%')
+  expect_true(file.exists('21/2'))
+
   removeObjects('ross-test', confirm=TRUE)
+  setwd(old)
+  unlink('/Volumes/RamDisk/ross/', recursive = T)
   deleteBucket('ross-test')
 })
 
