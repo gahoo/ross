@@ -620,15 +620,9 @@ listMultipartUploads <- function(bucketname, prefix=NULL, delimiter=NULL, max=10
   r <- ListMultipartUploads(bucketname, prefix=prefix, delimiter=delimiter, max=max,
                             marker=marker, id_marker=id_marker, encoding_type=encoding_type)
   doc <- httr::content(r, encoding = 'UTF-8')
-  keys <- unlist(xpath2list(doc, '//Key'))
-  uploadIds <- unlist(xpath2list(doc, '//UploadId'))
-  StorageClass <- unlist(xpath2list(doc, '//StorageClass'))
-  Initiated <- unlist(xpath2list(doc, '//Initiated'))
-  if(!is.null(keys)){
-    tibble::tibble(keys=keys, uploadIds=uploadIds, StorageClass=StorageClass, Initiated)
-  }else{
-    tibble::tibble()
-  }
+  entries <- xpath2list(doc, '/ListMultipartUploadsResult/Upload', smart = F)
+  entries <- lapply(entries, as.data.frame)
+  plyr::ldply(entries)
 
 }
 
@@ -648,11 +642,28 @@ listMultipartUploads <- function(bucketname, prefix=NULL, delimiter=NULL, max=10
 #' abortMultipartUpload('ross-test')
 abortMultipartUpload <- function(bucketname, prefix=NULL){
   res <- listMultipartUploads(bucketname, prefix)
-  if(!is.null(res$keys)){
+  if(!is.null(res$Key)){
     for(i in 1:nrow(res)){
-      message("Aborting", res$keys[i], ":", res$uploadIds[i])
-      AbortMultipartUpload(bucketname, res$keys[i], res$uploadIds[i])
+      message("Aborting", res$Key[i], ":", res$UploadId[i])
+      AbortMultipartUpload(bucketname, res$Key[i], res$UploadId[i])
     }
   }
 }
 
+copyObjects <- function(src, dest, src_bucket=NULL, dest_bucket=NULL, ...){
+  if(is.null(src_bucket) && !is.null(dest_bucket)){
+    #Upload
+    r <- uploadMultipleObjects(dest_bucket, src, dest, ...)
+  }else if(!is.null(src_bucket) && is.null(dest_bucket)){
+    #Download
+    r <- downloadMultipleObjects(src_bucket, src, dest, ...)
+  }else if(!is.null(src_bucket) && !is.null(dest_bucket)){
+    #Copy
+    source <- sprintf("/%s/%s", src_bucket, src)
+    r <- CopyObject(source, dest_bucket, dest, ...)
+  }else{
+    #Local
+    r <- file.copy(src, dest, ...)
+  }
+  invisible(r)
+}
