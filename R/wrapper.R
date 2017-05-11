@@ -552,9 +552,42 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
     dirs <- gsub('/+', '/', dirs)
     dirs <- gsub('/\\.$', '/', dirs)
 
-    mkdirs(dirs)
+    if(length(dirs) == 1 && grepl('/$', dest)){
+      mkdirs(dirs)
+    }else if(length(dirs) > 1){
+      mkdirs(dirs)
+    }
 
     dirs
+  }
+
+  prepareDest <- function(keys, src, prefix='.'){
+    if(length(keys) == 0){
+      stop('No such key: ', src)
+    }
+
+    if(grepl('/$', prefix)){
+      path_fix <- dirname(src)
+      if(path_fix == '.'){
+        path_fix <- ""
+      }
+    }else{
+      if(prefix == '.'){
+        path_fix <- dirname(src)
+        if(path_fix == '.'){
+          path_fix <- ""
+        }
+      }else{
+        path_fix <- src
+      }
+    }
+
+    dest_base <- gsub(sprintf("^%s", path_fix), '', keys)
+    dest <- file.path(prefix, dest_base)
+    dest <- gsub("/+", "/", dest)
+    dest <- gsub('\\./+', '', dest)
+#    dest <- gsub('/$', '', dest)
+    dest
   }
 
   mkdirs <- function(dirs){
@@ -574,10 +607,12 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
   }
 
   keys <- prepareSrc(bucketname, src, pattern)
-  dirs <- prepareDirs(src, keys)
+#  dirs <- prepareDirs(src, keys)
+  dests <- prepareDest(keys, src, dest)
+  mkdirs(unique(dirname(dests)))
   message(length(keys), ' files to download')
 
-  task_params <- makeTaskParams(keys, dirs)
+  task_params <- makeTaskParams(keys, dests)
 
   if(.progressbar){
     op <- pbapply::pboptions(type = "timer")
@@ -644,12 +679,30 @@ abortMultipartUpload <- function(bucketname, prefix=NULL){
   res <- listMultipartUploads(bucketname, prefix)
   if(!is.null(res$Key)){
     for(i in 1:nrow(res)){
-      message("Aborting", res$Key[i], ":", res$UploadId[i])
+      message("Aborting ", res$Key[i], ":", res$UploadId[i])
       AbortMultipartUpload(bucketname, res$Key[i], res$UploadId[i])
     }
   }
 }
 
+#' copyObjects
+#'
+#' @param src
+#' @param dest
+#' @param src_bucket
+#' @param dest_bucket
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' # Upload
+#' copyObjects('tests/test_upload/multiplefiles/will_success/', 'success', dest_bucket = 'ross-test')
+#' # Download
+#' copyObjects('success', '/Volumes/RamDisk/', src_bucket = 'ross-test')
+#' # Online Copy
+#' copyObjects('success/1/1.txt', 'cp/1/1.txt', 'ross-test', 'ross-test')
 copyObjects <- function(src, dest, src_bucket=NULL, dest_bucket=NULL, ...){
   if(is.null(src_bucket) && !is.null(dest_bucket)){
     #Upload
