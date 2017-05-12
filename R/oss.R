@@ -146,27 +146,10 @@ rm.Bucket <- function(x, ...){
 #' oss.cp('oss://ross-test/success', '/Volumes/RamDisk/')
 #'
 oss.cp <- function(from, to, ...){
-  #copyObjects()
-  if(is.oss(from) && !is.oss(to)){
-    # Download
-    from <- oss(from)
-    r <- downloadMultipleObjects(from$bucket, from$key, to, ...)
-  }else if(!is.oss(from) && is.oss(to)){
-    # Upload
-    to <- oss(to)
-    if(is.null(to$key)) to$key <- "/"
-    r <- uploadMultipleObjects(to$bucket, from, to$key, ...)
-  }else if(is.oss(from) && is.oss(to)){
-    # Copy
-    from <- oss(from)
-    to <- oss(to)
-    if(is.null(to$key)) to$key <- basename(from$key)
-    source <- sprintf("/%s/%s", from$bucket, from$key)
-    r <- CopyObject(source, to$bucket, to$key, ...)
-  }else{
-    # Local Copy
-    r <- file.copy(from, to, ...)
-  }
+  from <- format_oss(from)
+  to <- format_oss(to)
+  r <- copyObjects(from$key, to$key, from$bucket, to$bucket)
+
   invisible(r)
 }
 
@@ -220,6 +203,15 @@ usage.character <- function(x, ...){
 }
 
 #####
-is.oss <- function(x){
+is_oss <- function(x){
   "oss" %in% class(x) || grepl('^oss://', x)
+}
+
+format_oss <- function(x){
+  if(is_oss(x)){
+    x <- oss(x)
+    x
+  }else{
+    list(bucket=NULL, key=x)
+  }
 }
