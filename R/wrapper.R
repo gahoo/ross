@@ -113,7 +113,7 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
 #' removeObjects('ross-test')
 #' removeObjects('ross-test', 'upload/')
 #' removeObjects('ross-test', 'upload/', confirm=TRUE)
-removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
+removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, quiet=TRUE, step=1000){
   if(!confirm){
     if(is.null(prefix)){
       question <- sprintf("Are you sure to delete all objects in bucket %s?(yes/no): ", bucketname)
@@ -126,13 +126,22 @@ removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
     }
   }
 
-  deleteMultipleObjects <- function(keys){
+  parseXML <- function(doc){
+    success_keys <- unlist(xpath2list(doc, '/DeleteResult/Deleted/Key'))
+    message("Success Deleted: \n", paste0(success_keys, collapse = '\n'))
+  }
+
+  deleteMultipleObjects <- function(keys, quiet=T){
     cnt <- ceiling(length(keys)/step)
     response <- list()
     for(i in 1:cnt){
       start = (cnt - 1 ) * step + 1
       end = ifelse(length(keys) < cnt * step, length(keys), cnt * step)
-      response[[i]] <- DeleteMultipleObjects(bucketname, keys, quiet = T)
+      response[[i]] <- DeleteMultipleObjects(bucketname, keys, quiet = quiet)
+      if(!quiet){
+        doc <- httr::content(response[[i]], encoding = 'UTF-8')
+        parseXML(doc)
+      }
     }
     response
   }
@@ -146,7 +155,7 @@ removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, step=1000){
   }
 
   if(length(keys) > 1){
-    r <- deleteMultipleObjects(keys)
+    r <- deleteMultipleObjects(keys, quiet)
   }else if(length(keys) == 1){
     r <- DeleteObject(bucketname, keys)
   }else{
