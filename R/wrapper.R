@@ -691,12 +691,14 @@ abortMultipartUpload <- function(bucketname, prefix=NULL){
 copyObjects <- function(src, dest, src_bucket=NULL, dest_bucket=NULL, ...){
   if(is.null(src_bucket) && !is.null(dest_bucket)){
     #Upload
+    if(is.null(dest)) dest <- "/"
     r <- uploadMultipleObjects(dest_bucket, src, dest, ...)
   }else if(!is.null(src_bucket) && is.null(dest_bucket)){
     #Download
     r <- downloadMultipleObjects(src_bucket, src, dest, ...)
   }else if(!is.null(src_bucket) && !is.null(dest_bucket)){
     #Copy
+    if(is.null(dest)) dest <- basename(src)
     source <- sprintf("/%s/%s", src_bucket, src)
     r <- CopyObject(source, dest_bucket, dest, ...)
   }else{
