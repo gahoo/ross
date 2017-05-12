@@ -236,7 +236,7 @@
 }
 
 .get.cache.bucket.location <- function(bucketname) {
-  location <- .state$location[[bucketname]]
+  location <- locationState(bucketname)
   if(is.null(location)){
     .get.bucket.location(bucketname)
   }else{
@@ -250,7 +250,9 @@
   r <- GetBucketLocation(bucketname)
   if(r$status_code == 200){
     location <- unlist(xml2::as_list(httr::content(r, encoding = 'UTF-8')))
-    .state$location[[bucketname]] <- location
+    locationState(bucketname, location)
+  }else if(r$status_code == 403){
+    stop(sprintf("Can't get bucket name. Please try set location manually with locationState('%s', 'oss-cn-xxx').", bucketname))
   }else{
     stop(sprintf("No Bucket Named %s.", bucketname))
   }
@@ -346,6 +348,21 @@ states <- function(name, ..., state){
   }else{
     .state[[name]][[idx]] <- state
   }
+}
+
+#' locationState
+#'
+#' @param bucketname
+#' @param location
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' locationState('ross-test')
+#' locationState('ross-test', 'oss-cn-beijing')
+locationState <- function(bucketname, location){
+  states('multipart', bucketname, state=location)
 }
 
 multiPartUploadState <- function(bucketname, key, state){
