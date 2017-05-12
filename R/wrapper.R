@@ -200,6 +200,26 @@ aclBucket <- function(bucketname, acl){
   }
 }
 
+
+parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRUE){
+  if(.progressbar){
+    op <- pbapply::pboptions(type = "timer")
+  }else{
+    op <- pbapply::pboptions(type = "none")
+  }
+  if(.parallel){
+    cl <- parallel::makeForkCluster(n)
+    status_codes <- pbapply::pbsapply(task_params, func, cl=cl)
+    parallel::stopCluster(cl)
+  }else{
+    status_codes <- pbapply::pbsapply(task_params, func)
+  }
+  pbapply::pboptions(op)
+
+  status_codes
+}
+
+
 #' uploadObject
 #'
 #' @param bucketname
@@ -240,6 +260,10 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPa
   }
 
   multiPartUpload <- function(bucketname, src, key, ...){
+    uploadEachPart <- function(x) {
+      uploadPart(src, key, uploadId, x$partPosition, x$partSize, x$partNumber)
+    }
+
     uploadId <- multiPartUploadState(bucketname, key)$uploadId
     task_params <- makePartParams(file_size, split, maxPartSize)
 
@@ -251,18 +275,7 @@ uploadObject <- function(bucketname, src, dest=NULL, resume=TRUE, split=5, maxPa
       uploadId <- unlist(xpath2list(httr::content(r, encoding = 'UTF-8'), '//UploadId'))
     }
 
-    if(.progressbar){
-      op <- pbapply::pboptions(type = "timer")
-    }else{
-      op <- pbapply::pboptions(type = "none")
-    }
-
-    cl <- parallel::makeForkCluster(split)
-    status_codes <- pbapply::pbsapply(task_params, function(x) {
-      uploadPart(src, key, uploadId, x$partPosition, x$partSize, x$partNumber)
-    }, cl=cl)
-    parallel::stopCluster(cl)
-    pbapply::pboptions(op)
+    status_codes <- parForkExec(task_params, uploadEachPart, n=split, .progressbar = .progressbar, .parallel = TRUE)
 
     if(all(status_codes == 200)){
       multiPartUploadState(bucketname, key, state=NULL)
@@ -420,19 +433,8 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
   if(is.null(task_params)){
     return(invisible())
   }
-  if(.progressbar){
-    op <- pbapply::pboptions(type = "timer")
-  }else{
-    op <- pbapply::pboptions(type = "none")
-  }
-  if(.parallel){
-    cl <- parallel::makeForkCluster(split)
-    status_codes <- pbapply::pbsapply(task_params, uploadEachFile, cl=cl)
-    parallel::stopCluster(cl)
-  }else{
-    status_codes <- pbapply::pbsapply(task_params, uploadEachFile)
-  }
-  pbapply::pboptions(op)
+
+  status_codes <- parForkExec(task_params, uploadEachFile, n=split, .progressbar = .progressbar, .parallel = .parallel)
 
   names(status_codes) <- files
   failed <- names(status_codes)[status_codes != 200]
@@ -556,48 +558,18 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
     keys
   }
 
-  prepareDirs <- function(src, keys){
-    if(length(keys) == 0){
-      stop('No such key: ', src)
-    }
-
-    dirs <- dirname(keys)
-    prefix <- dirname(src)
-    if(prefix != '.'){
-      dirs <- gsub(paste0('^', prefix), '', dirs)
-    }
-    dirs <- file.path(path.expand(dest), dirs)
-    dirs <- gsub('/+', '/', dirs)
-    dirs <- gsub('/\\.$', '/', dirs)
-
-    if(length(dirs) == 1 && grepl('/$', dest)){
-      mkdirs(dirs)
-    }else if(length(dirs) > 1){
-      mkdirs(dirs)
-    }
-
-    dirs
-  }
-
   prepareDest <- function(keys, src, prefix='.'){
     if(length(keys) == 0){
       stop('No such key: ', src)
     }
 
-    if(grepl('/$', prefix)){
+    if(grepl('/$', prefix) || prefix == '.'){
       path_fix <- dirname(src)
       if(path_fix == '.'){
         path_fix <- ""
       }
     }else{
-      if(prefix == '.'){
-        path_fix <- dirname(src)
-        if(path_fix == '.'){
-          path_fix <- ""
-        }
-      }else{
-        path_fix <- src
-      }
+      path_fix <- src
     }
 
     dest_base <- gsub(sprintf("^%s", path_fix), '', keys)
@@ -612,10 +584,10 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
     sapply(unique(dirs), dir.create, recursive=T, showWarnings=F)
   }
 
-  makeTaskParams <- function(keys, dirs){
+  makeTaskParams <- function(keys, dests){
     lapply(1:length(keys), function(i){
       list(src = keys[i],
-           dest = dirs[i])
+           dest = dests[i])
     })
   }
 
@@ -625,26 +597,12 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
   }
 
   keys <- prepareSrc(bucketname, src, pattern)
-#  dirs <- prepareDirs(src, keys)
   dests <- prepareDest(keys, src, dest)
   mkdirs(unique(dirname(dests)))
   message(length(keys), ' files to download')
 
   task_params <- makeTaskParams(keys, dests)
-
-  if(.progressbar){
-    op <- pbapply::pboptions(type = "timer")
-  }else{
-    op <- pbapply::pboptions(type = "none")
-  }
-  if(.parallel){
-    cl <- parallel::makeForkCluster(split)
-    status_codes <- pbapply::pbsapply(task_params, downloadEachFile, cl=cl)
-    parallel::stopCluster(cl)
-  }else{
-    status_codes <- pbapply::pbsapply(task_params, downloadEachFile)
-  }
-  pbapply::pboptions(op)
+  status_codes <- parForkExec(task_params, downloadEachFile, n=split, .progressbar = .progressbar, .parallel = .parallel)
 
   names(status_codes) <- keys
   failed <- names(status_codes)[status_codes != 0]
