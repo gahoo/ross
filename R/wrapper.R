@@ -209,6 +209,27 @@ aclBucket <- function(bucketname, acl){
   }
 }
 
+#' aclObject
+#'
+#' @param bucketname
+#' @param key
+#' @param acl
+#'
+#' @return
+#' @export
+#'
+#' @examples
+aclObject <- function(bucketname, key, acl){
+  if(missing(acl)){
+    r <- GetObjectACL(bucketname, key)
+    doc <- httr::content(r, encoding = 'UTF-8')
+    unlist(xpath2list(doc, '/AccessControlPolicy/AccessControlList/Grant'))
+  }else{
+    r <- PutObjectACL(bucketname, key, acl)
+    invisible(r)
+  }
+}
+
 
 parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRUE){
   if(.progressbar){

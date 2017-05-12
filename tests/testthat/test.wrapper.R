@@ -7,6 +7,16 @@ test_that("aclBucket", {
   deleteBucket('ross-test')
 })
 
+test_that("aclObject", {
+  expect_message(createBucket('ross-test'), 'ross-test with private')
+  expect_silent(r<-PutObject('ross-test', 'test.txt'))
+  expect_equal(aclObject('ross-test', 'test.txt'), 'private')
+  expect_silent(aclObject('ross-test', 'test.txt', 'public-read'))
+  expect_equal(aclObject('ross-test', 'test.txt'), 'public-read')
+  removeObjects('ross-test', confirm=TRUE)
+  deleteBucket('ross-test')
+})
+
 test_that("usageBucket", {
   createBucket('ross-test')
   removeObjects('ross-test', confirm=TRUE)

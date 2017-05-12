@@ -173,7 +173,11 @@ oss.acl <- function(x, ...){
 }
 
 acl.oss <- function(x, ...){
-  aclBucket(x$bucket, ...)
+  if(is.null(x$key)){
+    aclBucket(x$bucket, ...)
+  }else{
+    aclObject(x$bucket, x$key, ...)
+  }
 }
 
 acl.character <- function(x, ...){
