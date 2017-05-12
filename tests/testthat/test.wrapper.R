@@ -26,6 +26,7 @@ test_that("listBucket, removeObjects, usageBucket", {
   # listBucket
   upload_path <- 'tests/test_upload/multiplefiles/will_success/'
   expect_output(r <- uploadMultipleObjects('ross-test', upload_path,  .parallel = T), '100%')
+  expect_true('ross-test' %in% listBucket()$Name)
   expect_equal(nrow(listBucket('ross-test')), 1)
   expect_equal(nrow(listBucket('ross-test', 'will_success')), 1)
   expect_equal(nrow(listBucket('ross-test', 'will_success/')), 5)
