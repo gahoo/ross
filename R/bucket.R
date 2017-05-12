@@ -120,7 +120,9 @@ Bucket <- R6::R6Class("Bucket",
       uploadMultipleObjects(self$Name, src=src, prefix=prefix, pattern=pattern, resume=pattern, split=split,
                             .progressbar=.progressbar, ..., .parallel=.parallel)
     },
-    cp = function() {},
+    cp = function(from, to, ...) {
+      oss.cp(from, to, ...)
+    },
     print = function(...) {
       bucket_text <- sprintf(paste(
           "<Bucket>",
