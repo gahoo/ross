@@ -185,6 +185,8 @@ acl.character <- function(x, ...){
   acl.oss(x, ...)
 }
 #####
+oss.stat <- function(){}
+
 oss.meta <- function(){}
 
 oss.read <- function(){}

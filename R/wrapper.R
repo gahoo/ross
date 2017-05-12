@@ -230,6 +230,22 @@ aclObject <- function(bucketname, key, acl){
   }
 }
 
+getBucketInfo <- function(bucketname){
+  r <- GetBucketInfo(bucketname)
+  doc <- httr::content(r, encoding = 'UTF-8')
+  info <- xpath2list(doc, '/BucketInfo/Bucket')
+  names(info) <- gsub('.*\\.', '', names(info))
+  cat(paste(names(info), info, sep=": ", collapse = '\n'))
+  invisible(info)
+}
+
+getObjectInfo <- function(bucketname, key){
+  r <- HeadObject(bucketname, key)
+  cat(paste(names(r$headers), r$headers, sep=": ", collapse = '\n'))
+  invisible(r$headers)
+}
+
+
 
 parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRUE){
   if(.progressbar){
