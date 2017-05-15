@@ -273,3 +273,20 @@ PutSymlink <- function(bucketname, key, target, .meta=NULL){
 GetSymlink <- function(bucketname, key){
   .api.get.header.request(bucketname=bucketname, path=key, query='symlink')
 }
+
+#' RestoreObject
+#'
+#' @param bucketname
+#' @param key
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' PutBucket('ross-archive', StorageClass = 'Archive')
+#' PutObject('ross-archive', 'test.txt')
+#' r<-RestoreObject('ross-archive', 'test.txt') #202
+#' r<-RestoreObject('ross-archive', 'test.txt') #200
+RestoreObject <- function(bucketname, key){
+  .api.post.header.request(bucketname=bucketname, path=key, query='restore')
+}

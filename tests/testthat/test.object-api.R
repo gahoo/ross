@@ -171,3 +171,17 @@ test_that("GetSymlink", {
   r <- GetSymlink('ross-test', 'test-no-exist-linked.txt')
   expect_equal(r$status_code, 200)
 })
+
+test_that("RestoreObject",{
+  r <- PutBucket('ross-test-archive', StorageClass = 'Archive')
+  expect_equal(r$status_code, 200)
+  r <- PutObject('ross-test-archive', 'test.txt', 'test')
+  expect_equal(r$status_code, 200)
+  r <- RestoreObject('ross-test-archive', 'test.txt')
+  expect_equal(r$status_code, 202)
+  r <- RestoreObject('ross-test-archive', 'test.txt')
+  expect_equal(r$status_code, 409)
+  removeObjects('ross-test-archive', confirm = T)
+  r <- DeleteBucket('ross-test-archive')
+  expect_equal(r$status_code, 204)
+})
