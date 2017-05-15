@@ -230,6 +230,14 @@ aclObject <- function(bucketname, key, acl){
   }
 }
 
+#' getBucketInfo
+#'
+#' @param bucketname
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getBucketInfo <- function(bucketname){
   r <- GetBucketInfo(bucketname)
   doc <- httr::content(r, encoding = 'UTF-8')
@@ -239,12 +247,26 @@ getBucketInfo <- function(bucketname){
   invisible(info)
 }
 
+#' getObjectInfo
+#'
+#' @param bucketname
+#' @param key
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' PutObject('ross-test', 'test.txt')
+#' getObjectInfo('ross-test', 'test.txt')
 getObjectInfo <- function(bucketname, key){
   r <- HeadObject(bucketname, key)
-  cat(paste(names(r$headers), r$headers, sep=": ", collapse = '\n'))
+  if(r$status_code == 200){
+    cat(paste(names(r$headers), r$headers, sep=": ", collapse = '\n'))
+  }else if(r$status_code == 404){
+    warning('No Such Key: ', key)
+  }
   invisible(r$headers)
 }
-
 
 
 parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRUE){
