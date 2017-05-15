@@ -252,7 +252,7 @@
     location <- unlist(xml2::as_list(httr::content(r, encoding = 'UTF-8')))
     locationState(bucketname, location)
   }else if(r$status_code == 403){
-    stop(sprintf("Can't get bucket name. Please try set location manually with locationState('%s', 'oss-cn-xxx').", bucketname))
+    stop(sprintf("Can't get bucket location. Please try set location manually with locationState('%s', 'oss-cn-xxx').", bucketname))
   }else{
     stop(sprintf("No Bucket Named %s.", bucketname))
   }
