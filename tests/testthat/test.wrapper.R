@@ -17,6 +17,23 @@ test_that("aclObject", {
   deleteBucket('ross-test')
 })
 
+test_that("getBucketInfo", {
+  expect_message(createBucket('ross-test'), 'ross-test with private')
+  expect_output(r <- getBucketInfo('ross-test'))
+  expect_equal(r$Name, 'ross-test')
+  deleteBucket('ross-test')
+})
+
+test_that("getObjectInfo", {
+  expect_message(createBucket('ross-test'), 'ross-test with private')
+  PutObject('ross-test', 'test.txt')
+  expect_output(r <- getObjectInfo('ross-test', 'test.txt'))
+  expect_equal(r$`content-md5`, "1B2M2Y8AsgTpgAmY7PhCfg==")
+  expect_warning(r <- getObjectInfo('ross-test', 'non-exists'))
+  removeObjects('ross-test', confirm=TRUE)
+  deleteBucket('ross-test')
+})
+
 test_that("usageBucket", {
   createBucket('ross-test')
   removeObjects('ross-test', confirm=TRUE)
