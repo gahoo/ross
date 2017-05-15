@@ -34,6 +34,33 @@ test_that("getObjectInfo", {
   deleteBucket('ross-test')
 })
 
+test_that("metaObject", {
+  expect_message(createBucket('ross-test'), 'ross-test with private')
+  PutObject('ross-test', 'test.txt')
+  expect_silent(r <- metaObject('ross-test', 'test.txt', meta=list(test=1)))
+  expect_equal(r$status_code, 200)
+  expect_silent(r <- metaObject('ross-test', 'test.txt', meta=list(test=2)))
+  expect_equal(r$status_code, 200)
+  expect_silent(r <- metaObject('ross-test', 'test.txt'))
+  expect_equal(r$test, '2')
+  expect_silent(r <- metaObject('ross-test', 'test.txt', meta=list(test2=2)))
+  expect_silent(r <- metaObject('ross-test', 'test.txt'))
+  expect_equal(r$test2, '2')
+  expect_silent(r <- metaObject('ross-test', 'test.txt', meta=list(test=1)))
+  expect_silent(r <- metaObject('ross-test', 'test.txt'))
+  expect_equal(r$test, '1')
+  expect_equal(length(r), 2)
+  expect_silent(r <- metaObject('ross-test', 'test.txt', meta=list(test2=NULL)))
+  expect_silent(r <- metaObject('ross-test', 'test.txt'))
+  expect_true(is.null(r$test2))
+  expect_equal(length(r), 1)
+  expect_silent(r <- metaObject('ross-test', 'test.txt', meta=NULL))
+  expect_equal(r$status_code, 200)
+  expect_silent(r <- metaObject('ross-test', 'test.txt'))
+  expect_equal(length(r), 0)
+
+})
+
 test_that("usageBucket", {
   createBucket('ross-test')
   removeObjects('ross-test', confirm=TRUE)
