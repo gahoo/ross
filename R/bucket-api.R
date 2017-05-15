@@ -6,7 +6,7 @@
 #'
 #' @param name The bucket name
 #' @param acl Authority control of bucket. choose from public-read-write, public-read, private.
-#' @param StorageClass Storage type, Standard or IA.
+#' @param StorageClass Storage type, Standard, IA or Archive.
 #' @param Location The region of bucket.
 #'
 #' @return
@@ -17,7 +17,7 @@
 PutBucket <- function(bucketname, Location="oss-cn-beijing", acl = "private", StorageClass="Standard") {
   .check.acl(acl)
 
-  if(!StorageClass %in% c("Standard", "IA")){
+  if(!StorageClass %in% c("Standard", "IA", "Archive")){
     stop('Invalid StorageClass, choose from Standard, .')
   }
 
