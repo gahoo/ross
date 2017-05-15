@@ -268,6 +268,57 @@ getObjectInfo <- function(bucketname, key){
   invisible(r$headers)
 }
 
+#' metaObject
+#'
+#' @param bucketname
+#' @param key
+#' @param meta
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' PutObject('ross-test', 'test.txt')
+#' metaObject('ross-test', 'test.txt', meta=list(test1='a', test2='b'))
+#' metaObject('ross-test', 'test.txt')
+#' metaObject('ross-test', 'test.txt', meta=list(test3='d'))
+#' metaObject('ross-test', 'test.txt')
+#' metaObject('ross-test', 'test.txt', meta=list(test3='c'))
+#' metaObject('ross-test', 'test.txt')
+#' metaObject('ross-test', 'test.txt', meta=list(test3=NULL))
+#' metaObject('ross-test', 'test.txt')
+#' metaObject('ross-test', 'test.txt', meta=NULL)
+#' metaObject('ross-test', 'test.txt')
+metaObject <-function(bucketname, key, meta){
+  extractMeta <- function(r){
+    idx <- grep("x-oss-meta-", names(r$headers))
+    object_meta <- r$headers[idx]
+    names(object_meta) <- gsub('x-oss-meta-', '', names(object_meta))
+    object_meta
+  }
+
+  updateMeta <- function(old, new){
+    for(k in names(new)){
+      old[[k]] <- new[[k]]
+    }
+    old
+  }
+
+  r <- HeadObject(bucketname, key)
+  object_meta <- extractMeta(r)
+
+  if(missing(meta)){
+    object_meta
+  }else if(is.null(meta)){
+    r <- PutObjectMeta(bucketname, key, .meta=meta)
+    invisible(r)
+  }else if(!missing(meta)){
+    object_meta <- updateMeta(object_meta, meta)
+    r <- PutObjectMeta(bucketname, key, .meta=object_meta)
+    invisible(r)
+  }
+}
+
 
 parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRUE){
   if(.progressbar){
