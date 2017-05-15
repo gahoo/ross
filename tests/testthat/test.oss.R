@@ -44,7 +44,7 @@ test_that("oss.cp", {
   expect_true(is_file('renamed/test1.txt'))
   oss.cp('oss://ross-test/folder', 'deepper/')
   expect_true(is_file('deepper/folder/test1.txt'))
-  oss.cp('oss://ross-test/deep/folder', 'deep/renamed')
+  oss.cp('oss://ross-test/deep/folder2', 'deep/renamed')
   expect_true(is_file('deep/renamed/test1.txt'))
   oss.cp('oss://ross-test/deep', 'deep3/')
   expect_true(is_file('deep3/deep/folder2/test1.txt'))
@@ -96,4 +96,8 @@ test_that("oss.cp", {
   expect_true(is_online('test2.txt'))
   oss.cp('oss://ross-test/test.txt', 'oss://ross-test/another/test2.txt')
   expect_true(is_online('another/test2.txt'))
+
+  removeObjects('ross-test', confirm = T)
+  unlink('/Volumes/RamDisk/ross/')
+  deleteBucket('ross-test')
 })
