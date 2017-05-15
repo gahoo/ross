@@ -184,9 +184,28 @@ acl.character <- function(x, ...){
   x <- oss(x)
   acl.oss(x, ...)
 }
-#####
-oss.stat <- function(){}
+##### stat
+oss.stat <- function(x, ...){
+  UseMethod('stat', x)
+}
 
+stat.oss <- function(x, ...){
+  if(is.null(x$key)){
+    getBucketInfo(x$bucket)
+  }else{
+    getObjectInfo(x$bucket, x$key)
+  }
+}
+
+stat.character <- function(x, ...){
+  x <- oss(x)
+  stat.oss(x)
+}
+
+stat.Bucket <- function(x, ...){
+  x$print()
+}
+#####
 oss.meta <- function(){}
 
 oss.read <- function(){}
