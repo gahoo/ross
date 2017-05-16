@@ -58,7 +58,20 @@ test_that("metaObject", {
   expect_equal(r$status_code, 200)
   expect_silent(r <- metaObject('ross-test', 'test.txt'))
   expect_equal(length(r), 0)
+  removeObjects('ross-test', confirm=TRUE)
+  deleteBucket('ross-test')
 
+})
+
+test_that("linkObject", {
+  expect_message(createBucket('ross-test'), 'ross-test with private')
+  PutObject('ross-test', 'test.txt')
+  expect_silent(r <- linkObject('ross-test', 'linked-test.txt', target = 'test.txt'))
+  expect_equal(r$status_code, 200)
+  expect_silent(r <- linkObject('ross-test', 'linked-test.txt'))
+  expect_equal(r, 'test.txt')
+  removeObjects('ross-test', confirm=TRUE)
+  deleteBucket('ross-test')
 })
 
 test_that("usageBucket", {
