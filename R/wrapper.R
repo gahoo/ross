@@ -231,6 +231,24 @@ aclObject <- function(bucketname, key, acl){
 }
 
 
+#' aclMultipleObjects
+#'
+#' @param bucketname
+#' @param prefix
+#' @param acl
+#' @param recursive
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' PutObject('ross-test', 'test1.txt')
+#' PutObject('ross-test', 'test2.txt')
+#' aclMultipleObjects('ross-test', 'test1.txt', 'public-read', .progressbar=F)
+#' aclObject('ross-test', 'test1.txt')
+#' aclMultipleObjects('ross-test', 'test', 'public-read-write', recursive = T, .progressbar=F)
+#' aclObject('ross-test', 'test2.txt')
 aclMultipleObjects <- function(bucketname, prefix, acl, recursive = FALSE, ...){
   if(recursive){
     keys <- suppressMessages(listBucket(bucketname, prefix, delimiter = '', .output = 'character'))
@@ -338,7 +356,7 @@ metaObject <-function(bucketname, key, meta){
   }
 }
 
-#' Title
+#' metaMultipleObjects
 #'
 #' @param bucketname
 #' @param prefix
@@ -350,6 +368,14 @@ metaObject <-function(bucketname, key, meta){
 #' @export
 #'
 #' @examples
+#' PutObject('ross-test', 'test1.txt')
+#' PutObject('ross-test', 'test2.txt')
+#' metaMultipleObjects('ross-test', 'test1.txt', meta=list(a=1), .progressbar=F)
+#' metaObject('ross-test', 'test1.txt')
+#' metaMultipleObjects('ross-test', 'test', meta=list(b=2), recursive = T)
+#' metaObject('ross-test', 'test1.txt')
+#' metaObject('ross-test', 'test2.txt')
+
 metaMultipleObjects <- function(bucketname, prefix, meta, recursive=FALSE, ...){
   if(recursive){
     keys <- suppressMessages(listBucket(bucketname, prefix, delimiter = '', .output = 'character'))
