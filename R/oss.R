@@ -11,6 +11,11 @@ oss <- function(x){
   if(key == '') key <- NULL
   structure(list(bucketname=bucketname, key=key), class='oss')
 }
+
+print.oss <- function(x){
+  cat(sprintf("oss://%s/%s", x$bucket, x$key))
+  invisible(x)
+}
 ##### ls
 #' oss.ls
 #'
@@ -155,7 +160,18 @@ oss.cp <- function(from, to, ...){
 
 
 #####
-oss.ln <- function(){}
+oss.ln <- function(x, ...){
+  UseMethod('ln', x)
+}
+
+ln.oss <- function(x, ...){
+  linkObject(x$bucket, x$key, ...)
+}
+
+ln.character <- function(x, ...){
+  x <- oss(x)
+  ln.oss(x, ...)
+}
 ##### acl
 #' oss.acl
 #'
@@ -170,6 +186,12 @@ oss.ln <- function(){}
 #' oss.acl('oss://ross-test', acl='public-read')
 oss.acl <- function(x, ...){
   UseMethod('acl', x)
+}
+
+"oss.acl<-" <- function(x, value){
+  x <- oss(x)
+  acl.oss(x, acl=value)
+  x
 }
 
 acl.oss <- function(x, ...){
@@ -206,7 +228,26 @@ stat.Bucket <- function(x, ...){
   x$print()
 }
 #####
-oss.meta <- function(){}
+oss.meta <- function(x, ...){
+  UseMethod('meta', x)
+}
+
+"oss.meta<-" <- function(x, value){
+  x <- oss(x)
+  meta.oss(x, meta=value)
+  x
+}
+
+meta.oss <- function(x, ...){
+  metaObject(x$bucket, x$key, ...)
+}
+
+meta.character <- function(x, ...){
+  x <- oss(x)
+  meta.oss(x, ...)
+}
+
+#####
 
 oss.read <- function(){}
 
