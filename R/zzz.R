@@ -350,6 +350,17 @@ states <- function(name, ..., state){
   }
 }
 
+saveStates <- function(bucketname, status_codes, success_code, state_func, status_name=NULL, ...){
+  if(!is.null(status_name)) names(status_codes) <- status_name
+  failed <- names(status_codes)[status_codes != success_code]
+  if(length(failed) > 0){
+    state_func(bucketname, ..., state=failed)
+    warning('Some files failed:\n', paste0(failed, collapse = '\n'))
+  }else{
+    state_func(bucketname, ..., state=NULL)
+  }
+}
+
 #' locationState
 #'
 #' @param bucketname
@@ -377,3 +388,6 @@ downloadState <- function(bucketname, src, dest, pattern, state){
   states('download', bucketname, src, dest, pattern, state=state)
 }
 
+aclState <- function(bucketname, prefix, acl, recursive, state){
+  states('acl', bucketname, prefix, acl, recursive, state=state)
+}
