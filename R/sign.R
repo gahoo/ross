@@ -111,7 +111,7 @@ NULL
   authorization <- sprintf("OSS %s:%s", AccessKeyId, signature)
   headers <- add_headers(date = date, authorization = authorization, .headers=.headers)
 
-  response <- do.call(method, args = list(url, headers, query = query, body=body, user_agent("ross 0.0.1")))
+  response <- do.call(method, args = list(url, headers, query = query, body=body, user_agent("ross 0.0.5")))
   .check.http_error(response)
   response
 }
