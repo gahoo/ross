@@ -216,7 +216,7 @@ PutObjectMeta <- function(bucketname, key, .meta=NULL){
 
 #' GetObjectMeta
 #'
-#' Only includes basic meta info. For complete meta use HeadObject.
+#' Only includes basic meta info like size, etag, etc. For complete meta use HeadObject.
 #'
 #' @inheritParams PutObject
 #'
