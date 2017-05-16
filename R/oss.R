@@ -188,9 +188,9 @@ oss.acl <- function(x, ...){
   UseMethod('acl', x)
 }
 
-"oss.acl<-" <- function(x, value){
+"oss.acl<-" <- function(x, value, ...){
   x <- oss(x)
-  acl.oss(x, acl=value)
+  acl.oss(x, acl=value, ...)
   x
 }
 
@@ -198,7 +198,11 @@ acl.oss <- function(x, ...){
   if(is.null(x$key)){
     aclBucket(x$bucket, ...)
   }else{
-    aclObject(x$bucket, x$key, ...)
+    if('recursive' %in% names(list(...))){
+      aclMultipleObjects(x$bucket, x$key, ...)
+    }else{
+      aclObject(x$bucket, x$key, ...)
+    }
   }
 }
 
