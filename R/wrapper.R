@@ -394,11 +394,14 @@ parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRU
     op <- pbapply::pboptions(type = "none")
   }
 
-  n <- ifelse(length(task_params) < n, length(task_params), n)
   if(.parallel){
-    cl <- parallel::makeForkCluster(n)
+    if(.Platform$OS.type == 'unix'){
+      cl <- parallel::makeForkCluster(n)
+    }else{
+      cl <- parallel::makePSOCKcluster(n)
+    }
     status_codes <- pbapply::pbsapply(task_params, func, cl=cl)
-    parallel::stopCluster(cl)
+    on.exit(parallel::stopCluster(cl))
   }else{
     status_codes <- pbapply::pbsapply(task_params, func)
   }
