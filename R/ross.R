@@ -15,6 +15,7 @@ NULL
 .state$multipart <- list()
 .state$upload <- list()
 .state$download <- list()
+.state$acl <- list()
 
 
 .api.request <- function(sign.func, method, ossresource=NULL,
