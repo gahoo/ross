@@ -120,6 +120,15 @@ test_that("HeadObject", {
   expect_equal(r$status_code, 200)
 })
 
+test_that("PutObjectMeta", {
+  r <- PutObject('ross-test', 'test.txt')
+  expect_equal(r$status_code, 200)
+  r <- PutObjectMeta('ross-test', 'test.txt', .meta=list(test='a'))
+  expect_equal(r$status_code, 200)
+  r <- HeadObject('ross-test', 'test.txt')
+  expect_equal(r$headers$`x-oss-meta-test`, 'a')
+})
+
 test_that("GetObjectMeta", {
   r <- PutObject('ross-test', 'test.txt')
   expect_equal(r$status_code, 200)
