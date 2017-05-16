@@ -76,6 +76,19 @@ test_that("metaObject", {
 
 })
 
+test_that("metaMultipleObjects", {
+  expect_message(createBucket('ross-test'), 'ross-test with private')
+  expect_silent(r<-PutObject('ross-test', 'test1.txt'))
+  expect_silent(r<-PutObject('ross-test', 'test2.txt'))
+  expect_silent(r<-PutObject('ross-test', 'test3.txt'))
+  expect_silent(metaMultipleObjects('ross-test', 'test1.txt', meta=list(a=1), .progressbar=F))
+  expect_equal(metaObject('ross-test', 'test1.txt')$a, '1')
+  expect_silent(metaMultipleObjects('ross-test', 'test', meta=list(b=2), recursive = T, .progressbar=F))
+  expect_equal(metaObject('ross-test', 'test3.txt')$b, '2')
+  removeObjects('ross-test', confirm=TRUE)
+  deleteBucket('ross-test')
+})
+
 test_that("linkObject", {
   expect_message(createBucket('ross-test'), 'ross-test with private')
   PutObject('ross-test', 'test.txt')
