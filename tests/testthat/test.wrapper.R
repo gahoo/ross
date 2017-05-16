@@ -17,6 +17,19 @@ test_that("aclObject", {
   deleteBucket('ross-test')
 })
 
+test_that("aclMultipleObjects",{
+  expect_message(createBucket('ross-test'), 'ross-test with private')
+  expect_silent(r<-PutObject('ross-test', 'test1.txt'))
+  expect_silent(r<-PutObject('ross-test', 'test2.txt'))
+  expect_silent(r<-PutObject('ross-test', 'test3.txt'))
+  expect_silent(aclMultipleObjects('ross-test', 'test1.txt', 'public-read', .progressbar=F))
+  expect_equal(aclObject('ross-test', 'test1.txt'), 'public-read')
+  expect_silent(aclMultipleObjects('ross-test', 'test', 'public-read-write', recursive = T, .progressbar=F))
+  expect_equal(aclObject('ross-test', 'test3.txt'), 'public-read-write')
+  removeObjects('ross-test', confirm=TRUE)
+  deleteBucket('ross-test')
+})
+
 test_that("getBucketInfo", {
   expect_message(createBucket('ross-test'), 'ross-test with private')
   expect_output(r <- getBucketInfo('ross-test'))
