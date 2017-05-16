@@ -230,6 +230,25 @@ aclObject <- function(bucketname, key, acl){
   }
 }
 
+
+aclMultipleObjects <- function(bucketname, prefix, acl, recursive = FALSE){
+  if(recursive){
+    keys <- listBucket(bucketname, prefix, delimiter = '', .output = 'character')
+  }else{
+    keys <- prefix
+  }
+
+  status_codes <- parForkExec(keys, function(x){
+    r <- aclObject(bucketname, x, acl)
+    r$status_code
+  }, n = 5, .progressbar=T, .parallel = T)
+
+  names(status_codes) <- keys
+
+  invisible(status_codes)
+
+}
+
 #' getBucketInfo
 #'
 #' @param bucketname
@@ -310,7 +329,7 @@ metaObject <-function(bucketname, key, meta){
   if(missing(meta)){
     object_meta
   }else if(is.null(meta)){
-    r <- PutObjectMeta(bucketname, key, .meta=meta)
+    r <- PutObjectMeta(bucketname, key, .meta=NULL)
     invisible(r)
   }else if(!missing(meta)){
     object_meta <- updateMeta(object_meta, meta)
@@ -319,6 +338,18 @@ metaObject <-function(bucketname, key, meta){
   }
 }
 
+metaMultipleObjects <- function(){}
+
+linkObject <- function(bucketname, key, target, .meta=NULL){
+  if(missing(target)){
+    r <- GetSymlink(bucketname, key)
+    r$headers$`x-oss-symlink-target`
+  }else{
+    r <- PutSymlink(bucketname, key, target, .meta)
+    invisible(r)
+  }
+
+}
 
 parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRUE){
   if(.progressbar){
