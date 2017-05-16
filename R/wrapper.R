@@ -338,8 +338,44 @@ metaObject <-function(bucketname, key, meta){
   }
 }
 
-metaMultipleObjects <- function(){}
+#' Title
+#'
+#' @param bucketname
+#' @param prefix
+#' @param meta
+#' @param recursive
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+metaMultipleObjects <- function(bucketname, prefix, meta, recursive=FALSE, ...){
+  if(recursive){
+    keys <- suppressMessages(listBucket(bucketname, prefix, delimiter = '', .output = 'character'))
+  }else{
+    keys <- prefix
+  }
 
+  status_codes <- parForkExec(keys, function(x){
+    r <- metaObject(bucketname, x, meta)
+    r$status_code
+  }, ...)
+
+  invisible(status_codes)
+}
+
+#' Title
+#'
+#' @param bucketname
+#' @param key
+#' @param target
+#' @param .meta
+#'
+#' @return
+#' @export
+#'
+#' @examples
 linkObject <- function(bucketname, key, target, .meta=NULL){
   if(missing(target)){
     r <- GetSymlink(bucketname, key)

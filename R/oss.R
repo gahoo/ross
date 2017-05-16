@@ -236,14 +236,22 @@ oss.meta <- function(x, ...){
   UseMethod('meta', x)
 }
 
-"oss.meta<-" <- function(x, value){
+"oss.meta<-" <- function(x, value, ...){
   x <- oss(x)
-  meta.oss(x, meta=value)
+  meta.oss(x, meta=value, ...)
   x
 }
 
 meta.oss <- function(x, ...){
-  metaObject(x$bucket, x$key, ...)
+  if(is.null(x$key)){
+    stop('Bucket has no meta.')
+  }else{
+    if('recursive' %in% names(list(...))){
+      metaMultipleObjects(x$bucket, x$key, ...)
+    }else{
+      metaObject(x$bucket, x$key, ...)
+    }
+  }
 }
 
 meta.character <- function(x, ...){
