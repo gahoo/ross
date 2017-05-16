@@ -231,9 +231,9 @@ aclObject <- function(bucketname, key, acl){
 }
 
 
-aclMultipleObjects <- function(bucketname, prefix, acl, recursive = FALSE){
+aclMultipleObjects <- function(bucketname, prefix, acl, recursive = FALSE, ...){
   if(recursive){
-    keys <- listBucket(bucketname, prefix, delimiter = '', .output = 'character')
+    keys <- suppressMessages(listBucket(bucketname, prefix, delimiter = '', .output = 'character'))
   }else{
     keys <- prefix
   }
@@ -241,9 +241,9 @@ aclMultipleObjects <- function(bucketname, prefix, acl, recursive = FALSE){
   status_codes <- parForkExec(keys, function(x){
     r <- aclObject(bucketname, x, acl)
     r$status_code
-  }, n = 5, .progressbar=T, .parallel = T)
+  }, ...)
 
-  names(status_codes) <- keys
+  saveStates(bucketname, status_codes, 200, aclState, status_name=keys, prefix, acl, recursive)
 
   invisible(status_codes)
 
@@ -357,6 +357,8 @@ parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRU
   }else{
     op <- pbapply::pboptions(type = "none")
   }
+
+  n <- ifelse(length(task_params) < n, length(task_params), n)
   if(.parallel){
     cl <- parallel::makeForkCluster(n)
     status_codes <- pbapply::pbsapply(task_params, func, cl=cl)
