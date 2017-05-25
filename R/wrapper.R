@@ -347,11 +347,13 @@ metaObject <-function(bucketname, key, meta){
   if(missing(meta)){
     object_meta
   }else if(is.null(meta)){
-    r <- PutObjectMeta(bucketname, key, .meta=NULL)
+    source <- sprintf('/%s/%s', bucketname, key)
+    r <- CopyObject(source, bucketname, key, .meta = NULL)
     invisible(r)
   }else if(!missing(meta)){
     object_meta <- updateMeta(object_meta, meta)
-    r <- PutObjectMeta(bucketname, key, .meta=object_meta)
+    source <- sprintf('/%s/%s', bucketname, key)
+    r <- CopyObject(source, bucketname, key, .meta = meta)
     invisible(r)
   }
 }
@@ -391,7 +393,7 @@ metaMultipleObjects <- function(bucketname, prefix, meta, recursive=FALSE, ...){
   invisible(status_codes)
 }
 
-#' Title
+#' linkObject
 #'
 #' @param bucketname
 #' @param key
@@ -426,8 +428,8 @@ parForkExec <- function(task_params, func, n=5, .progressbar=TRUE, .parallel=TRU
     }else{
       cl <- parallel::makePSOCKcluster(n)
     }
-    status_codes <- pbapply::pbsapply(task_params, func, cl=cl)
     on.exit(parallel::stopCluster(cl))
+    status_codes <- pbapply::pbsapply(task_params, func, cl=cl)
   }else{
     status_codes <- pbapply::pbsapply(task_params, func)
   }
