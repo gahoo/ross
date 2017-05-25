@@ -326,3 +326,18 @@ test_that("copyObjects", {
   # Local Copy
   expect_silent(copyObjects('/Volumes/RamDisk/success/1/1.txt', '/Volumes/RamDisk/1.txt'))
 })
+
+test_that("save/load Objects", {
+  createBucket('ross-test')
+  a <- 1:4
+  b <- 5:6
+  # save
+  expect_silent(r <- saveObject('ross-test', 'test.RData', a, b))
+  expect_equal(r$status_code, 200)
+  expect_silent(r <- saveObject('ross-test', 'test.RData', a, b, opts=list(split = 10)))
+  expect_equal(r$status_code, 200)
+  # load
+  rm(a, b)
+  expect_silent(r<-loadObject('ross-test', 'test.RData'))
+  expect_true(all(c('a', 'b') %in% ls()))
+})
