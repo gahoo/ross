@@ -918,3 +918,26 @@ copyObjects <- function(src, dest, src_bucket=NULL, dest_bucket=NULL, ...){
   }
   invisible(r)
 }
+
+saveObject <- function(bucketname, key, ..., envir = parent.frame(), opts=NULL){
+  tmp <- tempfile(fileext = '.RData')
+  on.exit(unlink(tmp))
+  save(..., file = tmp, envir = envir, compress = 'bzip2')
+  do.call(uploadObject, c(list(bucketname, tmp, key), opts))
+}
+
+saveObjectInMem <- function(bucketname, key, ..., envir = parent.frame()){
+  con <- rawConnection(raw(0), "wb")
+  on.exit(close(con))
+  save(..., file = con, envir = envir, compress = 'bzip2')
+  r <- PutObject(bucketname, key, body=rawConnectionValue(con))
+  invisible(r)
+}
+
+loadObject <- function(bucketname, key, envir = parent.frame(), ..., quiet = T){
+  tmp <- tempfile(fileext = '.RData')
+  on.exit(unlink(tmp))
+  r <- downloadObject(bucketname, key, tmp, ..., quiet = quiet)
+  load(tmp, envir = envir)
+  invisible(r)
+}
