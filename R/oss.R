@@ -231,7 +231,23 @@ stat.character <- function(x, ...){
 stat.Bucket <- function(x, ...){
   x$print()
 }
-#####
+##### meta
+#' oss.meta
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.meta('oss://ross-test/test.txt')
+#' oss.meta('oss://ross-test/test.txt', meta=list(b=2))
+#' oss.meta('oss://ross-test/test.txt', meta=list(a=1))
+#' oss.meta('oss://ross-test/test.txt', meta=list(a=NULL))
+#' oss.meta('oss://ross-test', meta=NULL)
+#' oss.meta('oss://ross-test/test/', recursive=T, meta=list(a=1))
+
 oss.meta <- function(x, ...){
   UseMethod('meta', x)
 }
@@ -266,6 +282,65 @@ oss.read <- function(){}
 oss.write <- function(){}
 
 oss.file <- function(){}
+##### save
+#' oss.save
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' a <- 1:10
+#' oss.save('oss://ross-test/test.RData', a)
+oss.save <- function(x, ...){
+  UseMethod('save', x)
+}
+
+save.oss <- function(x, ...){
+  if(is.null(x$key)){
+    stop('Key must be specified')
+  }else{
+    saveObject(x$bucket, x$key, ...)
+  }
+}
+
+save.character <- function(x, ...){
+  x <- oss(x)
+  save.oss(x, ...)
+}
+##### load
+#' oss.load
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.load('oss://ross-test/test.RData')
+#' ls()
+#' e <- new.env()
+#' oss.load('oss://ross-test/test.RData', envir=e)
+#' ls(e)
+oss.load <- function(x, ...){
+  UseMethod('load', x)
+}
+
+load.oss <- function(x, envir = parent.frame(), ...){
+  if(is.null(x$key)){
+    stop('Key must be specified')
+  }else{
+    loadObject(x$bucket, x$key, envir = envir, ...)
+  }
+}
+
+load.character <- function(x, envir = parent.frame(), ...){
+  x <- oss(x)
+  load.oss(x, envir = envir, ...)
+}
 ##### usage
 oss.usage <- function(x, ...){
   UseMethod('usage', x)
