@@ -195,25 +195,6 @@ HeadObject <- function(bucketname, key,
   .api.head.header.request(bucketname=bucketname, header=header, path=key)
 }
 
-
-#' PutObjectMeta
-#'
-#' Will Overwrite Object Meta.
-#'
-#' @param bucketname
-#' @param key
-#' @param .meta
-#'
-#' @return
-#' @export
-#'
-#' @examples
-PutObjectMeta <- function(bucketname, key, .meta=NULL){
-  header <- .build.object.header(.meta=.meta)
-  .api.put.header.request(bucketname=bucketname, header=header, path=key, query='objectMeta')
-}
-
-
 #' GetObjectMeta
 #'
 #' Only includes basic meta info like size, etag, etc. For complete meta use HeadObject.
