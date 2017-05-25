@@ -703,6 +703,7 @@ downloadObject <- function(bucketname, src, dest=NULL,
 
   url <- GetObject(bucketname, src, expires = 1200, .url = T)
   if(resume) extra <- c(extra, " -c")
+  if(!getOption('ross.aria2c')) method <- 'internal'
 
   if(method == 'aria2'){
     dir_dest <- dirname(dest)
