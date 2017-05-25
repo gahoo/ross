@@ -919,6 +919,22 @@ copyObjects <- function(src, dest, src_bucket=NULL, dest_bucket=NULL, ...){
   invisible(r)
 }
 
+#' saveObject
+#'
+#' @param bucketname
+#' @param key
+#' @param ...
+#' @param envir
+#' @param opts arguments pass to uploadObject.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' a <- 1:4
+#' b <- 5:6
+#' saveObject('ross-test', 'test.RData', a, b)
+#' saveObject('ross-test', 'test.RData', a, b, opts=list(split = 10))
 saveObject <- function(bucketname, key, ..., envir = parent.frame(), opts=NULL){
   tmp <- tempfile(fileext = '.RData')
   on.exit(unlink(tmp))
@@ -934,6 +950,20 @@ saveObjectInMem <- function(bucketname, key, ..., envir = parent.frame()){
   invisible(r)
 }
 
+#' loadObject
+#'
+#' @param bucketname
+#' @param key
+#' @param envir
+#' @param ...
+#' @param quiet
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' loadObject('ross-test', 'test.RData')
+#' ls()
 loadObject <- function(bucketname, key, envir = parent.frame(), ..., quiet = T){
   tmp <- tempfile(fileext = '.RData')
   on.exit(unlink(tmp))
