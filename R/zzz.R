@@ -5,7 +5,8 @@
     ross.location = "beijing",
     ross.internal = FALSE,
     ross.vpc = FALSE,
-    ross.debug = FALSE
+    ross.debug = FALSE,
+    ross.aria2c = is.installed('aria2c')
   )
   toset <- !(names(op.ross) %in% names(op))
   if(any(toset)) options(op.ross[toset])
@@ -390,4 +391,13 @@ downloadState <- function(bucketname, src, dest, pattern, state){
 
 aclState <- function(bucketname, prefix, acl, recursive, state){
   states('acl', bucketname, prefix, acl, recursive, state=state)
+}
+
+is.installed <- function(name){
+  exit_code <- system(paste('which ', name), ignore.stdout = T, ignore.stderr = F)
+  if(exit_code == 0){
+    TRUE
+  }else{
+    FALSE
+  }
 }
