@@ -971,3 +971,17 @@ loadObject <- function(bucketname, key, envir = parent.frame(), ..., quiet = T){
   load(tmp, envir = envir)
   invisible(r)
 }
+
+saveRDSObject <- function(bucketname, key, object, ..., opts=NULL){
+  tmp <- tempfile(fileext = '.rds')
+  on.exit(unlink(tmp))
+  saveRDS(object, file = tmp, compress = 'bzip2', ...)
+  do.call(uploadObject, c(list(bucketname, tmp, key), opts))
+}
+
+readRDSObject <- function(bucketname, key, ..., refhook=NULL, quiet = T){
+  tmp <- tempfile(fileext = '.rds')
+  on.exit(unlink(tmp))
+  downloadObject(bucketname, key, tmp, ..., quiet = quiet)
+  readRDS(tmp, refhook=refhook)
+}

@@ -341,6 +341,41 @@ load.character <- function(x, envir = parent.frame(), ...){
   x <- oss(x)
   load.oss(x, envir = envir, ...)
 }
+#####
+oss.saveRDS <- function(x, ...){
+  UseMethod('saveRDS', x)
+}
+
+saveRDS.oss <- function(x, object, ...){
+  if(is.null(x$key)){
+    stop('Key must be specified')
+  }else{
+    saveRDS(x$bucket, x$key, ...)
+  }
+}
+
+saveRDS.character <- function(x, object, ...){
+  x <- oss(x)
+  saveRDS.oss(x, object, ...)
+}
+
+#####
+oss.readRDS <- function(x, ...){
+  UseMethod('readRDS', x)
+}
+
+readRDS.oss <- function(x, ...){
+  if(is.null(x$key)){
+    stop('Key must be specified')
+  }else{
+    readRDSObject(x$bucket, x$key, ...)
+  }
+}
+
+readRDS.character <- function(x, ...){
+  x <- oss(x)
+  readRDS.oss(x, ...)
+}
 ##### usage
 oss.usage <- function(x, ...){
   UseMethod('usage', x)
