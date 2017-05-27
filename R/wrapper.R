@@ -295,14 +295,23 @@ getBucketInfo <- function(bucketname){
 #' @examples
 #' PutObject('ross-test', 'test.txt')
 #' getObjectInfo('ross-test', 'test.txt')
-getObjectInfo <- function(bucketname, key){
+getObjectInfo <- function(bucketname, key, print=TRUE){
   r <- HeadObject(bucketname, key)
-  if(r$status_code == 200){
+  if(r$status_code == 200 && print){
     cat(paste(names(r$headers), r$headers, sep=": ", collapse = '\n'))
   }else if(r$status_code == 404){
     warning('No Such Key: ', key)
   }
   invisible(r$headers)
+}
+
+isObjectExist <- function(bucketname, key){
+  r <- HeadObject(bucketname, key)
+  if(r$status_code == 200){
+    TRUE
+  }else if(r$status_code == 404){
+    FALSE
+  }
 }
 
 #' metaObject
@@ -404,10 +413,12 @@ metaMultipleObjects <- function(bucketname, prefix, meta, recursive=FALSE, ...){
 #' @export
 #'
 #' @examples
+#' PutObject('ross-test', 'test.txt')
+#' linkObject('ross-test', 'linked-test.txt', '/ross-test/test.txt')
 linkObject <- function(bucketname, key, target, .meta=NULL){
   if(missing(target)){
     r <- GetSymlink(bucketname, key)
-    r$headers$`x-oss-symlink-target`
+    URLdecode(r$headers$`x-oss-symlink-target`)
   }else{
     r <- PutSymlink(bucketname, key, target, .meta)
     invisible(r)
@@ -964,7 +975,7 @@ saveObjectInMem <- function(bucketname, key, ..., envir = parent.frame()){
 #' @examples
 #' loadObject('ross-test', 'test.RData')
 #' ls()
-loadObject <- function(bucketname, key, envir = parent.frame(), ..., quiet = T){
+loadObject <- function(bucketname, key, ..., envir = parent.frame(), quiet = T){
   tmp <- tempfile(fileext = '.RData')
   on.exit(unlink(tmp))
   r <- downloadObject(bucketname, key, tmp, ..., quiet = quiet)
