@@ -126,6 +126,37 @@ Object <- R6::R6Class("Object",
     },
     restore = function(){
       restoreObject(self$bucket, self$key)
+    },
+    print = function(){
+      if(self$exists()){
+        object_text <- sprintf(paste(
+          "<Object>",
+          "Bucket: %s",
+          "Key: %s",
+          "Size: %s",
+          "Type: %s",
+          "Etag: %s",
+          "Creation Date: %s",
+          "Modified Date: %s",
+          sep = "\n"),
+          self$bucket,
+          self$key,
+          self$size,
+          self$type,
+          self$etag,
+          self$creation_date,
+          self$modified_date)
+      }else{
+        object_text <- sprintf(paste(
+          "<Object>",
+          "Bucket: %s",
+          "Key: %s",
+          sep = "\n"),
+          self$bucket,
+          self$key)
+      }
+      cat(object_text)
+      invisible(self)
     }
   ),
   private = list(
