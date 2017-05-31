@@ -125,8 +125,7 @@ Object <- R6::R6Class("Object",
       }
     },
     restore = function(){
-      r <- RestoreObject(self$bucket, self$key)
-      invisible(r)
+      restoreObject(self$bucket, self$key)
     }
   ),
   private = list(
