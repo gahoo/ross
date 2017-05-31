@@ -316,6 +316,10 @@ isObjectExist <- function(bucketname, key){
   }
 }
 
+isBucketExist <- function(bucketname){
+  bucketname %in% listBucket()$Name
+}
+
 #' metaObject
 #'
 #' @param bucketname
@@ -997,4 +1001,9 @@ readRDSObject <- function(bucketname, key, ..., refhook=NULL, quiet = T){
   on.exit(unlink(tmp))
   downloadObject(bucketname, key, tmp, ..., quiet = quiet)
   readRDS(tmp, refhook=refhook)
+}
+
+restoreObject <- function(buketname, key){
+  r <- RestoreObject(bucketname, key)
+  invisible(r)
 }
