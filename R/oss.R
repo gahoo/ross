@@ -65,6 +65,7 @@ ls.BucketList <- function(x, ...){
   }
   x$list(...)
 }
+
 ##### new bucket
 #' oss.mb
 #'
@@ -164,13 +165,63 @@ oss.ln <- function(x, ...){
   UseMethod('ln', x)
 }
 
-ln.oss <- function(x, ...){
-  linkObject(x$bucket, x$key, ...)
+ln.oss <- function(x, target, ...){
+  if(!missing(target) && grepl("^oss://", target)){
+    target <- gsub("^oss://", "/", target)
+  }
+  linkObject(x$bucket, x$key, target, ...)
 }
 
-ln.character <- function(x, ...){
+ln.character <- function(x, target, ...){
   x <- oss(x)
-  ln.oss(x, ...)
+  ln.oss(x, target, ...)
+}
+
+ln.Object <- function(x, target){
+  if(missing(target)){
+    x$link
+  }else{
+    target <- ifelse(grepl("^oss://", target), gsub("^oss://", "/", target), target)
+    x$link <- target
+  }
+}
+##### exist
+oss.exists <- function(x){
+  UseMethod('exists', x)
+}
+
+exists.oss <- function(x){
+  if(is.null(x$key)){
+    isBucketExist(x$bucket)
+  }else{
+    isObjectExist(x$bucket, x$key)
+  }
+}
+
+exists.character <- function(x){
+  x <- oss(x)
+  exists.oss(x)
+}
+
+exists.Object <- exists.Bucket <-function(x){
+  x$exists()
+}
+#####
+oss.restore <- function(x){
+  UseMethod('restore', x)
+}
+
+restore.oss <- function(x){
+  restoreObject(x$bucket, x$key)
+}
+
+restore.character <- function(x){
+  x <- oss(x)
+  restore.oss(x)
+}
+
+restore.Object <- function(x){
+  x$restore()
 }
 ##### acl
 #' oss.acl
