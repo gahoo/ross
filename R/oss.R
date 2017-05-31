@@ -66,6 +66,9 @@ ls.BucketList <- function(x, ...){
   x$list(...)
 }
 
+ls.Object <- function(x, ...){
+  listBucket(x$bucket, x$key, ...)
+}
 ##### new bucket
 #' oss.mb
 #'
@@ -134,7 +137,7 @@ rm.character <- function(x, ...){
   rm.oss(x, ...)
 }
 
-rm.Bucket <- function(x, ...){
+rm.Bucket <- rm.Object <- function(x, ...){
   x$delete()
 }
 ##### cp
@@ -261,6 +264,14 @@ acl.character <- function(x, ...){
   x <- oss(x)
   acl.oss(x, ...)
 }
+
+acl.Bucket <- acl.Object <- function(x, acl, ...){
+  if(missing(acl)){
+    x$acl
+  }else{
+    x$acl <- acl
+  }
+}
 ##### stat
 oss.stat <- function(x, ...){
   UseMethod('stat', x)
@@ -279,7 +290,7 @@ stat.character <- function(x, ...){
   stat.oss(x)
 }
 
-stat.Bucket <- function(x, ...){
+stat.Bucket <- stat.Object <- function(x, ...){
   x$print()
 }
 ##### meta
@@ -326,6 +337,14 @@ meta.character <- function(x, ...){
   meta.oss(x, ...)
 }
 
+meta.Object <- function(x, meta, ...){
+  if(missing(meta)){
+    x$meta
+  }else{
+    x$meta <- meta
+  }
+}
+
 #####
 
 oss.read <- function(){}
@@ -361,6 +380,10 @@ save.character <- function(x, ...){
   x <- oss(x)
   save.oss(x, ...)
 }
+
+save.Object <- function(x, ...){
+  x$save(...)
+}
 ##### load
 #' oss.load
 #'
@@ -392,6 +415,10 @@ load.character <- function(x, envir = parent.frame(), ...){
   x <- oss(x)
   load.oss(x, envir = envir, ...)
 }
+
+load.Object <- function(x, envir = parent.frame(), ...){
+  x$load(envir=envir, ...)
+}
 #####
 oss.saveRDS <- function(x, ...){
   UseMethod('saveRDS', x)
@@ -410,6 +437,9 @@ saveRDS.character <- function(x, object, ...){
   saveRDS.oss(x, object, ...)
 }
 
+saveRDS.Object <- function(x, ...){
+  x$saveRDS(...)
+}
 #####
 oss.readRDS <- function(x, ...){
   UseMethod('readRDS', x)
@@ -427,6 +457,10 @@ readRDS.character <- function(x, ...){
   x <- oss(x)
   readRDS.oss(x, ...)
 }
+
+readRDS.Object <- function(x, ...){
+  x$readRDS(...)
+}
 ##### usage
 oss.usage <- function(x, ...){
   UseMethod('usage', x)
@@ -441,6 +475,13 @@ usage.character <- function(x, ...){
   usage.oss(x, ...)
 }
 
+usage.Bucket <- function(x, ...){
+  x$usage(...)
+}
+
+usage.Object <- function(x, ...){
+  usageBucket(x$bucket, x$key, ...)
+}
 #####
 is_oss <- function(x){
   "oss" %in% class(x) || grepl('^oss://', x)
