@@ -47,6 +47,17 @@ test_that("getObjectInfo", {
   deleteBucket('ross-test')
 })
 
+test_that("isObjectExist/isBucketExist", {
+  createBucket('ross-test')
+  expect_true(isBucketExist('ross-test'))
+  PutObject('ross-test', 'test.txt')
+  expect_true(isObjectExist('ross-test', 'test.txt'))
+  expect_false(isObjectExist('ross-test', 'not-exist'))
+  removeObjects('ross-test', confirm = T)
+  deleteBucket('ross-test')
+  expect_false(isBucketExist('ross-test'))
+})
+
 test_that("metaObject", {
   expect_message(createBucket('ross-test'), 'ross-test with private')
   PutObject('ross-test', 'test.txt')
@@ -340,4 +351,26 @@ test_that("save/load Objects", {
   rm(a, b)
   expect_silent(r<-loadObject('ross-test', 'test.RData'))
   expect_true(all(c('a', 'b') %in% ls()))
+})
+
+test_that("saveRDS/readRDS Objects", {
+  createBucket('ross-test')
+  # saveRDS
+  expect_silent(r <- saveRDSObject('ross-test', 'test.RData', 1:5))
+  expect_equal(r$status_code, 200)
+  # readRDS
+  expect_identical(readRDSObject('ross-test', 'test.RData'), 1:5)
+})
+
+test_that("restoreObject", {
+  createBucket('ross-test-arch', StorageClass = 'Archive')
+  r <- PutObject('ross-test-arch', 'test.txt', 'asdf')
+  expect_silent(r <- restoreObject('ross-test-arch', 'test.txt'))
+  expect_equal(r$status_code, 202)
+  expect_warning(r <- restoreObject('ross-test-arch', 'test.txt'))
+  expect_equal(r$status_code, 409)
+  expect_warning(r <- GetObject('ross-test-arch', 'test.txt'))
+  expect_equal(r$status_code, 403)
+  removeObjects('ross-test-arch', 'test.txt', confirm = T)
+  deleteBucket('ross-test-arch')
 })
