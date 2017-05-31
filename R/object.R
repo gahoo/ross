@@ -86,8 +86,12 @@ Object <- R6::R6Class("Object",
     readRDS = function(..., refhook=NULL, quiet = T){
       readRDSObject(self$bucket, self$key, ..., refhook=refhook, quiet = quiet)
     },
-    upload = function(){},
-    download = function(){},
+    upload = function(src, ...){
+      uploadObject(self$bucket, src, dest = self$key, ...)
+    },
+    download = function(dest=NULL, ...){
+      downloadObject(self$bucket, self$key, dest, ...)
+    },
     delete = function(){
       r <- DeleteObject(self$bucket, self$key)
       private$init()
@@ -120,7 +124,10 @@ Object <- R6::R6Class("Object",
         }
       }
     },
-    restore = function(){}
+    restore = function(){
+      r <- RestoreObject(self$bucket, self$key)
+      invisible(r)
+    }
   ),
   private = list(
     position = 0,
@@ -134,7 +141,9 @@ Object <- R6::R6Class("Object",
     }
   ),
   active = list(
-    acl = function(){},
+    acl = function(acl){
+      aclObject(self$bucket, self$key, acl)
+    },
     link = function(target){
       if(self$type == 'Symlink' || is.null(self$type)){
         linkObject(self$bucket, self$key, target)
@@ -142,6 +151,8 @@ Object <- R6::R6Class("Object",
         stop(sprintf('%s type has no target.', self$type))
       }
     },
-    meta = function(){}
+    meta = function(meta){
+      metaObject(self$bucket, self$key, meta)
+    }
   )
 )
