@@ -219,6 +219,8 @@ aclBucket <- function(bucketname, acl){
 #' @export
 #'
 #' @examples
+#' aclObject('ross-test', 'test.txt')
+#' aclObject('ross-test', 'test.txt', 'public-read')
 aclObject <- function(bucketname, key, acl){
   if(missing(acl)){
     r <- GetObjectACL(bucketname, key)
@@ -362,7 +364,7 @@ metaObject <-function(bucketname, key, meta){
   }else if(!missing(meta)){
     object_meta <- updateMeta(object_meta, meta)
     source <- sprintf('/%s/%s', bucketname, key)
-    r <- CopyObject(source, bucketname, key, .meta = meta)
+    r <- CopyObject(source, bucketname, key, .meta = object_meta)
     invisible(r)
   }
 }
