@@ -123,6 +123,9 @@ Bucket <- R6::R6Class("Bucket",
     cp = function(from, to, ...) {
       oss.cp(from, to, ...)
     },
+    exists = function(){
+      isBucketExist(self$Name)
+    },
     print = function(...) {
       bucket_text <- sprintf(paste(
           "<Bucket>",
