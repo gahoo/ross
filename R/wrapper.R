@@ -307,6 +307,16 @@ getObjectInfo <- function(bucketname, key, print=TRUE){
   invisible(r$headers)
 }
 
+#' isObjectExist
+#'
+#' @param bucketname
+#' @param key
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' isObjectExist('ross-test', 'test.txt')
 isObjectExist <- function(bucketname, key){
   r <- HeadObject(bucketname, key)
   if(r$status_code == 200){
@@ -316,6 +326,15 @@ isObjectExist <- function(bucketname, key){
   }
 }
 
+#' isBucketExist
+#'
+#' @param bucketname
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' isBucketExist('ross-test')
 isBucketExist <- function(bucketname){
   bucketname %in% listBucket()$Name
 }
@@ -1003,7 +1022,7 @@ readRDSObject <- function(bucketname, key, ..., refhook=NULL, quiet = T){
   readRDS(tmp, refhook=refhook)
 }
 
-restoreObject <- function(buketname, key){
+restoreObject <- function(bucketname, key){
   r <- RestoreObject(bucketname, key)
   invisible(r)
 }
