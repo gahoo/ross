@@ -27,8 +27,24 @@ Object <- R6::R6Class("Object",
       self$refresh()
       invisible(r)
     },
-    read = function(..., encoding = 'UTF-8'){
-      r <- GetObject(self$bucket, self$key, ...)
+    read = function(n=-1L, ..., encoding = 'UTF-8'){
+      makeRange <- function(n){
+        start <- self$seek()
+        end <- start + n
+        end <- ifelse(end > self$size, self$size, end)
+        self$seek(end)
+        Range <- sprintf("%s-%s", start, end - 1)
+        Range
+      }
+
+      if(n <= 0){
+        Range <- NULL
+      }else{
+        if(self$seek() == self$size) return(raw(0))
+        Range <- makeRange(n)
+      }
+
+      r <- GetObject(self$bucket, self$key, Range=Range, ...)
       httr::content(r, encoding = encoding)
     },
     url = function(expires = 1200){
@@ -44,13 +60,17 @@ Object <- R6::R6Class("Object",
       self$etag <- info$etag
       self$creation_date <- info$date
       self$modified_date <- info$`last-modified`
-      private$append_position <- self$size
+      if(self$type == 'Appendable'){
+        private$position <- self$size
+      }else{
+        private$position <- 0
+      }
     },
     exists = function(){
       isObjectExist(self$bucket, self$key)
     },
     append = function(content, ...){
-      r <- AppendObject(self$bucket, self$key, body = content, position = private$append_position, ...)
+      r <- AppendObject(self$bucket, self$key, body = content, position = private$position, ...)
       self$refresh()
       invisible(r)
     },
@@ -83,17 +103,34 @@ Object <- R6::R6Class("Object",
       r <- CopyObject(source, self$bucket, self$key, ..., .meta = .meta)
       invisible(r)
     },
+    seek = function(where, origin='start'){
+      if(missing(where)){
+        private$position
+      }else{
+        if(origin == 'start'){
+          private$position <- where
+        }else if(origin == 'current'){
+          private$position <- private$position + where
+        }else if(origin == 'end'){
+          private$position <- self$size - where
+        }
+
+        if(private$position > self$size){
+          private$position <- self$size
+        }
+      }
+    },
     restore = function(){}
   ),
   private = list(
-    append_position = 0,
+    position = 0,
     init = function(){
       size = NULL
       type = NULL
       etag = NULL
       creation_date = NULL
       modified_date = NULL
-      private$append_position <- 0
+      private$position <- 0
     }
   ),
   active = list(
