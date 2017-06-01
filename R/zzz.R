@@ -50,6 +50,14 @@
   if(is.null(bucketname)){
     "http://oss.aliyuncs.com"
   }else{
+    custom_domain <- cdnState(bucketname)
+    if(!is.null(custom_domain)) {
+      if(!grepl("^http", custom_domain)){
+        custom_domain <- paste0("http://", custom_domain)
+        }
+      return(custom_domain)
+    }
+
     if(is.null(Location)){
       Location <- .get.cache.bucket.location(bucketname)
     }
@@ -344,6 +352,7 @@ body_type <- function(x){
 
 states <- function(name, ..., state){
   idx <- paste(..., sep=":")
+  if(length(idx) == 0) return(.state[[name]])
   if(missing(state)){
     .state[[name]][[idx]]
   }else{
@@ -391,6 +400,26 @@ downloadState <- function(bucketname, src, dest, pattern, state){
 
 aclState <- function(bucketname, prefix, acl, recursive, state){
   states('acl', bucketname, prefix, acl, recursive, state=state)
+}
+
+#' cdnState
+#'
+#' @param bucketname
+#' @param domain
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' cdnState('igenecode-report', domain = 'report.igenecode.com')
+#' cdnState('igenecode-report')
+#' cdnState()
+cdnState <- function(bucketname, domain){
+  if(missing(bucketname)){
+    states('CDN')
+  }else{
+    states('CDN', bucketname, state=domain)
+  }
 }
 
 is.installed <- function(name){
