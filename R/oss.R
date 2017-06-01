@@ -155,15 +155,15 @@ rm.Bucket <- rm.Object <- function(x, ...){
 #' oss.cp('oss://ross-test/success', '/Volumes/RamDisk/')
 #'
 oss.cp <- function(from, to, ...){
-  from <- format_oss(from)
-  to <- format_oss(to)
+  from <- format.oss(from)
+  to <- format.oss(to)
   r <- copyObjects(from$key, to$key, from$bucket, to$bucket)
 
   invisible(r)
 }
 
 
-#####
+##### ln
 oss.ln <- function(x, ...){
   UseMethod('ln', x)
 }
@@ -209,7 +209,7 @@ exists.character <- function(x){
 exists.Object <- exists.Bucket <-function(x){
   x$exists()
 }
-#####
+##### restore
 oss.restore <- function(x){
   UseMethod('restore', x)
 }
@@ -345,12 +345,58 @@ meta.Object <- function(x, meta, ...){
   }
 }
 
-#####
+##### url
+oss.url <- function(x, ...){
+  UseMethod('url', x)
+}
 
-oss.read <- function(){}
+url.oss <- function(x, expires = 1200){
+  urlObject(x$bucket, x$key, expires = expires)
+}
 
-oss.write <- function(){}
+url.character <- function(x, expires = 1200){
+  x <- oss(x)
+  url.oss(x, expires)
+}
 
+url.Object <- function(x, expires = 1200){
+  x$url(expires)
+}
+##### read
+oss.read <- function(x, ...){
+  UseMethod('read', x)
+}
+
+read.oss <- function(x, ...){
+  readObject(x$bucket, x$key, ...)
+}
+
+read.character <- function(x, ...){
+  x <- oss(x)
+  read.oss(x)
+}
+
+read.Object <- function(x, ...){
+  x$read(...)
+}
+##### write
+oss.write <- function(x, ...){
+  UseMethod('write', x)
+}
+
+write.oss <- function(x, content, ...){
+  writeObject(x$bucket, x$key, content, ...)
+}
+
+write.character <- function(x, content, ...){
+  x <- oss(x)
+  write.oss(x, content, ...)
+}
+
+write.Object <- function(x, content, ...){
+  x$write(content, ...)
+}
+##### file
 oss.file <- function(){}
 ##### save
 #' oss.save
@@ -419,7 +465,7 @@ load.character <- function(x, envir = parent.frame(), ...){
 load.Object <- function(x, envir = parent.frame(), ...){
   x$load(envir=envir, ...)
 }
-#####
+##### saveRDS
 oss.saveRDS <- function(x, ...){
   UseMethod('saveRDS', x)
 }
@@ -440,7 +486,7 @@ saveRDS.character <- function(x, object, ...){
 saveRDS.Object <- function(x, ...){
   x$saveRDS(...)
 }
-#####
+##### readRDS
 oss.readRDS <- function(x, ...){
   UseMethod('readRDS', x)
 }
@@ -483,12 +529,12 @@ usage.Object <- function(x, ...){
   usageBucket(x$bucket, x$key, ...)
 }
 #####
-is_oss <- function(x){
+is.oss <- function(x){
   "oss" %in% class(x) || grepl('^oss://', x)
 }
 
-format_oss <- function(x){
-  if(is_oss(x)){
+format.oss <- function(x){
+  if(is.oss(x)){
     x <- oss(x)
     x
   }else{
