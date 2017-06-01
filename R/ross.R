@@ -16,6 +16,7 @@ NULL
 .state$upload <- list()
 .state$download <- list()
 .state$acl <- list()
+.state$CDN <- list()
 
 
 .api.request <- function(sign.func, method, ossresource=NULL,
@@ -27,7 +28,7 @@ NULL
   if(is.null(path)){
     url <- host
   }else{
-    url <- httr::modify_url(host, path=path)
+    url <- URLencode(httr::modify_url(host, path=path))
   }
 
   if(is.null(ossresource)){
