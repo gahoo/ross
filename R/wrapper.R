@@ -1008,6 +1008,19 @@ loadObject <- function(bucketname, key, ..., envir = parent.frame(), quiet = T){
   invisible(r)
 }
 
+#' saveRDSObject
+#'
+#' @param bucketname
+#' @param key
+#' @param object
+#' @param ...
+#' @param opts
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' saveRDSObject('ross-test', 'test.rds', 1:5)
 saveRDSObject <- function(bucketname, key, object, ..., opts=NULL){
   tmp <- tempfile(fileext = '.rds')
   on.exit(unlink(tmp))
@@ -1015,6 +1028,19 @@ saveRDSObject <- function(bucketname, key, object, ..., opts=NULL){
   do.call(uploadObject, c(list(bucketname, tmp, key), opts))
 }
 
+#' readRDSObject
+#'
+#' @param bucketname
+#' @param key
+#' @param ...
+#' @param refhook
+#' @param quiet
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' readRDSObject('ross-test', 'test.rds')
 readRDSObject <- function(bucketname, key, ..., refhook=NULL, quiet = T){
   tmp <- tempfile(fileext = '.rds')
   on.exit(unlink(tmp))
@@ -1022,7 +1048,33 @@ readRDSObject <- function(bucketname, key, ..., refhook=NULL, quiet = T){
   readRDS(tmp, refhook=refhook)
 }
 
+#' restoreObject
+#'
+#' @param bucketname
+#' @param key
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' createBucket('ross-test-archive', StorageClass = 'Archive')
+#' PutObject('ross-test-archive', 'test.txt')
+#' restoreObject('ross-test-archive', 'test.txt')
 restoreObject <- function(bucketname, key){
   r <- RestoreObject(bucketname, key)
   invisible(r)
+}
+
+writeObject <- function(bucketname, key, content, ...){
+  r <- PutObject(bucketname, key, content, ...)
+  invisible(r)
+}
+
+readObject <- function(bucketname, key, Range=NULL, ..., encoding='UTF-8'){
+  r <- GetObject(bucketname, key, Range, ...)
+  httr::content(r, encoding = encoding)
+}
+
+urlObject <- function(bucketname, key, expires = 1200){
+  GetObject(bucketname, key, expires = expires, .url = T)
 }
