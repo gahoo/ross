@@ -120,11 +120,12 @@ oss.rm <- function(x, ...){
   UseMethod('rm', x)
 }
 
-rm.oss <- function(x, ...){
+rm.oss <- function(x, ..., .all=FALSE){
   if(x$bucketname == ""){
     stop('Invalid oss path.')
   }else{
     if(is.null(x$key)){
+      if(.all) removeObjects(x$bucketname, x$key, ...)
       deleteBucket(x$bucketname)
     }else{
       removeObjects(x$bucketname, x$key, ...)
