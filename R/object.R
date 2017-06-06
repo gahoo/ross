@@ -48,7 +48,7 @@ Object <- R6::R6Class("Object",
       httr::content(r, encoding = encoding)
     },
     url = function(expires = 1200){
-      GetObject(self$bucket, self$key, expires = expires, .url = TRUE)
+      urlObject(self$bucket, self$key, expires = expires)
     },
     refresh = function(){
       info <- getObjectInfo(self$bucket, self$key, print=FALSE)
