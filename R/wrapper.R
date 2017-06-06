@@ -47,7 +47,12 @@ deleteBucket <- function(bucketname){
 #' listBucket('ross-test', 'upload', 'upload/file1', '/', '10')
 listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_keys='1000', .all = TRUE, .output="data.frame"){
   isTruncated <- function(doc){
-    xpath2list(doc, '/ListBucketResult/IsTruncated') == 'true'
+    truncated <- xpath2list(doc, '/ListBucketResult/IsTruncated')
+    if(length(truncated) > 0 && truncated == 'true'){
+      TRUE
+    }else{
+      FALSE
+    }
   }
 
   parseXML <- function(doc){
