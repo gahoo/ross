@@ -36,7 +36,7 @@ print.oss <- function(x){
 #' oss.ls(b)
 oss.ls <- function(x, ...){
   if(missing(x)){
-    ls.BucketList()
+    listBucket()
   }else{
     UseMethod('ls', x)
   }
