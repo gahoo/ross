@@ -31,16 +31,9 @@ Bucket <- R6::R6Class("Bucket",
       self$Location = Location
       self$StorageClass = StorageClass
 
-      tryCatch(
-        suppressWarnings(self$refresh()),
-        error = function(e) {
-          if(autoCreate){
-            self$create(Location, acl, StorageClass)
-          }else{
-            warning(e)
-          }
-        }
-      )
+      if(!self$exists() && autoCreate) {
+        self$create(Location, acl, StorageClass)
+      }
     },
 #' @examples
 #'
@@ -48,7 +41,7 @@ Bucket <- R6::R6Class("Bucket",
 #' b<-Bucket$new('ross-test')
 #' # create bucket after init.
 #' b$create()
-    create = function(Location, acl='private', StorageClass='Standard') {
+    create = function(Location, StorageClass, acl='private') {
       if(missing(Location)){
         Location <- self$Location
       }
