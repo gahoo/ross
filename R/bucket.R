@@ -48,7 +48,7 @@ Bucket <- R6::R6Class("Bucket",
 #' b<-Bucket$new('ross-test')
 #' # create bucket after init.
 #' b$create()
-    create = function(Location, acl='private', StorageClass) {
+    create = function(Location, acl='private', StorageClass='Standard') {
       if(missing(Location)){
         Location <- self$Location
       }
