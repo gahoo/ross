@@ -1,3 +1,65 @@
+test_that("oss", {
+  expect_silent(x <- oss('oss://ross-test'))
+  expect_true(is.null(x$key))
+  expect_silent(x <- oss('oss://ross-test/test.txt'))
+  expect_silent(oss(x))
+  expect_equal(x$bucket, 'ross-test')
+  expect_equal(x$key, 'test.txt')
+  expect_error(oss('ross'))
+})
+
+test_that("oss.ls", {
+  expect_silent(oss.ls())
+  try(oss.rm('oss://ross-test', confirm=T, .all=T))
+  oss.mb('oss://ross-test')
+  oss.write('oss://ross-test/test.txt', 'test')
+  suppressMessages(expect_equal(nrow(oss.ls('oss://ross-test')), 1))
+  oss.write('oss://ross-test/test/1.txt', 'test')
+  oss.write('oss://ross-test/test/2.txt', 'test')
+  suppressMessages(expect_equal(nrow(oss.ls('oss://ross-test/test/')), 2))
+  b <- Bucket$new('ross-test')
+  expect_true('test.txt' %in% oss.ls(b, .output='character'))
+  o <- Object$new('ross-test', 'test.txt')
+  expect_true("test.txt" %in% oss.ls(o, .output='character'))
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+test_that("oss.mb", {
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+  oss.mb('oss://ross-test')
+  expect_true(oss.exists('oss://ross-test'))
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+  expect_false(oss.exists('oss://ross-test'))
+  b <- Bucket$new('ross-test')
+  oss.mb(b)
+  oss.rm(b)
+})
+
+test_that("oss.rm/oss.exists", {
+  try(oss.rm('oss://ross-test', confirm=T, .all=T))
+  oss.mb('oss://ross-test')
+  oss.write('oss://ross-test/test.txt', '')
+  oss.write('oss://ross-test/test2.txt', '')
+  oss.write('oss://ross-test/test3.txt', '')
+
+  expect_true(oss.exists('oss://ross-test/test.txt'))
+  expect_silent(oss.rm('oss://ross-test/test.txt', confirm=T))
+  expect_false(oss.exists('oss://ross-test/test.txt'))
+
+  o <- Object$new('ross-test', 'test2.txt')
+  expect_true(oss.exists(o))
+  expect_silent(oss.rm(o))
+  expect_false(oss.exists(o))
+
+  expect_warning(oss.rm('oss://ross-test/', confirm=T))
+  expect_silent(oss.rm('oss://ross-test/', confirm=T, .all=T))
+
+  b <- Bucket$new('ross-test', autoCreate=T)
+  expect_true(oss.exists(b))
+  expect_silent(oss.rm(b))
+  expect_false(oss.exists(b))
+})
+
 test_that("oss.cp", {
   is_file <- function(x){file.exists(x) && !dir.exists(x)}
   is_online <- function(x){
@@ -100,4 +162,36 @@ test_that("oss.cp", {
   removeObjects('ross-test', confirm = T)
   unlink('/Volumes/RamDisk/ross/')
   deleteBucket('ross-test')
+})
+
+test_that("oss.ln", {
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+  oss.mb('oss://ross-test')
+  expect_silent(oss.ln('oss://ross-test/linked-test.txt', 'oss://ross-test/test.txt'))
+  expect_equal(oss.ln('oss://ross-test/linked-test.txt'), "/ross-test/test.txt")
+  expect_silent(oss.ln('oss://ross-test/linked-test.txt', '/ross-test/test2.txt'))
+  expect_equal(oss.ln('oss://ross-test/linked-test.txt'), "/ross-test/test2.txt")
+  o <- Object$new('ross-test', 'linked-test2.txt')
+  expect_silent(oss.ln(o, '/ross-test/test3.txt'))
+  expect_equal(oss.ln(o), "/ross-test/test3.txt")
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+test_that("oss.restore", {
+  oss.mb('oss://ross-test-arch', StorageClass='Archive')
+  oss.write('oss://ross-test-arch/test.txt', 'test')
+  expect_silent(r <- oss.restore('oss://ross-test-arch/test.txt'))
+  expect_equal(r$status_code, 202)
+  o <- Object$new('ross-test-arch', 'test.txt')
+  expect_warning(oss.restore(o))
+  oss.rm('oss://ross-test-arch', confirm=T, .all=T)
+})
+
+test_that("oss.acl" {
+  oss.mb('oss://ross-test')
+  oss.write('oss://ross-test/test.txt', '')
+  expect_equal(oss.acl('oss://ross-test/test.txt'), 'private')
+  expect_silent(oss.acl('oss://ross-test/test.txt', 'public-read'))
+  expect_equal(oss.acl('oss://ross-test/test.txt'), 'public-read')
+  oss.rm('oss://ross-test')
 })
