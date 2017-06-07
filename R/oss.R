@@ -165,6 +165,25 @@ oss.cp <- function(from, to, ...){
 
 
 ##### ln
+#' oss.ln
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.ln('oss://ross-test/linked-test.txt', 'oss://ross-test/test.txt')
+#' oss.ln('oss://ross-test/linked-test.txt')
+#' oss.ln('oss://ross-test/linked-test.txt', '/ross-test/test2.txt')
+#' oss.ln('oss://ross-test/linked-test.txt')
+#'
+#' o <- Object$new('ross-test', 'linked-test2.txt')
+#' oss.ln(o, '/ross-test/test3.txt')
+#' oss.ln(o)
+o <- Object$new('ross-test', 'linked-test2.txt')
+
 oss.ln <- function(x, ...){
   UseMethod('ln', x)
 }
@@ -190,6 +209,22 @@ ln.Object <- function(x, target){
   }
 }
 ##### exist
+#' oss.exists
+#'
+#' @param x
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.exists('oss://ross-test')
+#' oss.exists('oss://ross-test/test.txt')
+#'
+#' o <- Object$new('ross-test', 'test.txt')
+#' oss.exists(o)
+#'
+#' b <- Bucket$new('ross-test')
+#' oss.exist(b)
 oss.exists <- function(x){
   UseMethod('exists', x)
 }
@@ -211,6 +246,20 @@ exists.Object <- exists.Bucket <-function(x){
   x$exists()
 }
 ##### restore
+#' oss.restore
+#'
+#' @param x
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.mb('oss://ross-test-arch', StorageClass='Archive')
+#' oss.write('oss://ross-test-arch/test.txt', 'test')
+#' oss.restore('oss://ross-test-arch/test.txt')
+#'
+#' o <- Object$new('ross-test-arch', 'test.txt')
+#' oss.restore(o)
 oss.restore <- function(x){
   UseMethod('restore', x)
 }
@@ -239,6 +288,9 @@ restore.Object <- function(x){
 #' @examples
 #' oss.acl('oss://ross-test')
 #' oss.acl('oss://ross-test', acl='public-read')
+#'
+#' oss.acl('oss://ross-test/test.txt')
+#' oss.acl('oss://ross-test/test.txt', acl='private')
 oss.acl <- function(x, ...){
   UseMethod('acl', x)
 }
@@ -274,6 +326,17 @@ acl.Bucket <- acl.Object <- function(x, acl, ...){
   }
 }
 ##### stat
+#' oss.stat
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.stat('oss://ross-test')
+#' oss.stat('oss://ross-test/test.txt')
 oss.stat <- function(x, ...){
   UseMethod('stat', x)
 }
@@ -347,6 +410,16 @@ meta.Object <- function(x, meta, ...){
 }
 
 ##### url
+#' oss.url
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.url('oss://ross-test/test.txt', expires = 600)
 oss.url <- function(x, ...){
   UseMethod('url', x)
 }
@@ -364,6 +437,17 @@ url.Object <- function(x, expires = 1200){
   x$url(expires)
 }
 ##### read
+#' oss.read
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.read('oss://ross-test/test.txt')
+#' oss.read('oss://ross-test/test.txt', Range='0-100')
 oss.read <- function(x, ...){
   UseMethod('read', x)
 }
@@ -381,6 +465,16 @@ read.Object <- function(x, ...){
   x$read(...)
 }
 ##### write
+#' oss.write
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.write('oss://ross-test/test.txt', 'test')
 oss.write <- function(x, ...){
   UseMethod('write', x)
 }
@@ -467,6 +561,16 @@ load.Object <- function(x, envir = parent.frame(), ...){
   x$load(envir=envir, ...)
 }
 ##### saveRDS
+#' oss.saveRDS
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.saveRDS('oss://ross-test/test.rds', 1:5)
 oss.saveRDS <- function(x, ...){
   UseMethod('saveRDS', x)
 }
@@ -488,6 +592,18 @@ saveRDS.Object <- function(x, ...){
   x$saveRDS(...)
 }
 ##### readRDS
+#' oss.readRDS
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.readRDS('oss://ross-test/test.rds')
+#' e <- new.env()
+#' oss.readRDS('oss://ross-test/test.rds', envir=e)
 oss.readRDS <- function(x, ...){
   UseMethod('readRDS', x)
 }
@@ -509,6 +625,19 @@ readRDS.Object <- function(x, ...){
   x$readRDS(...)
 }
 ##### usage
+#' oss.usage
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' oss.usage('oss://ross-test/')
+#' oss.usage('oss://ross-test/', unit='KB')
+#' oss.usage('oss://ross-test/test/')
+#' oss.usage('oss://ross-test/test/test.txt')
 oss.usage <- function(x, ...){
   UseMethod('usage', x)
 }
