@@ -475,7 +475,7 @@ saveRDS.oss <- function(x, object, ...){
   if(is.null(x$key)){
     stop('Key must be specified')
   }else{
-    saveRDS(x$bucket, x$key, ...)
+    saveRDSObject(x$bucket, x$key, object, ...)
   }
 }
 
