@@ -182,16 +182,140 @@ test_that("oss.restore", {
   oss.write('oss://ross-test-arch/test.txt', 'test')
   expect_silent(r <- oss.restore('oss://ross-test-arch/test.txt'))
   expect_equal(r$status_code, 202)
+
   o <- Object$new('ross-test-arch', 'test.txt')
   expect_warning(oss.restore(o))
   oss.rm('oss://ross-test-arch', confirm=T, .all=T)
 })
 
-test_that("oss.acl" {
+test_that("oss.acl", {
   oss.mb('oss://ross-test')
+  expect_silent(oss.acl('oss://ross-test/', 'private'))
+  expect_equal(oss.acl('oss://ross-test/'), 'private')
   oss.write('oss://ross-test/test.txt', '')
   expect_equal(oss.acl('oss://ross-test/test.txt'), 'private')
   expect_silent(oss.acl('oss://ross-test/test.txt', 'public-read'))
   expect_equal(oss.acl('oss://ross-test/test.txt'), 'public-read')
-  oss.rm('oss://ross-test')
+
+  o <- Object$new('ross-test', 'test.txt')
+  expect_equal(oss.acl(o), 'public-read')
+  expect_silent(oss.acl(o, 'public-read-write'))
+  expect_equal(oss.acl(o), 'public-read-write')
+
+  b <- Bucket$new('ross-test')
+  expect_equal(oss.acl(b), 'private')
+  expect_silent(oss.acl(b, 'public-read'))
+  expect_equal(oss.acl(b), 'public-read')
+
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+test_that("oss.stat", {
+  oss.mb('oss://ross-test')
+  expect_output(oss.stat('oss://ross-test'), 'ross-test')
+  oss.write('oss://ross-test/test.txt', '')
+  expect_output(oss.stat('oss://ross-test/test.txt'), '1B2M2Y8AsgTpgAmY7PhCfg==')
+
+  o <- Object$new('ross-test', 'test.txt')
+  expect_output(oss.stat(o), 'D41D8CD98F00B204E9800998ECF8427E')
+
+  b <- Bucket$new('ross-test')
+  expect_output(oss.stat(b), 'ross-test')
+
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+test_that("oss.meta", {
+  oss.mb('oss://ross-test')
+  oss.write('oss://ross-test/test/test.txt', '')
+  oss.write('oss://ross-test/test/test2.txt', '')
+  oss.meta('oss://ross-test/test/test.txt', meta=list(b=2))
+  expect_equal(oss.meta('oss://ross-test/test/test.txt'), list(b='2'))
+  oss.meta('oss://ross-test/test/test.txt', meta=list(a=1))
+  expect_equal(oss.meta('oss://ross-test/test/test.txt'), list(a='1', b='2'))
+  oss.meta('oss://ross-test/test/test.txt', meta=list(a=NULL))
+  expect_equal(oss.meta('oss://ross-test/test/test.txt'), list(b='2'))
+  expect_output(oss.meta('oss://ross-test/test/', recursive=T, meta=list(a=1)), '100%')
+  expect_equal(oss.meta('oss://ross-test/test/test.txt'), list(a='1', b='2'))
+  expect_equal(oss.meta('oss://ross-test/test/test2.txt'), list(a='1'))
+  oss.meta('oss://ross-test/test/test.txt', meta=NULL)
+  expect_length(oss.meta('oss://ross-test/test/test.txt'), 0)
+
+  o <- Object$new('ross-test', 'test/test2.txt')
+  expect_equal(oss.meta(o), list(a='1'))
+  oss.meta(o, meta=list(b=2))
+  expect_equal(oss.meta(o), list(a='1', b='2'))
+
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+
+test_that("oss.url", {
+  oss.mb('oss://ross-test')
+  oss.write('oss://ross-test/test.txt', '')
+  expect_silent(oss.url('oss://ross-test/test.txt'))
+
+  o <- Object$new('ross-test', 'test.txt')
+  expect_silent(oss.url(o))
+
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+test_that("oss.read/oss.write", {
+  oss.mb('oss://ross-test')
+  expect_silent(oss.write('oss://ross-test/test.txt', 'test'))
+  expect_equal(oss.read('oss://ross-test/test.txt'), 'test')
+
+  o <- Object$new('ross-test', 'test.txt')
+  expect_silent(oss.write(o, 'test2'))
+  expect_equal(oss.read(o), 'test2')
+
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+test_that("oss.save/oss.load", {
+  oss.mb('oss://ross-test')
+  a <- 1:5; b <- 5:6
+  expect_silent(oss.save('oss://ross-test/test.RData', a, b))
+  e <- new.env()
+  expect_silent(oss.load('oss://ross-test/test.RData', envir=e))
+  expect_true(all(c('a', 'b') %in% ls(envir=e)) == TRUE)
+
+  o <- Object$new('ross-test', 'test.RData')
+  expect_silent(oss.save(o, a, b))
+  e <- new.env()
+  expect_silent(oss.load(o, envir=e))
+  expect_true(all(c('a', 'b') %in% ls(envir=e)) == TRUE)
+
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+test_that("oss.saveRDS/oss.readRDS", {
+  oss.mb('oss://ross-test')
+  expect_silent(oss.saveRDS('oss://ross-test/test.rds', 1:5))
+  expect_identical(oss.readRDS('oss://ross-test/test.rds'), 1:5)
+
+  o <- Object$new('ross-test', 'test.RData')
+  expect_silent(oss.saveRDS(o, 1:5))
+  expect_identical(oss.readRDS(o), 1:5)
+
+  oss.rm('oss://ross-test', confirm=T, .all=T)
+})
+
+test_that("oss.usage", {
+  oss.mb('oss://ross-test')
+  oss.write('oss://ross-test/test/test.txt', 'test')
+  oss.write('oss://ross-test/test/test2.txt', 'test')
+
+  expect_equal(oss.usage('oss://ross-test', unit='B'), 8)
+  expect_equal(oss.usage('oss://ross-test/test/', unit='B'), 8)
+  expect_equal(oss.usage('oss://ross-test/test/test.txt', unit='B'), 4)
+
+  o <- Object$new('ross-test', 'test/test.txt')
+  expect_equal(oss.usage(o, unit='B'), 4)
+
+  b <- Bucket$new('ross-test')
+  expect_equal(oss.usage(b, unit='B'), 8)
+
+  oss.rm('oss://ross-test', confirm=T, .all=T)
 })
