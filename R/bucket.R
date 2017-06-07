@@ -33,6 +33,8 @@ Bucket <- R6::R6Class("Bucket",
 
       if(!self$exists() && autoCreate) {
         self$create(Location, acl, StorageClass)
+      }else{
+        self$refresh()
       }
     },
 #' @examples
