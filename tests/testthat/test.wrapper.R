@@ -107,6 +107,7 @@ test_that("linkObject", {
   expect_equal(r$status_code, 200)
   expect_silent(r <- linkObject('ross-test', 'linked-test.txt'))
   expect_equal(r, 'test.txt')
+  expect_identical(readObject('ross-test', 'linked-test.txt'), raw(0))
   removeObjects('ross-test', confirm=TRUE)
   deleteBucket('ross-test')
 })
