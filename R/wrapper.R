@@ -45,7 +45,7 @@ deleteBucket <- function(bucketname){
 #' listBucket('ross-test')
 #' listBucket('ross-test', 'upload')
 #' listBucket('ross-test', 'upload', 'upload/file1', '/', '10')
-listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_keys='1000', .all = TRUE, .output="data.frame"){
+listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_keys='1000', quiet=TRUE, .all = TRUE, .output="data.frame"){
   isTruncated <- function(doc){
     truncated <- xpath2list(doc, '/ListBucketResult/IsTruncated')
     if(length(truncated) > 0 && truncated == 'true'){
@@ -70,7 +70,7 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
       doc <- httr::content(r, encoding = 'UTF-8')
       contents <- c(contents, parseXML(doc))
       next_marker <- xpath2list(doc, '/ListBucketResult/NextMarker')
-      message(sprintf("%s objects listed.", length(contents)))
+      if(!quiet) message(sprintf("%s objects listed.", length(contents)))
       if(!isTruncated(doc) || !.all){
         break
       }
@@ -444,7 +444,7 @@ metaMultipleObjects <- function(bucketname, prefix, meta, recursive=FALSE, ...){
 #'
 #' @examples
 #' PutObject('ross-test', 'test.txt')
-#' linkObject('ross-test', 'linked-test.txt', '/ross-test/test.txt')
+#' linkObject('ross-test', 'linked-test.txt', 'test.txt')
 linkObject <- function(bucketname, key, target, .meta=NULL){
   if(missing(target)){
     r <- GetSymlink(bucketname, key)
