@@ -18,7 +18,7 @@ ListParts
 }
 \examples{
 r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
-uploadId <- unlist(xpath2list(content(r), '//UploadId'))
+uploadId <- unlist(xpath2list(httr::content(r), '//UploadId'))
 UploadPart('ross-test', 'multi-test.txt', uploadId, 1, 'test1')
 UploadPart('ross-test', 'multi-test.txt', uploadId, 2, 'test2')
 ListParts('ross-test', 'multi-test.txt', uploadId)

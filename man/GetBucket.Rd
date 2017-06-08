@@ -4,7 +4,7 @@
 \alias{GetBucket}
 \title{GetBucket}
 \usage{
-GetBucket(bucketname, prefix = NULL, marker = NULL, delimiter = NULL,
+GetBucket(name, prefix = NULL, marker = NULL, delimiter = NULL,
   max_keys = NULL, encoding_type = NULL)
 }
 \arguments{
@@ -20,4 +20,10 @@ GetBucket(bucketname, prefix = NULL, marker = NULL, delimiter = NULL,
 }
 \description{
 Equals to ListObject
+}
+\examples{
+GetBucket('ross-test')
+GetBucket('ross-test', 'upload')
+GetBucket('ross-test', 'upload', 'upload/file1', '/', '10')
+
 }

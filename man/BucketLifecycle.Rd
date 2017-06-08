@@ -3,13 +3,19 @@
 \docType{class}
 \name{BucketLifecycle}
 \alias{BucketLifecycle}
+\alias{BucketLifecycle}
+\alias{BucketCORS}
 \title{BucketLifecycle}
 \format{An R6 class object.}
 \usage{
 BucketLifecycle
+
+BucketCORS
 }
 \description{
 Convenient ways to manipulate lifecycle rules
+
+Convenient ways to manipulate CORS rules
 }
 \examples{
 
@@ -33,5 +39,6 @@ life$add('backup2_', ID='backup-2', Object.Days=90)
 life$add('backup3_', ID='backup-3', Object.Days=90)
 life$save()
 life
+
 }
 \keyword{datasets}

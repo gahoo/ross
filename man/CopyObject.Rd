@@ -37,10 +37,10 @@ CopyObject(source, bucketname, key, encryption = NULL, acl = "private",
 CopyObject
 }
 \examples{
-CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt')
-CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', encryption = 'AES256')
-CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', acl = 'public-read')
-CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', meta.directive = 'REPLACE', .meta = list(owner='igenecode.com'))
-CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', ETag = 'AAAA', ETag.match = F)
-CopyObject('/ross-test/test2.txt', 'ross-test', 'test2.txt', since = Sys.time(), modified.since = F)
+CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt')
+CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', encryption = 'AES256')
+CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', acl = 'public-read')
+CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', meta.directive = 'REPLACE', .meta = list(owner='igenecode.com'))
+CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', ETag = 'AAAA', ETag.match = F)
+CopyObject('/ross-test/test.txt', 'ross-test', 'test2.txt', since = Sys.time(), modified.since = F)
 }

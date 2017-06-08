@@ -5,7 +5,7 @@
 \title{GetObject}
 \usage{
 GetObject(bucketname, key, Range = NULL, ETag = NULL, ETag.match = TRUE,
-  since = NULL, modified.since = TRUE, ...)
+  since = NULL, modified.since = TRUE, ..., expires = 60, .url = FALSE)
 }
 \arguments{
 \item{bucketname}{Destinate bucket}
@@ -23,6 +23,10 @@ GetObject(bucketname, key, Range = NULL, ETag = NULL, ETag.match = TRUE,
 \item{modified.since}{Copy when object was modified since a time, or copy when object was not modified since a time.}
 
 \item{...}{avaliable headers: response-content-type, response-content-language, response-expires, response-cache-control, response-content-disposition, response-content-encoding}
+
+\item{expires}{How long will the url expires in seconds.}
+
+\item{.url}{boolean Only URL will return when TRUE.}
 }
 \description{
 GetObject
@@ -33,4 +37,6 @@ GetObject('ross-test', 'test.txt', Range = '0-1')
 GetObject('ross-test', 'test.txt', ETag = 'AAAA', ETag.match = F)
 GetObject('ross-test', 'test.txt', since = Sys.time(), modified.since = T)
 GetObject('ross-test', 'test.txt', "response-cache-control"='no-cache')
+GetObject('ross-test', 'test.txt', .url=T)
+GetObject('ross-test', 'test.txt', expires=3600, .url=T)
 }

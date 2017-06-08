@@ -33,5 +33,7 @@ UploadPartCopy
 }
 \examples{
 PutObject('ross-test', 'test.txt', 'test')
-UploadPartCopy('/ross-test/test.txt', 'ross-test', 'multi-test.txt', '300C834B2037432E871D62B848087139', 2, Range = '0-1')
+r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
+uploadId <- unlist(xpath2list(httr::content(r), '//UploadId'))
+UploadPartCopy('/ross-test/test.txt', 'ross-test', 'multi-test.txt', uploadId, 2, Range = '0-1')
 }

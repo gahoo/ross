@@ -12,7 +12,7 @@ GetObjectMeta(bucketname, key)
 \item{key}{The file path of object on oss.}
 }
 \description{
-GetObjectMeta
+Only includes basic meta info like size, etag, etc. For complete meta use HeadObject.
 }
 \examples{
 PutObject('ross-test', 'test.txt')

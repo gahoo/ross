@@ -13,6 +13,8 @@ Bucket
 }
 \value{
 
+
+
 }
 \description{
 Bucket
@@ -28,9 +30,12 @@ b<-Bucket$new('ross-test')
 # create bucket after init.
 b$create()
 
-## rm
-b$rm
+## delete
+b$delete
 b$list()
+b$rm()
+b$rm(confirm=T)
+b$rm('test-', confirm=T)
 
 ## acl
 b$acl
@@ -72,8 +77,23 @@ b$referer <- list()
  b$lifecycle$add('upload_', Object.Days = 7)
  b$lifecycle
 
+
+ ## CORS
+
+ b$cors$add('*', 'GET')
+ b$cors$save()
+ b$cors
+ # cors auto save is off to speedup by default when using Bucket class.
+ # Turn on
+ b$cors$autoSave <- T
+ b$cors$add('*', 'GET')
+ b$cors
+
 }
 \seealso{
 \code{\link{BucketLifecycle}}
+
+\code{\link{BucketLifecycle}}
+'
 }
 \keyword{datasets}

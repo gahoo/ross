@@ -2,12 +2,9 @@
 % Please edit documentation in R/service-api.R
 \name{GetService}
 \alias{GetService}
-\alias{listBucket}
 \title{GetService}
 \usage{
 GetService(prefix = NULL, marker = NULL, max_keys = 100)
-
-listBucket(...)
 }
 \arguments{
 \item{prefix}{The prefix of buckets to filter.}
@@ -18,11 +15,4 @@ listBucket(...)
 }
 \description{
 Equals to ListObject
-
-ListBucket
 }
-\section{Functions}{
-\itemize{
-\item \code{listBucket}: 
-}}
-

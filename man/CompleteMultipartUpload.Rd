@@ -15,5 +15,5 @@ CompleteMultipartUpload(bucketname, key, uploadId, Etags = NULL)
 CompleteMultipartUpload
 }
 \examples{
-CompleteMultipartUpload('ross-test', 'multi-test.txt', '300C834B2037432E871D62B848087139')
+CompleteMultipartUpload('ross-test', 'multi-test.txt', uploadId)
 }

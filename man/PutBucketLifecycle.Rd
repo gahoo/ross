@@ -9,19 +9,9 @@ PutBucketLifecycle(name, rules, body = NULL)
 \arguments{
 \item{name}{The bucket name}
 
-\item{Prefix}{Object prefix applying the rule.}
+\item{rules}{list Rules created by `.build.xml_body.PutBucketLifecycle.Rules`. Will be ignore when body parameter is specified.}
 
-\item{RuleID}{Uid of rule}
-
-\item{Status}{Enable or Disable the rule.}
-
-\item{Object.CreatedBeforeDate}{Expires date for object.}
-
-\item{Object.Days}{Expris days for object.}
-
-\item{Multpart.CreatedBeforeDate}{Expris date for multipart upload.}
-
-\item{Multpart.Days}{Expris day for multipart upload.}
+\item{body}{charactor XML content of rules.}
 }
 \description{
 Config bucket object life cycle rules.

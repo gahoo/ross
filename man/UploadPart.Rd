@@ -22,6 +22,7 @@ UploadPart(bucketname, key, uploadId, partNumber, body = NULL, ...,
 UploadPart
 }
 \examples{
-InitiateMultipartUpload('ross-test', 'multi-test.txt')
-UploadPart('ross-test', 'multi-test.txt', 'F7376AAB033344C1922A588D15CE56A2', 1, 'test')
+r <- InitiateMultipartUpload('ross-test', 'multi-test.txt')
+uploadId <- unlist(xpath2list(httr::content(r), '//UploadId'))
+UploadPart('ross-test', 'multi-test.txt', uploadId, 1, 'test')
 }
