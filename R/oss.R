@@ -36,16 +36,18 @@ print.oss <- function(x){
 #' oss.ls(b)
 oss.ls <- function(x, ...){
   if(missing(x)){
-    listBucket()
+    listBucket(...)
   }else{
     UseMethod('ls', x)
   }
 }
 
+#' @export
 ls.oss <- function(x, ...){
   listBucket(x$bucketname, prefix=x$key, ...)
 }
 
+#' @export
 ls.character <- function(x, ...){
   x <- oss(x)
   if(x$bucketname == ""){
@@ -55,10 +57,12 @@ ls.character <- function(x, ...){
   }
 }
 
+#' @export
 ls.Bucket <- function(x, ...){
   x$list(...)
 }
 
+#' @export
 ls.BucketList <- function(x, ...){
   if(missing(x)){
     x <- BucketList$new()
@@ -66,6 +70,7 @@ ls.BucketList <- function(x, ...){
   x$list(...)
 }
 
+#' @export
 ls.Object <- function(x, ...){
   listBucket(x$bucket, x$key, ...)
 }
@@ -87,15 +92,18 @@ oss.mb <- function(x, ...){
   UseMethod('mb', x)
 }
 
+#' @export
 mb.oss <- function(x, ...){
   createBucket(x$bucketname, ...)
 }
 
+#' @export
 mb.character <- function(x, ...){
   x <- oss(x)
   mb.oss(x, ...)
 }
 
+#' @export
 mb.Bucket <- function(x, ...){
   x$create()
 }
@@ -120,6 +128,7 @@ oss.rm <- function(x, ...){
   UseMethod('rm', x)
 }
 
+#' @export
 rm.oss <- function(x, ..., .all=FALSE){
   if(x$bucketname == ""){
     stop('Invalid oss path.')
@@ -133,11 +142,13 @@ rm.oss <- function(x, ..., .all=FALSE){
   }
 }
 
+#' @export
 rm.character <- function(x, ...){
   x <- oss(x)
   rm.oss(x, ...)
 }
 
+#' @export
 rm.Bucket <- rm.Object <- function(x, ...){
   x$delete()
 }
@@ -187,18 +198,21 @@ oss.ln <- function(x, ...){
   UseMethod('ln', x)
 }
 
+#' @export
 ln.oss <- function(x, target, ...){
   if(!missing(target) && grepl("^oss://", target)){
-    target <- gsub("^oss://", "/", target)
+    target <- gsub(paste0("^oss://", x$bucket, "/"), "", target)
   }
   linkObject(x$bucket, x$key, target, ...)
 }
 
+#' @export
 ln.character <- function(x, target, ...){
   x <- oss(x)
   ln.oss(x, target, ...)
 }
 
+#' @export
 ln.Object <- function(x, target){
   if(missing(target)){
     x$link
@@ -228,6 +242,7 @@ oss.exists <- function(x){
   UseMethod('exists', x)
 }
 
+#' @export
 exists.oss <- function(x){
   if(is.null(x$key)){
     isBucketExist(x$bucket)
@@ -236,11 +251,13 @@ exists.oss <- function(x){
   }
 }
 
+#' @export
 exists.character <- function(x){
   x <- oss(x)
   exists.oss(x)
 }
 
+#' @export
 exists.Object <- exists.Bucket <-function(x){
   x$exists()
 }
@@ -263,15 +280,18 @@ oss.restore <- function(x){
   UseMethod('restore', x)
 }
 
+#' @export
 restore.oss <- function(x){
   restoreObject(x$bucket, x$key)
 }
 
+#' @export
 restore.character <- function(x){
   x <- oss(x)
   restore.oss(x)
 }
 
+#' @export
 restore.Object <- function(x){
   x$restore()
 }
@@ -300,6 +320,7 @@ oss.acl <- function(x, ...){
   x
 }
 
+#' @export
 acl.oss <- function(x, ...){
   if(is.null(x$key)){
     aclBucket(x$bucket, ...)
@@ -312,11 +333,13 @@ acl.oss <- function(x, ...){
   }
 }
 
+#' @export
 acl.character <- function(x, ...){
   x <- oss(x)
   acl.oss(x, ...)
 }
 
+#' @export
 acl.Bucket <- acl.Object <- function(x, acl, ...){
   if(missing(acl)){
     x$acl
@@ -340,6 +363,7 @@ oss.stat <- function(x, ...){
   UseMethod('stat', x)
 }
 
+#' @export
 stat.oss <- function(x, ...){
   if(is.null(x$key)){
     getBucketInfo(x$bucket)
@@ -348,11 +372,13 @@ stat.oss <- function(x, ...){
   }
 }
 
+#' @export
 stat.character <- function(x, ...){
   x <- oss(x)
   stat.oss(x)
 }
 
+#' @export
 stat.Bucket <- stat.Object <- function(x, ...){
   x$print()
 }
@@ -377,12 +403,14 @@ oss.meta <- function(x, ...){
   UseMethod('meta', x)
 }
 
+#' @export
 "oss.meta<-" <- function(x, value, ...){
   x <- oss(x)
   meta.oss(x, meta=value, ...)
   x
 }
 
+#' @export
 meta.oss <- function(x, ...){
   if(is.null(x$key)){
     stop('Bucket has no meta.')
@@ -395,11 +423,13 @@ meta.oss <- function(x, ...){
   }
 }
 
+#' @export
 meta.character <- function(x, ...){
   x <- oss(x)
   meta.oss(x, ...)
 }
 
+#' @export
 meta.Object <- function(x, meta, ...){
   if(missing(meta)){
     x$meta
@@ -423,15 +453,18 @@ oss.url <- function(x, ...){
   UseMethod('url', x)
 }
 
+#' @export
 url.oss <- function(x, expires = 1200){
   urlObject(x$bucket, x$key, expires = expires)
 }
 
+#' @export
 url.character <- function(x, expires = 1200){
   x <- oss(x)
   url.oss(x, expires)
 }
 
+#' @export
 url.Object <- function(x, expires = 1200){
   x$url(expires)
 }
@@ -451,15 +484,18 @@ oss.read <- function(x, ...){
   UseMethod('read', x)
 }
 
+#' @export
 read.oss <- function(x, ...){
   readObject(x$bucket, x$key, ...)
 }
 
+#' @export
 read.character <- function(x, ...){
   x <- oss(x)
   read.oss(x)
 }
 
+#' @export
 read.Object <- function(x, ...){
   x$read(...)
 }
@@ -478,15 +514,18 @@ oss.write <- function(x, ...){
   UseMethod('write', x)
 }
 
+#' @export
 write.oss <- function(x, content, ...){
   writeObject(x$bucket, x$key, content, ...)
 }
 
+#' @export
 write.character <- function(x, content, ...){
   x <- oss(x)
   write.oss(x, content, ...)
 }
 
+#' @export
 write.Object <- function(x, content, ...){
   x$write(content, ...)
 }
@@ -508,6 +547,7 @@ oss.save <- function(x, ...){
   UseMethod('save', x)
 }
 
+#' @export
 save.oss <- function(x, ...){
   if(is.null(x$key)){
     stop('Key must be specified')
@@ -516,11 +556,13 @@ save.oss <- function(x, ...){
   }
 }
 
+#' @export
 save.character <- function(x, ...){
   x <- oss(x)
   save.oss(x, ...)
 }
 
+#' @export
 save.Object <- function(x, ...){
   x$save(...)
 }
@@ -543,6 +585,7 @@ oss.load <- function(x, ...){
   UseMethod('load', x)
 }
 
+#' @export
 load.oss <- function(x, envir = parent.frame(), ...){
   if(is.null(x$key)){
     stop('Key must be specified')
@@ -551,11 +594,13 @@ load.oss <- function(x, envir = parent.frame(), ...){
   }
 }
 
+#' @export
 load.character <- function(x, envir = parent.frame(), ...){
   x <- oss(x)
   load.oss(x, envir = envir, ...)
 }
 
+#' @export
 load.Object <- function(x, envir = parent.frame(), ...){
   x$load(envir=envir, ...)
 }
@@ -574,6 +619,7 @@ oss.saveRDS <- function(x, ...){
   UseMethod('saveRDS', x)
 }
 
+#' @export
 saveRDS.oss <- function(x, object, ...){
   if(is.null(x$key)){
     stop('Key must be specified')
@@ -582,11 +628,13 @@ saveRDS.oss <- function(x, object, ...){
   }
 }
 
+#' @export
 saveRDS.character <- function(x, object, ...){
   x <- oss(x)
   saveRDS.oss(x, object, ...)
 }
 
+#' @export
 saveRDS.Object <- function(x, ...){
   x$saveRDS(...)
 }
@@ -607,6 +655,7 @@ oss.readRDS <- function(x, ...){
   UseMethod('readRDS', x)
 }
 
+#' @export
 readRDS.oss <- function(x, ...){
   if(is.null(x$key)){
     stop('Key must be specified')
@@ -615,11 +664,13 @@ readRDS.oss <- function(x, ...){
   }
 }
 
+#' @export
 readRDS.character <- function(x, ...){
   x <- oss(x)
   readRDS.oss(x, ...)
 }
 
+#' @export
 readRDS.Object <- function(x, ...){
   x$readRDS(...)
 }
@@ -641,19 +692,23 @@ oss.usage <- function(x, ...){
   UseMethod('usage', x)
 }
 
+#' @export
 usage.oss <- function(x, ...){
   usageBucket(x$bucketname, x$key, ...)
 }
 
+#' @export
 usage.character <- function(x, ...){
   x <- oss(x)
   usage.oss(x, ...)
 }
 
+#' @export
 usage.Bucket <- function(x, ...){
   x$usage(...)
 }
 
+#' @export
 usage.Object <- function(x, ...){
   usageBucket(x$bucket, x$key, ...)
 }
