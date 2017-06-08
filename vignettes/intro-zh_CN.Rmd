@@ -1,6 +1,6 @@
 ---
 title: "ROSS: an OSS SDK, client, API wrapper for R"
-author: "Vignette Author"
+author: "Jiaping Li"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-ross封装了OSS的API，封装了绝大多数的OSS API。共分为三层，原始的OSS API，wrapper函数，类ossutil函数以及几个R6对象。
+ross封装了绝大多数的OSS API。共分为三层，原始的OSS API，wrapper函数，类ossutil函数以及几个R6对象。
 
 - 第一层封装的是原始的OSS API，与阿里云OSS API完全保持一致。完整参数与使用方法请参阅官方[OSS API文档](https://help.aliyun.com/document_detail/31947.html)
 - 第二层是wrapper函数，将常见的功能封装为更为方便实用的函数。调用了第一层OSS API。
@@ -27,7 +27,8 @@ devtools::install_github('gahoo/ross')
 library(ross)
 ```
 
-### 设置环境变量
+## 设置
+### 环境变量
 操作OSS需要`AccessKeyId`和`AccessKeySecret`进行签名，在使用ross包之前需要先设置这两个环境变量。
 ```{r, eval=FALSE}
 Sys.setenv(
@@ -40,7 +41,7 @@ Sys.setenv(
 AccessKeyId=xxxxxxxxxxxxxxxx
 AccessKeySecret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
-#### 其他参数
+### 其他参数
 ross有以下全局参数设置，默认不需要更改。
 ```{r}
 options(
@@ -49,6 +50,17 @@ options(
   ross.debug = FALSE, # 是否开启debug模式
   ross.aria2c = TRUE # 是否使用aria2进行下载
 )
+```
+
+### Location 
+有时候权限不足无法自动获取Bucket的Location，此时需要手动设置：
+```{r}
+locationState('ross-test', 'oss-cn-beijing')
+```
+### CDN加速
+CDN加速的设置方法：
+```{r, eval=FALSE}
+cdnState('ross-test', 'custom.domain.com')
 ```
 
 
@@ -205,12 +217,4 @@ oss.usage('oss://ross-test/test/', unit='KB')
 `BucketList`, `Bucket`, `Object`等R6对象，提供了对Bucket或者Object的完整操作方法。
 
 ## 其他
-有时候权限不足无法自动获取Bucket的Location，此时需要手动设置：
-```{r}
-locationState('ross-test', 'oss-cn-beijing')
-```
-CDN加速
-```{r, eval=FALSE}
-cdnState('ross-test', 'custom.domain.com')
-```
 
