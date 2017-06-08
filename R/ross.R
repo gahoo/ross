@@ -22,7 +22,9 @@ NULL
 .api.request <- function(sign.func, method, ossresource=NULL,
                                 bucketname=NULL, Location=NULL, ...,
                                 header=NULL, path=NULL, query=NULL) {
-  host <- .build.host(bucketname, Location=Location, internal=getOption('ross.internal'), vpc=getOption('ross.vpc'))
+  host <- .build.host(bucketname, Location=Location,
+                      internal=getOption('ross.internal', FALSE),
+                      vpc=getOption('ross.vpc', FALSE))
   .headers <- .build.header(header)
   ossheader <- .build.ossheader(header)
   if(is.null(path)){
