@@ -182,7 +182,6 @@ oss.cp <- function(from, to, ...){
 #' o <- Object$new('ross-test', 'linked-test2.txt')
 #' oss.ln(o, '/ross-test/test3.txt')
 #' oss.ln(o)
-o <- Object$new('ross-test', 'linked-test2.txt')
 
 oss.ln <- function(x, ...){
   UseMethod('ln', x)
