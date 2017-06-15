@@ -59,6 +59,9 @@ test_that("Object",{
   expect_length(o$meta, 0)
   # exists
   expect_true(o$exists())
+  # move
+  expect_silent(o$moveTo('ross-test', 'mv.txt'))
+  expect_equal(o$key, 'mv.txt')
   # delete
   expect_silent(o$delete())
   expect_false(o$exists())
