@@ -107,6 +107,15 @@ Object <- R6::R6Class("Object",
       r <- CopyObject(source, self$bucket, self$key, ..., .meta = .meta)
       invisible(r)
     },
+    moveTo = function(bucket, key, ..., .meta = NULL){
+      r <- self$copyTo(bucket, key, ..., .meta = .meta)
+      if(r$status_code == 200){
+        self$delete()
+        self$bucket <- bucket
+        self$key <- key
+        self$refresh()
+      }
+    },
     seek = function(where, origin='start'){
       if(missing(where)){
         private$position
