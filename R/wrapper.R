@@ -118,7 +118,7 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
 #' removeObjects('ross-test')
 #' removeObjects('ross-test', 'upload/')
 #' removeObjects('ross-test', 'upload/', confirm=TRUE)
-removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, quiet=TRUE, step=1000){
+removeObjects <- function(bucketname, prefix=NULL, keys=NULL, confirm=FALSE, quiet=TRUE, step=1000){
   if(!confirm){
     if(is.null(prefix)){
       question <- sprintf("Are you sure to delete all objects in bucket %s?(yes/no): ", bucketname)
@@ -151,12 +151,19 @@ removeObjects <- function(bucketname, prefix=NULL, confirm=FALSE, quiet=TRUE, st
     response
   }
 
-  if(is.null(prefix)){
-    keys <- suppressMessages(listBucket(bucketname, prefix, delimiter = '', .all=T, .output = 'character'))
-  }else if(grepl("/$", prefix)){
-    keys <- suppressMessages(listBucket(bucketname, prefix, .all=T, .output = 'character'))
-  }else{
-    keys <- prefix
+  prefix2keys <- function(prefix){
+    if(is.null(prefix)){
+      keys <- suppressMessages(listBucket(bucketname, prefix, delimiter = '', .all=T, .output = 'character'))
+    }else if(grepl("/$", prefix)){
+      keys <- suppressMessages(listBucket(bucketname, prefix, .all=T, .output = 'character'))
+    }else{
+      keys <- prefix
+    }
+    keys
+  }
+
+  if(is.null(keys)){
+    keys <- prefix2keys(prefix)
   }
 
   if(length(keys) > 1){
@@ -329,6 +336,11 @@ isObjectExist <- function(bucketname, key){
   }else if(r$status_code == 404){
     FALSE
   }
+}
+
+isPseudoFolderExist <- function(bucketname, key){
+  if(!is.folder.char(key)) key <- paste0(key, '/')
+  nrow(listBucket(bucketname, key)) > 0
 }
 
 #' isBucketExist
@@ -642,7 +654,7 @@ uploadMultipleObjects <- function(bucketname, src, prefix='/', pattern=NULL, res
   }
 
   prepareDest <- function(files, src, prefix='.'){
-    if(grepl('/$', prefix)){
+    if(is.folder.char(prefix)){
       path_fix <- dirname(src)
       if(path_fix == '.'){
         path_fix <- ""
@@ -824,7 +836,7 @@ downloadMultipleObjects <- function(bucketname, src, dest='.', pattern=NULL,
       stop('No such key: ', src)
     }
 
-    if(grepl('/$', prefix) || prefix == '.'){
+    if(is.folder.char(prefix) || prefix == '.'){
       path_fix <- dirname(src)
       if(path_fix == '.'){
         path_fix <- ""
@@ -1070,7 +1082,7 @@ restoreObject <- function(bucketname, key){
   invisible(r)
 }
 
-writeObject <- function(bucketname, key, content, ...){
+writeObject <- function(bucketname, key, content=NULL, ...){
   r <- PutObject(bucketname, key, content, ...)
   invisible(r)
 }
@@ -1082,4 +1094,63 @@ readObject <- function(bucketname, key, Range=NULL, ..., encoding='UTF-8'){
 
 urlObject <- function(bucketname, key, expires = 1200){
   GetObject(bucketname, key, expires = expires, .url = T)
+}
+
+copyMultipleObjects <- function(src, dest, src_bucket, dest_bucket=src_bucket, ..., split=10, .progressbar = TRUE, .parallel = TRUE){
+  copyEach <- function(each_src){
+    each_source <- sprintf("/%s/%s", src_bucket, each_src)
+    each_dest <- sub(src, dest, each_src)
+    r <- CopyObject(each_source, dest_bucket, each_dest, ...)
+    r$status_code
+  }
+
+  if(is.root(dest)){
+    dest <- basename(src)
+  }else if(is.folder.char(dest)){
+    dest <- paste0(dest, basename(src))
+  }
+
+  src_files <- copyState(src, dest, src_bucket, dest_bucket)
+  if(is.null(src_files)){
+    if(isObjectExist(src_bucket, src)){
+      src_files <- src
+    }else if(isPseudoFolderExist(src_bucket, src)){
+      if(!is.folder.char(src)){
+        pattern <- paste0(src, '/')
+      }else{
+        pattern <- src
+        if(!is.folder.char(dest)) src <- sub('/$', '', src)
+      }
+      src_files <- listBucket(src_bucket, pattern, delimiter = '', .output = 'character')
+    }else{
+      warning('No Such File: ', src)
+      return()
+    }
+  }
+
+  if(length(src_files) > 0){
+    status_codes <- parForkExec(src_files, copyEach, n=split, .progressbar = .progressbar, .parallel = .parallel)
+  }else{
+    warning(src, " not found in ", src_bucket)
+    return()
+  }
+
+  names(status_codes) <- src_files
+  failed <- src_files[status_codes != 200]
+  if(length(failed) > 0){
+    copyState(src, dest, src_bucket, dest_bucket, state=failed)
+    warning('Some files failed:\n', paste0(failed, collapse = '\n'))
+  }else{
+    copyState(src, dest, src_bucket, dest_bucket, state=NULL)
+  }
+
+  invisible(status_codes)
+}
+
+moveObjects <- function(src, dest, src_bucket, dest_bucket, ...){
+  status_codes <- copyMultipleObjects(src, dest, src_bucket, dest_bucket, ...)
+  if(!is.null(status_codes)){
+    keys <- names(status_codes)[status_codes == 200]
+    removeObjects(src_bucket, keys=keys, confirm = T)
+  }
 }
