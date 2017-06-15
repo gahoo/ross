@@ -1147,7 +1147,7 @@ copyMultipleObjects <- function(src, dest, src_bucket, dest_bucket=src_bucket, .
   invisible(status_codes)
 }
 
-moveObjects <- function(src, dest, src_bucket, dest_bucket, ...){
+moveObjects <- function(src, dest, src_bucket, dest_bucket=src_bucket, ...){
   status_codes <- copyMultipleObjects(src, dest, src_bucket, dest_bucket, ...)
   if(!is.null(status_codes)){
     keys <- names(status_codes)[status_codes == 200]
