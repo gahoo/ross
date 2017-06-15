@@ -332,7 +332,7 @@ test_that("copyObjects", {
   expect_output(r<-copyObjects('success', '/Volumes/RamDisk/', src_bucket = 'ross-test'), "100%")
   expect_true(file.exists('/Volumes/RamDisk/success/1/1.txt'))
   # Online Copy
-  expect_slient(copyObjects('success/1/1.txt', 'cp/1/1.txt', 'ross-test', 'ross-test'))
+  expect_output(copyObjects('success', 'cp', 'ross-test', 'ross-test'), "100%")
   r <- HeadObject('ross-test', 'cp/1/1.txt')
   expect_equal(r$status_code, 200)
   # Local Copy
