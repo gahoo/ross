@@ -174,6 +174,14 @@ oss.cp <- function(from, to, ...){
   invisible(r)
 }
 
+##### mv
+oss.mv <- function(from, to, ...){
+  from <- format.oss(from)
+  to <- format.oss(to)
+  r <- moveObjects(from$key, to$key, from$bucket, to$bucket)
+
+  invisible(r)
+}
 
 ##### ln
 #' oss.ln
