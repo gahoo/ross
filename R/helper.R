@@ -382,6 +382,10 @@ downloadState <- function(bucketname, src, dest, pattern, state){
   states('download', bucketname, src, dest, pattern, state=state)
 }
 
+copyState <- function(src, dest, src_bucket, dest_bucket, state){
+  states('copy', src, dest, src_bucket, dest_bucket, state=state)
+}
+
 aclState <- function(bucketname, prefix, acl, recursive, state){
   states('acl', bucketname, prefix, acl, recursive, state=state)
 }
@@ -413,4 +417,12 @@ is.installed <- function(name){
   }else{
     FALSE
   }
+}
+
+is.folder.char <- function(string){
+  grepl('/$', string)
+}
+
+is.root <- function(string){
+  grepl('^/$', string)
 }
