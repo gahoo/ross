@@ -118,6 +118,9 @@ Bucket <- R6::R6Class("Bucket",
     cp = function(from, to, ...) {
       oss.cp(from, to, ...)
     },
+    mv = function(from, to, ...) {
+      oss.mv(from, to, ...)
+    },
     exists = function(){
       isBucketExist(self$Name)
     },
