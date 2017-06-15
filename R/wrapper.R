@@ -962,9 +962,7 @@ copyObjects <- function(src, dest, src_bucket=NULL, dest_bucket=NULL, ...){
     r <- downloadMultipleObjects(src_bucket, src, dest, ...)
   }else if(!is.null(src_bucket) && !is.null(dest_bucket)){
     #Copy
-    if(is.null(dest)) dest <- basename(src)
-    source <- sprintf("/%s/%s", src_bucket, src)
-    r <- CopyObject(source, dest_bucket, dest, ...)
+    r <- copyMultipleObjects(src, dest, src_bucket, dest_bucket, ...)
   }else{
     #Local
     r <- file.copy(src, dest, ...)
