@@ -375,3 +375,33 @@ test_that("restoreObject", {
   removeObjects('ross-test-arch', 'test.txt', confirm = T)
   deleteBucket('ross-test-arch')
 })
+
+test_that("copyMultipleObjects", {
+  createBucket('ross-test')
+  writeObject('ross-test', 'abc/123.txt')
+  writeObject('ross-test', 'abc/456.txt')
+  # normal copy
+  expect_output(copyMultipleObjects('abc', 'efg', 'ross-test'), "100%")
+  expect_true(isPseudoFolderExist('ross-test', 'efg'))
+  # . copy to new/
+  expect_output(copyMultipleObjects('efg', 'new/path/', 'ross-test'), "100%")
+  expect_true(isPseudoFolderExist('ross-test', 'new/path/efg'))
+  # / copy to /
+  expect_output(copyMultipleObjects('new/path/efg/', 'jkl/', 'ross-test'), "100%")
+  expect_true(isPseudoFolderExist('ross-test', 'jkl/efg'))
+  # / copy to new
+  expect_output(copyMultipleObjects('new/path/efg/', 'mnt', 'ross-test'), "100%")
+  expect_true(isPseudoFolderExist('ross-test', 'mnt'))
+  # copy to root
+  removeObjects('ross-test', 'efg/', confirm = TRUE)
+  expect_output(copyMultipleObjects('new/path/efg', '/', 'ross-test'), "100%")
+  expect_true(isPseudoFolderExist('ross-test', 'efg'))
+  # not-exist
+  expect_warning(copyMultipleObjects('not-exist', 'new-place', 'ross-test', 'ross-test'), "No Such")
+  # same prefix
+  writeObject('ross-test', 'k')
+  writeObject('ross-test', 'kk/123.txt')
+  expect_output(copyMultipleObjects('k', 'l', 'ross-test', 'ross-test'), "100%")
+  expect_true('kk/' %in% listBucket('ross-test', .output='character'))
+  removeObjects('ross-test', confirm = TRUE)
+})
