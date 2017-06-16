@@ -1,10 +1,10 @@
 ---
-title: "ROSS: an OSS SDK, client, API wrapper for R"
+title: "ROSS User Guide"
 author: "Jiaping Li"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{ROSS: an OSS SDK, client, wrapper for R}
+  %\VignetteIndexEntry{User Guide}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,11 +15,11 @@ ross封装了绝大多数的OSS API。共分为三层，原始的OSS API，wrapp
 - 第二层是wrapper函数，将常见的功能封装为更为方便实用的函数。调用了第一层OSS API。
 - 第三层是类ossutil函数与R6对象，调用第二层的wrapper函数。通常情况下使用该层级就足够了。第二层中对应函数的参数在该层中都有效。
 
+# 安装与设置
 ## 安装
 ```{r, echo=FALSE, warning=FALSE}
 knitr::opts_chunk$set(eval = FALSE)
 library(ross)
-try(oss.rm('oss://ross-test', confirm=T, .all=T))
 ```
 
 ```{r, eval=FALSE}
@@ -64,15 +64,15 @@ cdnState('ross-test', 'custom.domain.com')
 ```
 
 
-## OSS API
+# OSS API
 
 函数名称与官方OSS API完全一致，提交API请求，返回response对象。
 
-## wrapper函数
+# wrapper函数
 
 方便的OSS函数调用，小写字母开头。
 
-## ossutils
+# ossutils
 
 oss开头的系列函数，实现了[ossutil](https://github.com/aliyun/ossutil)类似的功能。操作对象为`oss://`开头的OSS路径。
 最适合交互式的使用方式。
@@ -87,14 +87,14 @@ oss.mb('oss://ross-test', StorageClass='Archive')
 ```
 
 ### 读写文件
-`oss.write`的content参数不能为空。content可以是二进制的内容。
+`oss.write`的content若为空，则生成空文件。content可以是二进制的内容。
 ```{r}
 oss.write('oss://ross-test/test/test.txt', 'test')
 oss.read('oss://ross-test/test/test.txt')
 ```
 
 ### 列出文件/Bucket
-不加参数列出所有Bucket，否则列出指定路径下的文件。若以`/`结尾，则当作文件夹处理。
+不加参数列出所有Bucket，否则列出指定路径下的文件。若以`/`结尾，则当作文件夹处理。.output参数设置为`character`可以只返回`Key`。
 ```{r}
 # 列出ross开头的Bucket
 oss.ls(prefix='ross')
@@ -115,8 +115,8 @@ oss.rm('oss://ross-test/')
 oss.rm('oss://ross-test/', .all=T)
 ```
 
-### 文件复制（上传下载）
-上传下载均通过该函数实现，支持目录，在线文件的复制目前仅支持单个小于1G的文件。`split`参数控制并行上传下载的数量。`maxPartSize`设置每个分块的大小，过大可能会导致内存占用较高。`minMultiSize`设置最小分块上传文件的大小，即多大的文件需要分块上传。额外的参数会传递至`uploadMultipleObjects`或`downloadMultipleObjects`。
+### 文件复制（上传下载）移动
+上传下载均通过该函数实现，支持目录，在线文件的复制目前仅支持小于1G的文件。`split`参数控制并行上传下载的数量。`maxPartSize`设置每个分块的大小，过大可能会导致内存占用较高。`minMultiSize`设置最小分块上传文件的大小，即多大的文件需要分块上传。额外的参数会传递至`uploadMultipleObjects`或`downloadMultipleObjects`。
 ```{r, eval=FALSE}
 # 下载
 oss.cp('oss://ross-test/test/', '/Volumes/RamDisk/')
@@ -125,6 +125,8 @@ oss.cp('/Volumes/RamDisk/test', 'oss://ross-test/test2')
 oss.ls('oss://ross-test/')
 # 在线复制
 oss.cp('oss://ross-test/test/test.txt', 'oss://ross-test/test2.txt')
+# 在线移动
+oss.mv('oss://ross-test/test2.txt', 'oss://ross-test/test-mv.txt')
 ```
 
 ### R对象的存取
@@ -193,7 +195,7 @@ oss.read('oss://ross-test/linked-test.txt')
 对于`Archive`类型的*Bucket*，需要先恢复才能访问。
 ```{r}
 oss.mb('oss://ross-test-arch', StorageClass='Archive')
-oss.write('oss://ross-test-arch/test.txt', '')
+oss.write('oss://ross-test-arch/test.txt', 'test')
 oss.restore('oss://ross-test-arch/test.txt')
 ```
 
@@ -212,9 +214,132 @@ oss.stat('oss://ross-test/test/test.txt')
 oss.usage('oss://ross-test/test/', unit='KB')
 ```
 
-## R6对象
+# R6对象
 
 `BucketList`, `Bucket`, `Object`等R6对象，提供了对Bucket或者Object的完整操作方法。
 
-## 其他
+## BucketList
+`BucketList`对象实例化时会获取当前用户所有可用`Bucket`，`list`方法返回一个包含所有`bucket`的`tibble`对象。
+```{r}
+bl <- BucketList$new()
+bl$list()
+```
+`buckets`储存了当前用户所有的bucket对象。
+```{r}
+bl$buckets$`ross-test`
+```
+
+## Bucket
+### 创建Bucket
+Bucket对象需要先实例化才能使用，默认实例化时不会自动创建`Bucket`。可以修改参数`autoCreate=TRUE`，实例化同时创建。
+```{r}
+# 实例化
+b <- Bucket$new('ross-test')
+# 判断Bucket是否存在
+b$exists()
+# 创建Bucket，可选参数acl，StorageClass，Location
+b$create()
+```
+### 读写文件
+```{r}
+b$write('test/test.txt', 'test')
+b$read('test/test.txt')
+```
+### 列出Bucket内容
+可选参数与`listBucket`一致。
+```{r}
+# 列出根目录内容
+b$list()
+# 列出所有内容
+b$list(delimiter = '')
+# 列出test/下的内容
+b$list('test/')
+```
+### 删除文件/Bucket
+注意：不加prefix参数会删除`Bucket`内所有文件，使用时务必小心。
+```{r}
+# 删除单个文件
+b$rm('test/test.txt', confirm = T)
+# 删除目录
+b$rm('test/', confirm = T)
+# 删除所有文件
+b$rm(confirm = T)
+# 删除Bucket本身
+b$delete()
+```
+### 上传下载
+```{r}
+# 下载
+b$download('test/', '/Volumes/RamDisk/')
+# 上传
+b$upload('/Volumes/RamDisk/test', 'test2')
+```
+### 复制移动
+只支持`Bucket`内部的复制与移动，`Bucket`之间的操作请使用`oss.cp`与`oss.mv`
+```{r}
+# 复制
+b$cp('test2', 'test3')
+# 移动
+b$mv('test3', 'test-mv')
+```
+### 用量统计
+`usage`方法可以统计Bucket或某目录下存储的使用量`unit`参数设置统计单位。
+```{r}
+# 整个Bucket的用量
+b$usage(unit='B')
+# test/目录下的用量
+b$usage('test/', unit='B')
+```
+### 权限控制
+权限的查看与设置，均通过`acl`进行。
+```{r}
+# 查看当前设置
+b$acl
+# 更改权限为公共读
+b$acl <- 'public-read'
+```
+### 日志设置
+OSS的日志信息可以记录在任意一个Bucket之中，`logging`可以查看和设置访问日志的记录路径。`TargetBucket`和`TargetPrefix`为可以设置的值。
+```{r}
+# 设置日志存储前缀
+b$logging <- list(TargetPrefix='log-')
+# 查看日志配置
+b$logging
+# TargetBucket如果不设置即存储在本bucket内，也可以指定其他Bucket
+b$logging <- list(TargetBucket='ross-test')
+```
+### 静态网站托管配置
+OSS可以用来托管静态网站，通过`website`可以查看和设置。`Suffix`和`Key`分别为主页和错误信息页面的名称。
+```{r}
+# 设置
+b$website <- list(Suffix='index.html', Key='404.html')
+# 查看配置
+b$website
+```
+### 防盗链设置
+为了防止OSS上的数据被其他人盗链，OSS支持基于HTTP header中表头字段referer的防盗链方法。`AllowEmptyReferer`设置是否允许空的Referer，`RefererList`设置允许的Referer。细节请看：https://help.aliyun.com/document_detail/31869.html
+```{r}
+# 设置referer
+b$referer <- list(AllowEmptyReferer=T, RefererList=c('*.igenecode.com', 'aliyun.com'))
+b$referer <- list(AllowEmptyReferer=T)
+b$referer <- list(RefererList=c('*.igenecode.com', 'aliyun.com'))
+# 查看referer
+b$referer
+```
+### 生命周期配置
+OSS可以设置`Bucket`内指定前缀文件的生存周期。
+```{r}
+# 增加一条记录
+b$lifecycle$add('upload_', Object.Days = 5)
+# 保存设置，如果没有设置autoSave必须手动保存
+b$lifecycle$save()
+# 查看设置
+b$lifecycle
+# 可以设置自动保存，添加后自动保存
+b$lifecycle$autoSave <- T
+b$lifecycle$add('upload_', Object.Days = 7)
+b$lifecycle
+```
+
+# 其他
 
