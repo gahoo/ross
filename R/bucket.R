@@ -98,10 +98,14 @@ Bucket <- R6::R6Class("Bucket",
 #' b$rm(confirm=T)
 #' b$rm('test-', confirm=T)
     rm = function(prefix=NULL, confirm=FALSE, ...) {
-      removeObjects(self$Name, prefix, confirm, ...)
+      removeObjects(self$Name, prefix=prefix, confirm=confirm, ...)
     },
-    read = function() {},
-    write = function() {},
+    read = function(key) {
+      readObject(self$Name, key)
+    },
+    write = function(key, content=NULL) {
+      writeObject(self$Name, key, content)
+    },
     download = function(src, dest='.', pattern=NULL, resume=TRUE,
                         split=5, method='aria2', quiet=TRUE,
                          ..., .progressbar=TRUE, .parallel = TRUE) {
@@ -112,14 +116,14 @@ Bucket <- R6::R6Class("Bucket",
     upload = function(src, prefix='/', pattern=NULL, resume=TRUE, split=5,
                       .progressbar=TRUE, ..., .parallel = TRUE) {
 
-      uploadMultipleObjects(self$Name, src=src, prefix=prefix, pattern=pattern, resume=pattern, split=split,
+      uploadMultipleObjects(self$Name, src=src, prefix=prefix, pattern=pattern, resume=resume, split=split,
                             .progressbar=.progressbar, ..., .parallel=.parallel)
     },
     cp = function(from, to, ...) {
-      oss.cp(from, to, ...)
+      copyMultipleObjects(from, to, self$Name, ...)
     },
     mv = function(from, to, ...) {
-      oss.mv(from, to, ...)
+      moveObjects(from, to, self$Name, ...)
     },
     exists = function(){
       isBucketExist(self$Name)
