@@ -12,16 +12,37 @@ vignette: >
 ross封装了绝大多数的OSS API。共分为三层，原始的OSS API，wrapper函数，类ossutil函数以及几个R6对象。
 
 - 第一层封装的是原始的OSS API，与阿里云OSS API完全保持一致。完整参数与使用方法请参阅官方[OSS API文档](https://help.aliyun.com/document_detail/31947.html)
-- 第二层是wrapper函数，将常见的功能封装为更为方便实用的函数。调用了第一层OSS API。
-- 第三层是类ossutil函数与R6对象，调用第二层的wrapper函数。通常情况下使用该层级就足够了。第二层中对应函数的参数在该层中都有效。
+- 第二层是[wrapper函数](#wrapper)，将常见的功能封装为更为方便实用的函数。调用了第一层OSS API。
+- 第三层是类[ossutil函数](#ossutils)与[R6对象](#r6)，调用第二层的[wrapper函数](#wrapper)。通常情况下使用该层级就足够了。第二层中对应函数的参数在该层中都有效。
 
-# 安装与设置
-## 安装
-```{r, echo=FALSE, warning=FALSE}
+> 建议一般用户直接使用[ossutil](#ossutils)系列函数或[R6对象](#r6)。
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(eval = FALSE)
 library(ross)
 ```
 
+# Quick Start
+```{r}
+# 创建Bucket
+oss.mb('oss://ross-test')
+# 写入文件
+oss.write('oss://ross-test/test.txt', 'test')
+# 读取文件
+oss.read('oss://ross-test/test.txt')
+# 保存对象
+oss.saveRDS('oss://ross-test/test.rds', 1:5)
+# 读取对象
+oss.readRDS('oss://ross-test/test.rds')
+# 下载
+oss.cp('oss://ross-test/test.txt', '/tmp/')
+# 上传
+oss.cp('/tmp/test.txt', 'oss://ross-test/test.txt')
+```
+
+
+# 安装与设置
+## 安装
 ```{r, eval=FALSE}
 devtools::install_github('gahoo/ross')
 library(ross)
