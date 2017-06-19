@@ -327,18 +327,37 @@ b$referer <- list(RefererList=c('*.igenecode.com', 'aliyun.com'))
 b$referer
 ```
 ### 生命周期配置
-OSS可以设置`Bucket`内指定前缀文件的生存周期。
+OSS可以设置`Bucket`内指定前缀文件的生存周期，超过生存周期的文件会自动删除。 `ID`如果不指定会自动给一个, `Status`状态是否开启, `Object.CreatedBeforeDate`匹配某日期之前的文件, `Object.Days`匹配若干天前的文件, `Multpart.CreatedBeforeDate`匹配某日期前的parts, `Multpart.Days`匹配若干天前的part。
 ```{r}
-# 增加一条记录
-b$lifecycle$add('upload_', Object.Days = 5)
+# 增加一条记录，保留5天
+b$lifecycle$add('upload/', Object.Days = 5)
+# 自动删除指定日期前的文件，由于前缀相同，会覆盖上一条记录
+b$lifecycle$add('upload/', Object.CreatedBeforeDate = "2017-04-01")
 # 保存设置，如果没有设置autoSave必须手动保存
 b$lifecycle$save()
 # 查看设置
 b$lifecycle
 # 可以设置自动保存，添加后自动保存
 b$lifecycle$autoSave <- T
-b$lifecycle$add('upload_', Object.Days = 7)
+b$lifecycle$add('backup/', Object.Days = 7)
 b$lifecycle
+# 删除设置
+b$lifecycle$remove('backup/')
+b$lifecycle
+# 清空设置
+b$lifecycle$clear()
+b$lifecycle
+```
+### 跨域资源共享
+跨域资源共享(CORS)允许WEB端的应用程序访问不属于本域的资源。`AllowedOrigin`允许的来源，`AllowedMethod`允许的方法，`AllowedHeader`允许的Header，`ExposeHeader`允许访问的响应头，`MaxAgeSeconds`对特定资源的预取（OPTIONS）请求返回结果的缓存时间，单位为秒。除`MaxAgeSeconds`之外，都可以有多个。
+```{r}
+# 添加
+b$cors$add('*', c('GET','PUT'))
+b$cors$save()
+b$cors
+# 删除
+b$cors$remove('*', 'GET')
+b$cors
 ```
 
 # 其他
