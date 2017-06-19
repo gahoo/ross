@@ -88,6 +88,7 @@ Object <- R6::R6Class("Object",
     },
     upload = function(src, ...){
       uploadObject(self$bucket, src, dest = self$key, ...)
+      self$refresh()
     },
     download = function(dest=NULL, ...){
       downloadObject(self$bucket, self$key, dest, ...)
@@ -138,12 +139,17 @@ Object <- R6::R6Class("Object",
     },
     print = function(){
       if(self$exists()){
+        if(self$type == 'Symlink') {
+          target_text <- sprintf("\nTarget: %s", self$link)
+        }else{
+          target_text <- ''
+        }
         object_text <- sprintf(paste(
           "<Object>",
           "Bucket: %s",
           "Key: %s",
           "Size: %s",
-          "Type: %s",
+          "Type: %s%s",
           "Etag: %s",
           "Creation Date: %s",
           "Modified Date: %s",
@@ -152,6 +158,7 @@ Object <- R6::R6Class("Object",
           self$key,
           self$size,
           self$type,
+          target_text,
           self$etag,
           self$creation_date,
           self$modified_date)
@@ -185,7 +192,9 @@ Object <- R6::R6Class("Object",
     },
     link = function(target){
       if(self$type == 'Symlink' || is.null(self$type)){
-        linkObject(self$bucket, self$key, target)
+        target <- linkObject(self$bucket, self$key, target)
+        self$refresh()
+        target
       }else{
         stop(sprintf('%s type has no target.', self$type))
       }
