@@ -5,7 +5,7 @@
 \title{listBucket}
 \usage{
 listBucket(bucketname, prefix = NULL, marker = NULL, delimiter = "/",
-  max_keys = "1000", .all = TRUE, .output = "data.frame")
+  max_keys = "1000", quiet = TRUE, .all = TRUE, .output = "data.frame")
 }
 \arguments{
 \item{prefix}{The prefix of buckets to filter.}
