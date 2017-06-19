@@ -14,5 +14,5 @@ linkObject
 }
 \examples{
 PutObject('ross-test', 'test.txt')
-linkObject('ross-test', 'linked-test.txt', '/ross-test/test.txt')
+linkObject('ross-test', 'linked-test.txt', 'test.txt')
 }
