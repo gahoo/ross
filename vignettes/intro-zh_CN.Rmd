@@ -66,11 +66,169 @@ cdnState('ross-test', 'custom.domain.com')
 
 # OSS API
 
-函数名称与官方OSS API完全一致，提交API请求，返回response对象。
+函数名称与官方OSS API完全一致，提交API请求，返回response对象。wrapper函数基于此系列函数封装。完整参数与使用方法请参阅官方[OSS API文档](https://help.aliyun.com/document_detail/31947.html)
 
 # wrapper函数
 
-方便的OSS函数调用，小写字母开头。
+方便的OSS函数调用，小写字母开头。ossutils和R6对象均基于此系列函数封装。
+
+### 创建Bucket
+创建Bucket有三个可选参数：Location，acl，StorageClass。分别控制Bucket的物理存储位置，访问权限以及存储类型。其中，只有acl在Bucket创建之后可以更改。
+```{r}
+createBucket('ross-test')
+createBucket('ross-test', Location='oss-cn-beijing', acl='private', StorageClass='IA')
+```
+### 读写文件
+`oss.write`的content若为空，则生成空文件。content可以是二进制的内容。
+```{r}
+writeObject('ross-test', 'test/text.txt', 'test')
+writeObject('ross-test', 'test/text.txt', 'test')
+readObject('ross-test', 'test/text.txt')
+```
+### 列出文件／Bucket
+不加参数列出所有Bucket，否则列出指定路径下的文件。若以`/`结尾，则当作文件夹处理。.output参数设置为`character`可以只返回`Key`。
+```{r}
+# 列出Bucket
+listBucket(prefix='ross')
+# 列出Bucket内容
+listBucket('ross-test')
+# 列出Bucket，test目录下内容
+listBucket('ross-test', prefix = 'test/')
+```
+### 删除文件，文件夹，Bucket
+文件和目录的删除用`removeObjects`函数。Bucket的删除用`deleteBucket`函数。**注意：当prefix和keys都为空时，会删除整个Bucket的内容。**当Bucket不为空时无法删除。
+```{r, eval=FALSE}
+# 删除文件
+removeObjects('ross-test', prefix = 'test/test.txt', confirm = T)
+# keys可以接受多个值，明确需要删除的文件
+removeObjects('ross-test', keys = 'test/test.txt', confirm = T)
+# 删除目录
+removeObjects('ross-test', 'test/', confirm = T)
+# 清空Bucket
+removeObjects('ross-test', confirm = T)
+# 删除Bucket
+deleteBucket('ross-test')
+```
+### 上传下载
+支持断点续传，下载默认使用`aria2`，若没有安装，则使用`download.file`默认值。`resume`控制是否断点续传，`method`选择下载工具，`quiet`设置静默模式，`split`设置分块数。上传`maxPartSize`参数设置每个分块的最大值，设置过大在上传大文件时会占用过多内存。`minMultiSize`设置多大的文件需要使用分块上传。分块上传的文件，类型为`MultiPart`。
+```{r, eval=FALSE}
+# 单文件下载
+downloadObject('ross-test', 'test/test.txt', '/Volumes/RamDisk/')
+# 目录下载
+downloadMultipleObjects('ross-test', 'test/', '/Volumes/RamDisk/', pattern = '.txt$', .progressbar = T)
+# 文件上传
+uploadObject('ross-test', '/Volumes/RamDisk/test.txt', 'test2.txt')
+# 目录上传
+uploadMultipleObjects('ross-test', '/Volumes/RamDisk/test/', 'test2')
+```
+#### 分块（multipart）
+当使用分块上传失败未完成的时候，会留下分块。正常而言，重新上传的时候`resume=T`会跳过成功的分块继续上传。但不排除异常退出导致进度丢失，此时可以手动清掉不需要的分块。`listMultipartUploads`函数可以列出这些分块。`abortMultipartUpload`则可以清掉失败的分块。
+```{r, eval=FALSE}
+# 列出单个失败的文件所有的分块
+listMultipartUploads('ross-test', 'some-failed-multipart.gz')
+# 列出所有分块
+listMultipartUploads('ross-test')
+# 清除单个文件的所有分块
+abortMultipartUpload('ross-test', 'some-failed-multipart.gz')
+# 清楚所有分块
+abortMultipartUpload('ross-test')
+```
+
+### 复制移动
+`copyObjects`可以实现上传下载以及在线文件的复制。`copyMultipleObjects`和`moveObjects`的`dest_bucket`参数默认为`src_bucket`，而`copyObjects`若要进行在线复制则必须指定这个参数。
+```{r}
+# OSS文件或目录复制
+copyMultipleObjects('test.txt', 'test3/', 'ross-test')
+# 下载
+copyObjects('test.txt', '/Volumes/RamDisk/', 'ross-test')
+# 上传
+copyObjects('/Volumes/RamDisk/test.txt', 'test-up.txt', NULL, 'ross-test')
+# 在线复制
+copyObjects('test.txt', 'test3/', 'ross-test', 'ross-test')
+# 移动
+moveObjects('test3', 'test4/', 'ross-test')
+```
+### R对象的存取
+ross支持直接将R对象保存至OSS上。主要通过`saveObject`，`loadObject`，`saveRDSObject`，`readRDSObject`四个函数实现。
+```{r}
+a <- 1:5; b <- list(a)
+# 保存对象
+saveObject('ross-test', 'test.RData', a, b)
+# 加载对象
+e <- new.env()
+loadObject('ross-test', 'test.RData', envir = e)
+# 保存单个对象
+saveRDSObject('ross-test', 'test.rds', 1:5)
+# 读取单个对象
+readRDSObject('ross-test', 'test.rds')
+```
+### 权限控制
+OSS中可以对Bucket和文件分别设置不同的权限，文件的权限会覆盖Bucket的权限设置。可选项为：`private`, `public-read`，`public-read-write`
+```{r}
+# Bucket的权限
+aclBucket('ross-test')
+aclBucket('ross-test', 'public-read')
+# 单个文件的权限
+aclObject('ross-test', 'test.txt')
+aclObject('ross-test', 'test.txt', 'private')
+# 设置一个目录下文件的权限
+aclMultipleObjects('ross-test', 'test/', 'public-read-write', recursive = T, .progressbar=F)
+```
+### 元数据的设置
+OSS支持设置文件额外的meta信息，对文件的进行补充说明。支持对文件夹批量操作。
+```{r}
+# 单个文件设置
+metaObject('ross-test', 'test.txt', meta=list(crop='igenecode', author='me'))
+# 删除一个meta信息
+metaObject('ross-test', 'test.txt', meta=list(author=NULL))
+# 清空meta信息
+metaObject('ross-test', 'test.txt', meta=NULL)
+# 设置一个目录下的文件
+metaMultipleObjects('ross-test', 'test', meta=list(crop='igenecode'), recursive = T)
+```
+### 符号链接
+创建符号链接只支持文件，创建的时候不检查目标文件是否存在。下载符号链接的时候会下载目标文件，若目标文件不存在会报错。只支持链接同一个Bucket内的文件。
+```{r}
+# 设置链接
+linkObject('ross-test', 'linked-test.txt', 'test.txt')
+# 查看链接
+linkObject('ross-test', 'linked-test.txt')
+```
+### 归档文件的恢复
+对于`Archive`类型的*Bucket*，需要先恢复才能访问。
+```{r}
+createBucket('ross-test-arch', StorageClass = 'Archive')
+writeObject('ross-test-arch', 'test.txt', 'test')
+restoreObject('ross-test-arch', 'test.txt')
+readObject('ross-test-arch', 'test.txt')
+```
+### 查看信息
+```{r}
+getBucketInfo('ross-test')
+getObjectInfo('ross-test', 'test.txt')
+```
+
+### 其他
+```{r}
+# 判断文件是否存在
+isObjectExist('ross-test', 'test.txt')
+# 判断“目录”是否存在
+isPseudoFolderExist('ross-test', 'test/')
+# 判断Bucket是否存在
+isBucketExist('ross-test')
+
+# 获取文件下载链接
+urlObject('ross-test', 'test.txt', expires = 600)
+
+# 查看Bucket基本信息
+getBucketInfo('ross-test')
+getObjectInfo('ross-test', 'test.txt')
+
+# 查看Bucket用量
+usageBucket('ross-test', unit='B')
+usageBucket('ross-test', 'test/')
+```
+
 
 # ossutils
 
@@ -93,7 +251,7 @@ oss.write('oss://ross-test/test/test.txt', 'test')
 oss.read('oss://ross-test/test/test.txt')
 ```
 
-### 列出文件/Bucket
+### 列出文件／Bucket
 不加参数列出所有Bucket，否则列出指定路径下的文件。若以`/`结尾，则当作文件夹处理。.output参数设置为`character`可以只返回`Key`。
 ```{r}
 # 列出ross开头的Bucket
