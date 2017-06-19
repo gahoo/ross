@@ -134,10 +134,10 @@ rm.oss <- function(x, ..., .all=FALSE){
     stop('Invalid oss path.')
   }else{
     if(is.null(x$key)){
-      if(.all) removeObjects(x$bucketname, x$key, ...)
+      if(.all) removeObjects(x$bucketname, prefix=x$key, ...)
       deleteBucket(x$bucketname)
     }else{
-      removeObjects(x$bucketname, x$key, ...)
+      removeObjects(x$bucketname, prefix=x$key, ...)
     }
   }
 }
