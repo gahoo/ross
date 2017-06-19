@@ -120,10 +120,11 @@ listBucket <- function(bucketname, prefix=NULL, marker=NULL, delimiter='/', max_
 #' removeObjects('ross-test', 'upload/', confirm=TRUE)
 removeObjects <- function(bucketname, prefix=NULL, keys=NULL, confirm=FALSE, quiet=TRUE, step=1000){
   if(!confirm){
-    if(is.null(prefix)){
+    if(is.null(prefix) && is.null(keys)){
       question <- sprintf("Are you sure to delete all objects in bucket %s?(yes/no): ", bucketname)
     }else{
-      question <- sprintf("Are you sure to delete `%s` in bucket `%s`?(yes/no): ", prefix, bucketname)
+      to_del <- ifelse(is.null(keys), prefix, paste(keys, collapse = ', '))
+      question <- sprintf("Are you sure to delete `%s` in bucket `%s`?(yes/no): ", to_del, bucketname)
     }
     confirm<-readline(question)
     if(confirm != 'yes'){
@@ -289,6 +290,7 @@ aclMultipleObjects <- function(bucketname, prefix, acl, recursive = FALSE, ...){
 #' @export
 #'
 #' @examples
+#' getBucketInfo('ross-test')
 getBucketInfo <- function(bucketname){
   r <- GetBucketInfo(bucketname)
   doc <- httr::content(r, encoding = 'UTF-8')
