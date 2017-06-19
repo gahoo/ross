@@ -230,6 +230,8 @@ bl$buckets$`ross-test`
 ```
 
 ## Bucket
+`Bucket`对象包含了所有对`Bucket`的操作方法。
+
 ### 创建Bucket
 Bucket对象需要先实例化才能使用，默认实例化时不会自动创建`Bucket`。可以修改参数`autoCreate=TRUE`，实例化同时创建。
 ```{r}
@@ -359,6 +361,121 @@ b$cors
 b$cors$remove('*', 'GET')
 b$cors
 ```
+
+## Object
+`Object`对象包括了所有对单个文件的操作方法。
+
+### 实例化
+```{r}
+o <- Object$new('ross-test', 'test.txt')
+```
+### 文件读写
+`read`方法可以指定每次读出多少字节。
+```{r}
+o$write('test')
+o$read()
+# 每次只读两个字节
+o$read(n=2)
+o$read(n=2)
+o$read(n=2)
+# 指针位置归零
+o$seek(0)
+o$read(n=3)
+```
+### 删除
+`delete`方法用于删除文件，`exists`方法可以判断文件是否存在。
+```{r}
+o$exists()
+o$delete()
+o$exists()
+```
+### 追加模式
+`Appendable`类型的文件，可以多次写入。
+```{r}
+o$append('1')
+o$append('2')
+o$append('3')
+o$read()
+```
+### 获取文件下载地址
+`expires`参数设置超时时间，单位为秒。
+```{r}
+o$url(600)
+```
+### 上传下载
+```{r}
+o$download('/Volumes/RamDisk/', quiet=T)
+o$upload('/Volumes/RamDisk/test.txt')
+```
+### 复制移动
+```{r}
+# 复制到
+o$copyTo('ross-test', 'test2.txt')
+# 从文件复制
+o2 <- Object$new('ross-test', 'test3.txt')
+o2$copyFrom('ross-test', 'test.txt')
+# 移动到
+o$copyTo('ross-test', 'test-mv.txt')
+```
+### R对象的导入导出
+`save`, `load`方法可以导入导出多个R对象。`saveRDS`, `readRDS`则只能导入导出单个R对象。
+```{r}
+a <- 1:5; b <- list(a)
+o3 <- Object$new('ross-test', 'test.RData')
+# 保存
+o3$save(a, b)
+# 加载
+o3$load()
+# 单个对象
+o4 <- Object$new('ross-test', 'test.rds')
+o4$saveRDS(1:5)
+o4$readRDS()
+```
+### 权限控制
+单个文件的权限可以独立设置，可选的参数有：'private', 'public-read', 'public-read-write'
+```{r}
+# 设置权限
+o$acl <- 'public-read'
+# 查看权限
+o$acl
+```
+### 元数据的设置
+OSS支持设置文件额外的meta信息，对文件的进行补充说明。
+```{r}
+# 添加元数据
+o$meta <- list(author='me')
+o$meta <- list(crop='igenecode')
+# 查看元数据
+o$meta
+# 删除单条数据
+o$meta <- list(author=NULL)
+o$meta
+# 清空元数据
+o$meta <- NULL
+```
+### 符号链接
+只有`Symlink`类型的文件可以设置这个值。
+```{r}
+ol <- Object$new('ross-test', 'test-link.txt')
+# 设置链接，不检查目标文件是否存在
+ol$link <- 'test.txt'
+# 查看链接
+ol$link
+# 读取文件
+rawToChar(ol$read())
+```
+### 归档文件的恢复
+对于归档类型的文件，需要先恢复，才能读取到。
+```{r, eval=FALSE}
+oss.mb('oss://ross-test-arch', StorageClass='Archive')
+ro <- Object$new('ross-test-arch', 'test.txt')
+ro$write('test')
+# 直接读取会失败
+ro$read()
+ro$restore()
+ro$read()
+```
+
 
 # 其他
 
