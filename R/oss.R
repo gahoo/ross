@@ -169,7 +169,7 @@ rm.Bucket <- rm.Object <- function(x, ...){
 oss.cp <- function(from, to, ...){
   from <- format.oss(from)
   to <- format.oss(to)
-  r <- copyObjects(from$key, to$key, from$bucket, to$bucket)
+  r <- copyObjects(from$key, to$key, from$bucket, to$bucket, ...)
 
   invisible(r)
 }
