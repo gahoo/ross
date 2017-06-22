@@ -140,7 +140,7 @@ Browser <- R6::R6Class("Browser",
           "Files",
           DT::dataTableOutput('oss'),
           textOutput('debug'),
-          actionButton('go', 'Enter'),
+          actionButton('go', 'GO'),
           actionButton('download', 'Download'),
           actionButton('download_all', 'Download All')
         ),
@@ -162,8 +162,9 @@ Browser <- R6::R6Class("Browser",
         output$oss <- DT::renderDataTable({
           click <- isolate(input$oss_cell_clicked)
           if(!is.null(click)){
-            if(is.folder.char(click$value) || click$value == '..'){
-              self$navi(click$value)
+            key <- self$show(.shiny = TRUE, .DT = FALSE)$Key[click$row]
+            if(is.folder.char(key) || key == '..'){
+              self$navi(key)
             }
           }
           input$go
@@ -174,7 +175,7 @@ Browser <- R6::R6Class("Browser",
           click <- input$oss_cell_clicked
           str(click)
           click$value
-          gsub(self$root, '', self$pwd)
+          gsub(add.slash(self$root), '', self$pwd)
         })
       }
     }
