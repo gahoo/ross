@@ -426,3 +426,11 @@ is.folder.char <- function(string){
 is.root <- function(string){
   grepl('^/$', string)
 }
+
+format.folder <- function(string){
+  ifelse(is.folder.char(string), string, paste0(string, '/'))
+}
+
+strip.slash <- function(string){
+  sub('/$', '', string)
+}
