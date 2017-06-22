@@ -33,11 +33,11 @@ Browser <- R6::R6Class("Browser",
       if(key == '..'){
         if(is.null(self$pwd)) return(invisible())
         pwd <- dirname(self$pwd)
+        if(nchar(pwd) < nchar(self$root)) return(invisible())
         if(pwd == '.') {
           self$pwd <- NULL
           return(invisible())
         }
-        if(nchar(pwd) < nchar(self$root)) return(invisible())
       }else{
         if(is.null(self$pwd)){
           pwd <- strip.slash(key)
@@ -53,7 +53,7 @@ Browser <- R6::R6Class("Browser",
       }
       message(self$pwd)
     },
-    show = function(.DT=TRUE){
+    show = function(.DT=TRUE, .shiny=FALSE){
       createLink <- function(x){
         if(is.folder.char(x)){
           NULL
@@ -88,8 +88,16 @@ Browser <- R6::R6Class("Browser",
       }
 
       renderDT <- function(files){
+        parent <- data.frame(Key = '..', LastModified = NA, ETag = NA, Size = NA, Link = NA)
+        if(.shiny){
+          if(!is.null(self$bucket)){
+            files <- rbind(parent, files)
+            class(files$Link) <- 'list'
+            # files
+          }
+        }
         if(.DT){
-          DT::datatable(files)
+          DT::datatable(files, selection = 'single')
         }else{
           files
         }
@@ -98,6 +106,9 @@ Browser <- R6::R6Class("Browser",
       prefix <- paste0(self$pwd, '/')
       self$files %>% formatTable %>% renderDT
 
+    },
+    run = function(){
+      shinyApp(ui = self$ui, server = self$server)
     }
   ),
   active = list(
@@ -117,49 +128,55 @@ Browser <- R6::R6Class("Browser",
       }else{
         files <- listBucket(self$bucket, prefix)
       }
-      for(column in c('LastModified', 'ETag', 'Size')){
+      for(column in c('LastModified', 'ETag', 'Size', 'Link')){
         files <- fillNA(files, column)
       }
       files
+    },
+    ui = function(){
+      navbarPage(
+        "OSS Browser",
+        tabPanel(
+          "Files",
+          DT::dataTableOutput('oss'),
+          textOutput('debug'),
+          actionButton('go', 'Enter'),
+          actionButton('download', 'Download'),
+          actionButton('download_all', 'Download All')
+        ),
+        tabPanel(
+          "Download",
+          HTML("<iframe src='yaaw/index.html' width='100%' height='600px'>")
+        ),
+        navbarMenu(
+          "More",
+          tabPanel("Help"),
+          "----",
+          "Section header",
+          tabPanel("Table")
+        )
+      )
+    },
+    server = function(){
+      function(input, output) {
+        output$oss <- DT::renderDataTable({
+          click <- isolate(input$oss_cell_clicked)
+          if(!is.null(click)){
+            if(is.folder.char(click$value) || click$value == '..'){
+              self$navi(click$value)
+            }
+          }
+          input$go
+          self$show(.shiny = TRUE)
+        })
+
+        output$debug <- renderText({
+          click <- input$oss_cell_clicked
+          str(click)
+          click$value
+          gsub(self$root, '', self$pwd)
+        })
+      }
     }
   )
 )
-
-
-#' oss.browser
-#'
-#' @return
-#' @export
-#' @import shiny
-#' @import DT
-#' @import dplyr
-#'
-#' @examples
-oss.browser <- function(root=NULL, title = 'test'){
-  ui <- navbarPage("OSS Browser",
-    tabPanel(
-      "Files",
-      DT::dataTableOutput('oss')
-      ),
-    tabPanel(
-      "Download",
-      HTML("<iframe src='yaaw/index.html' width='100%' height='600px'>")
-      ),
-    navbarMenu(
-      "More",
-      tabPanel("Help"),
-      "----",
-      "Section header",
-      tabPanel("Table")
-    )
-  )
-
-  server <- function(input, output) {
-    output$oss <- DT::renderDataTable({
-      oss.ls(root) %>%
-        select(Key, LastModified, Size, ETag)
-    })
-  }
-
-  shinyApp(ui = ui, server = server)
-}
