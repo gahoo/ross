@@ -13,33 +13,114 @@
 Browser <- R6::R6Class("Browser",
   public = list(
     root = NULL,
+    bucket = NULL,
     pwd = NULL,
-    initialize = function(root){
-      self$root = format.folder(root)
-      self$pwd = self$root
+    initialize = function(bucket = NULL, root = NULL){
+      self$bucket = bucket
+      if(!is.null(root)){
+        self$root <- strip.slash(root)
+        self$pwd <- strip.slash(root)
+      }else{
+        self$root <- ''
+        self$pwd <- NULL
+      }
     },
     navi = function(key){
+      if(is.null(self$bucket)){
+        self$bucket <- key
+        return(invisible())
+      }
       if(key == '..'){
-        pwd <- format.folder(dirname(self$pwd))
-        test <- gsub(self$root, '', pwd)
-        message(test)
-        is_beyond_root <- grepl('^oss', gsub(self$root, '', pwd))
-        if(is_beyond_root) return(invisible())
+        if(is.null(self$pwd)) return(invisible())
+        pwd <- dirname(self$pwd)
+        if(pwd == '.') {
+          self$pwd <- NULL
+          return(invisible())
+        }
+        if(nchar(pwd) < nchar(self$root)) return(invisible())
       }else{
-        pwd <- paste0(self$pwd, key)
+        if(is.null(self$pwd)){
+          pwd <- strip.slash(key)
+        }else{
+          pwd <- file.path(self$pwd, strip.slash(key))
+        }
+
       }
-      message(pwd)
-      message(self$root)
-      x <- oss(pwd)
-      if(pwd == self$root || isObjectExist(x$bucketname, x$key) || isPseudoFolderExist(x$bucketname, x$key)){
-        self$pwd <- format.folder(pwd)
+      if(isObjectExist(self$bucket, pwd) || isPseudoFolderExist(self$bucket, pwd)){
+        self$pwd <- pwd
       }else{
-        stop("No Such Key: ", pwd)
+        warning("No Such Key: ", pwd)
       }
+      message(self$pwd)
     },
-    show = function(){
-      oss.ls(self$pwd) %>%
-        mutate(gsub(self$pwd, '', Key))
+    show = function(.DT=TRUE){
+      createLink <- function(x){
+        if(is.folder.char(x)){
+          NULL
+        }else{
+          link <- urlObject(self$bucket, x)
+          HTML(sprintf('<a href="%s">%s</a>', link, x))
+        }
+      }
+
+      smartSize <- function(x){
+        if(is.na(x)) return()
+        units <- c('B', 'KB', 'MB', 'GB', 'TB', 'PB')
+        for(i in 1:6){ if(x < 1024^i) break }
+        x <- round(x / 1024^(i-1))
+        paste(x, units[i])
+      }
+
+      formatTable <- function(files){
+        if(is.null(self$bucket)){
+          files %>%
+            select(Key = Name, Location, StorageClass)
+        }else{
+          files %>%
+            mutate(
+              Link = sapply(Key, createLink),
+              # Preview = sapply(Key, createLink),
+              Key = gsub(paste0('^', prefix), '', Key),
+              Size = sapply(as.numeric(Size), smartSize)
+            ) %>%
+            select(Key, LastModified, ETag, Size, Link)
+        }
+      }
+
+      renderDT <- function(files){
+        if(.DT){
+          DT::datatable(files)
+        }else{
+          files
+        }
+      }
+
+      prefix <- paste0(self$pwd, '/')
+      self$files %>% formatTable %>% renderDT
+
+    }
+  ),
+  active = list(
+    files = function(){
+      fillNA <- function(x, name){
+        if(!name %in% names(x)){
+          x[[name]] <- NA
+        }
+        x
+      }
+
+      prefix <- paste0(self$pwd, '/')
+      if(is.null(self$bucket)){
+        files <- listBucket()
+      }else if(is.null(self$pwd)){
+        files <- listBucket(self$bucket)
+      }else{
+        files <- listBucket(self$bucket, prefix)
+      }
+      for(column in c('LastModified', 'ETag', 'Size')){
+        files <- fillNA(files, column)
+      }
+      files
     }
   )
 )
