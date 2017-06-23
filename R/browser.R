@@ -5,6 +5,8 @@
 #' @importFrom R6 R6Class
 #' @import xml2
 #' @import httr
+#' @import shiny
+#' @import dplyr
 #' @export
 #' @name Bucket
 #'
@@ -93,11 +95,17 @@ Browser <- R6::R6Class("Browser",
           if(!is.null(self$bucket)){
             files <- rbind(parent, files)
             class(files$Link) <- 'list'
+            class(files$Size) <- 'character'
             # files
           }
         }
         if(.DT){
-          DT::datatable(files, selection = 'single')
+          DT::datatable(files, selection = 'single',
+                        extensions = 'Scroller', options = list(
+                          deferRender = TRUE,
+                          scrollY = 500,
+                          scroller = TRUE)) %>%
+            DT::formatDate('LastModified')
         }else{
           files
         }
@@ -133,6 +141,9 @@ Browser <- R6::R6Class("Browser",
       }
       files
     },
+    relative_dir = function(){
+      gsub(self$root, '', self$pwd)
+    },
     ui = function(){
       navbarPage(
         "OSS Browser",
@@ -146,7 +157,10 @@ Browser <- R6::R6Class("Browser",
         ),
         tabPanel(
           "Download",
-          HTML("<iframe src='yaaw/index.html' width='100%' height='600px'>")
+#          includeScript('inst/aria2/bundle.js'),
+          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js'))
+          # HTML(sprintf("<iframe src='file://%s' width='100%%' height='600px'>", system.file('yaaw/index.html', package = 'ross')))
+          # htmltools::includeHTML(system.file('yaaw/index.html', package = 'ross'))
         ),
         navbarMenu(
           "More",
@@ -158,7 +172,7 @@ Browser <- R6::R6Class("Browser",
       )
     },
     server = function(){
-      function(input, output) {
+      function(input, output, session) {
         output$oss <- DT::renderDataTable({
           click <- isolate(input$oss_cell_clicked)
           if(!is.null(click)){
@@ -171,11 +185,63 @@ Browser <- R6::R6Class("Browser",
           self$show(.shiny = TRUE)
         })
 
+        observeEvent(input$download, {
+          click <- isolate(input$oss_cell_clicked)
+          if(!is.null(click)){
+            key <- self$show(.shiny = TRUE, .DT = FALSE)$Key[click$row]
+            message('download:', key)
+            if(key == '..') return(invisible())
+            if(is.null(self$pwd)){
+              prefix <- key
+            }else{
+              prefix <- file.path(self$pwd, key)
+            }
+            if(isPseudoFolderExist(self$bucket, prefix)){
+              keys <- listBucket(self$bucket, prefix, delimiter = '', .output = 'character')
+              dirs <- gsub(self$root, '', dirname(keys))
+              urls <- sapply(keys, function(x){urlObject(self$bucket, x, expires = 7200)})
+              names(urls) <- NULL
+            }else if(isObjectExist(self$bucket, prefix)){
+              dirs <- self$relative_dir
+              urls <- urlObject(self$bucket, prefix)
+            }
+            session$sendCustomMessage(
+              type = 'addLinks',
+              message = list(
+                url = as.list(urls),
+                dir = as.list(dirs)
+                )
+              )
+          }
+        })
+
+        observeEvent(input$download_all, {
+          if(self$root == ''){
+            prefix <- NULL
+          }else{
+            prefix <- add.slash(self$root)
+          }
+          keys <- listBucket(self$bucket, prefix, delimiter = '', .output = 'character')
+          message(paste0(keys, collapse = '\n'))
+          dirs <- gsub(add.slash(self$root), '', dirname(keys))
+          dirs[dirs == '.'] <- ''
+          message(paste0(dirs, collapse = '\n'))
+          urls <- sapply(keys, function(x){urlObject(self$bucket, x, expires = 7200)})
+          names(urls) <- NULL
+          session$sendCustomMessage(
+            type = 'addLinks',
+            message = list(
+              url = as.list(urls),
+              dir = as.list(dirs)
+            )
+          )
+        })
+
         output$debug <- renderText({
           click <- input$oss_cell_clicked
           str(click)
           click$value
-          gsub(add.slash(self$root), '', self$pwd)
+          gsub(self$root, '', self$pwd)
         })
       }
     }
