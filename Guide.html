@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="generator" content="pandoc">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Jiaping Li">
+
+<meta name="date" content="2017-06-26">
+
+<title>ROSS User Guide</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css">
+
+<script type="text/javascript" src="ROSS%20User%20Guide_files/MathJax.js"></script><style type="text/css">.MathJax_Hover_Frame {border-radius: .25em; -webkit-border-radius: .25em; -moz-border-radius: .25em; -khtml-border-radius: .25em; box-shadow: 0px 0px 15px #83A; -webkit-box-shadow: 0px 0px 15px #83A; -moz-box-shadow: 0px 0px 15px #83A; -khtml-box-shadow: 0px 0px 15px #83A; border: 1px solid #A6D ! important; display: inline-block; position: absolute}
+.MathJax_Menu_Button .MathJax_Hover_Arrow {position: absolute; cursor: pointer; display: inline-block; border: 2px solid #AAA; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; -khtml-border-radius: 4px; font-family: 'Courier New',Courier; font-size: 9px; color: #F0F0F0}
+.MathJax_Menu_Button .MathJax_Hover_Arrow span {display: block; background-color: #AAA; border: 1px solid; border-radius: 3px; line-height: 0; padding: 4px}
+.MathJax_Hover_Arrow:hover {color: white!important; border: 2px solid #CCC!important}
+.MathJax_Hover_Arrow:hover span {background-color: #CCC!important}
+</style><style type="text/css">#MathJax_About {position: fixed; left: 50%; width: auto; text-align: center; border: 3px outset; padding: 1em 2em; background-color: #DDDDDD; color: black; cursor: default; font-family: message-box; font-size: 120%; font-style: normal; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 15px; -webkit-border-radius: 15px; -moz-border-radius: 15px; -khtml-border-radius: 15px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_About.MathJax_MousePost {outline: none}
+.MathJax_Menu {position: absolute; background-color: white; color: black; width: auto; padding: 5px 0px; border: 1px solid #CCCCCC; margin: 0; cursor: default; font: menu; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 5px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -khtml-border-radius: 5px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_MenuItem {padding: 1px 2em; background: transparent}
+.MathJax_MenuArrow {position: absolute; right: .5em; padding-top: .25em; color: #666666; font-size: .75em}
+.MathJax_MenuActive .MathJax_MenuArrow {color: white}
+.MathJax_MenuArrow.RTL {left: .5em; right: auto}
+.MathJax_MenuCheck {position: absolute; left: .7em}
+.MathJax_MenuCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuRadioCheck {position: absolute; left: .7em}
+.MathJax_MenuRadioCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuLabel {padding: 1px 2em 3px 1.33em; font-style: italic}
+.MathJax_MenuRule {border-top: 1px solid #DDDDDD; margin: 4px 3px}
+.MathJax_MenuDisabled {color: GrayText}
+.MathJax_MenuActive {background-color: #606872; color: white}
+.MathJax_MenuDisabled:focus, .MathJax_MenuLabel:focus {background-color: #E8E8E8}
+.MathJax_ContextMenu:focus {outline: none}
+.MathJax_ContextMenu .MathJax_MenuItem:focus {outline: none}
+#MathJax_AboutClose {top: .2em; right: .2em}
+.MathJax_Menu .MathJax_MenuClose {top: -10px; left: -10px}
+.MathJax_MenuClose {position: absolute; cursor: pointer; display: inline-block; border: 2px solid #AAA; border-radius: 18px; -webkit-border-radius: 18px; -moz-border-radius: 18px; -khtml-border-radius: 18px; font-family: 'Courier New',Courier; font-size: 24px; color: #F0F0F0}
+.MathJax_MenuClose span {display: block; background-color: #AAA; border: 1.5px solid; border-radius: 18px; -webkit-border-radius: 18px; -moz-border-radius: 18px; -khtml-border-radius: 18px; line-height: 0; padding: 8px 0 6px}
+.MathJax_MenuClose:hover {color: white!important; border: 2px solid #CCC!important}
+.MathJax_MenuClose:hover span {background-color: #CCC!important}
+.MathJax_MenuClose:hover:focus {outline: none}
+</style><style type="text/css">.MathJax_Preview .MJXf-math {color: inherit!important}
+</style><style type="text/css">.MJX_Assistive_MathML {position: absolute!important; top: 0; left: 0; clip: rect(1px, 1px, 1px, 1px); padding: 1px 0 0 0!important; border: 0!important; height: 1px!important; width: 1px!important; overflow: hidden!important; display: block!important; -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none}
+.MJX_Assistive_MathML.MJX_Assistive_MathML_Block {width: 100%!important}
+</style><style type="text/css">#MathJax_Zoom {position: absolute; background-color: #F0F0F0; overflow: auto; display: block; z-index: 301; padding: .5em; border: 1px solid black; margin: 0; font-weight: normal; font-style: normal; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; -webkit-box-sizing: content-box; -moz-box-sizing: content-box; box-sizing: content-box; box-shadow: 5px 5px 15px #AAAAAA; -webkit-box-shadow: 5px 5px 15px #AAAAAA; -moz-box-shadow: 5px 5px 15px #AAAAAA; -khtml-box-shadow: 5px 5px 15px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_ZoomOverlay {position: absolute; left: 0; top: 0; z-index: 300; display: inline-block; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+#MathJax_ZoomFrame {position: relative; display: inline-block; height: 0; width: 0}
+#MathJax_ZoomEventTrap {position: absolute; left: 0; top: 0; z-index: 302; display: inline-block; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+</style><style type="text/css">.MathJax_Preview {color: #888}
+#MathJax_Message {position: fixed; left: 1px; bottom: 2px; background-color: #E6E6E6; border: 1px solid #959595; margin: 0px; padding: 2px 8px; z-index: 102; color: black; font-size: 80%; width: auto; white-space: nowrap}
+#MathJax_MSIE_Frame {position: absolute; top: 0; left: 0; width: 0px; z-index: 101; border: 0px; margin: 0px; padding: 0px}
+.MathJax_Error {color: #CC0000; font-style: italic}
+</style><style type="text/css">.MJXp-script {font-size: .8em}
+.MJXp-right {-webkit-transform-origin: right; -moz-transform-origin: right; -ms-transform-origin: right; -o-transform-origin: right; transform-origin: right}
+.MJXp-bold {font-weight: bold}
+.MJXp-italic {font-style: italic}
+.MJXp-scr {font-family: MathJax_Script,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-frak {font-family: MathJax_Fraktur,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-sf {font-family: MathJax_SansSerif,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-cal {font-family: MathJax_Caligraphic,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-mono {font-family: MathJax_Typewriter,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-largeop {font-size: 150%}
+.MJXp-largeop.MJXp-int {vertical-align: -.2em}
+.MJXp-math {display: inline-block; line-height: 1.2; text-indent: 0; font-family: 'Times New Roman',Times,STIXGeneral,serif; white-space: nowrap; border-collapse: collapse}
+.MJXp-display {display: block; text-align: center; margin: 1em 0}
+.MJXp-math span {display: inline-block}
+.MJXp-box {display: block!important; text-align: center}
+.MJXp-box:after {content: " "}
+.MJXp-rule {display: block!important; margin-top: .1em}
+.MJXp-char {display: block!important}
+.MJXp-mo {margin: 0 .15em}
+.MJXp-mfrac {margin: 0 .125em; vertical-align: .25em}
+.MJXp-denom {display: inline-table!important; width: 100%}
+.MJXp-denom > * {display: table-row!important}
+.MJXp-surd {vertical-align: top}
+.MJXp-surd > * {display: block!important}
+.MJXp-script-box > *  {display: table!important; height: 50%}
+.MJXp-script-box > * > * {display: table-cell!important; vertical-align: top}
+.MJXp-script-box > *:last-child > * {vertical-align: bottom}
+.MJXp-script-box > * > * > * {display: block!important}
+.MJXp-mphantom {visibility: hidden}
+.MJXp-munderover {display: inline-table!important}
+.MJXp-over {display: inline-block!important; text-align: center}
+.MJXp-over > * {display: block!important}
+.MJXp-munderover > * {display: table-row!important}
+.MJXp-mtable {vertical-align: .25em; margin: 0 .125em}
+.MJXp-mtable > * {display: inline-table!important; vertical-align: middle}
+.MJXp-mtr {display: table-row!important}
+.MJXp-mtd {display: table-cell!important; text-align: center; padding: .5em 0 0 .5em}
+.MJXp-mtr > .MJXp-mtd:first-child {padding-left: 0}
+.MJXp-mtr:first-child > .MJXp-mtd {padding-top: 0}
+.MJXp-mlabeledtr {display: table-row!important}
+.MJXp-mlabeledtr > .MJXp-mtd:first-child {padding-left: 0}
+.MJXp-mlabeledtr:first-child > .MJXp-mtd {padding-top: 0}
+.MJXp-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 1px 3px; font-style: normal; font-size: 90%}
+.MJXp-scale0 {-webkit-transform: scaleX(.0); -moz-transform: scaleX(.0); -ms-transform: scaleX(.0); -o-transform: scaleX(.0); transform: scaleX(.0)}
+.MJXp-scale1 {-webkit-transform: scaleX(.1); -moz-transform: scaleX(.1); -ms-transform: scaleX(.1); -o-transform: scaleX(.1); transform: scaleX(.1)}
+.MJXp-scale2 {-webkit-transform: scaleX(.2); -moz-transform: scaleX(.2); -ms-transform: scaleX(.2); -o-transform: scaleX(.2); transform: scaleX(.2)}
+.MJXp-scale3 {-webkit-transform: scaleX(.3); -moz-transform: scaleX(.3); -ms-transform: scaleX(.3); -o-transform: scaleX(.3); transform: scaleX(.3)}
+.MJXp-scale4 {-webkit-transform: scaleX(.4); -moz-transform: scaleX(.4); -ms-transform: scaleX(.4); -o-transform: scaleX(.4); transform: scaleX(.4)}
+.MJXp-scale5 {-webkit-transform: scaleX(.5); -moz-transform: scaleX(.5); -ms-transform: scaleX(.5); -o-transform: scaleX(.5); transform: scaleX(.5)}
+.MJXp-scale6 {-webkit-transform: scaleX(.6); -moz-transform: scaleX(.6); -ms-transform: scaleX(.6); -o-transform: scaleX(.6); transform: scaleX(.6)}
+.MJXp-scale7 {-webkit-transform: scaleX(.7); -moz-transform: scaleX(.7); -ms-transform: scaleX(.7); -o-transform: scaleX(.7); transform: scaleX(.7)}
+.MJXp-scale8 {-webkit-transform: scaleX(.8); -moz-transform: scaleX(.8); -ms-transform: scaleX(.8); -o-transform: scaleX(.8); transform: scaleX(.8)}
+.MJXp-scale9 {-webkit-transform: scaleX(.9); -moz-transform: scaleX(.9); -ms-transform: scaleX(.9); -o-transform: scaleX(.9); transform: scaleX(.9)}
+.MathJax_PHTML .noError {vertical-align: ; font-size: 90%; text-align: left; color: black; padding: 1px 3px; border: 1px solid}
+</style></head>
+
+<body><div id="MathJax_Message" style="display: none;"></div>
+
+
+
+
+<h1 class="title toc-ignore">ROSS User Guide</h1>
+<h4 class="author"><em>Jiaping Li</em></h4>
+<h4 class="date"><em>2017-06-26</em></h4>
+
+
+
+<p>ross封装了绝大多数的OSS API。共分为三层，原始的OSS API，wrapper函数，类ossutil函数以及几个R6对象。</p>
+<ul>
+<li>第一层封装的是原始的OSS API，与阿里云OSS API完全保持一致。完整参数与使用方法请参阅官方<a href="https://help.aliyun.com/document_detail/31947.html">OSS API文档</a></li>
+<li>第二层是<a href="#wrapper">wrapper函数</a>，将常见的功能封装为更为方便实用的函数。调用了第一层OSS API。</li>
+<li>第三层是类<a href="#ossutils">ossutil函数</a>与<a href="#r6">R6对象</a>，调用第二层的<a href="#wrapper">wrapper函数</a>。通常情况下使用该层级就足够了。第二层中对应函数的参数在该层中都有效。</li>
+</ul>
+<blockquote>
+<p>建议一般用户直接使用<a href="#ossutils">ossutil</a>系列函数或<a href="#r6">R6对象</a>。</p>
+</blockquote>
+<div id="quick-start" class="section level1">
+<h1>Quick Start</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 创建Bucket</span>
+<span class="kw">oss.mb</span>(<span class="st">'oss://ross-test'</span>)
+<span class="co"># 写入文件</span>
+<span class="kw">oss.write</span>(<span class="st">'oss://ross-test/test.txt'</span>, <span class="st">'test'</span>)
+<span class="co"># 读取文件</span>
+<span class="kw">oss.read</span>(<span class="st">'oss://ross-test/test.txt'</span>)
+<span class="co"># 保存对象</span>
+<span class="kw">oss.saveRDS</span>(<span class="st">'oss://ross-test/test.rds'</span>, <span class="dv">1</span>:<span class="dv">5</span>)
+<span class="co"># 读取对象</span>
+<span class="kw">oss.readRDS</span>(<span class="st">'oss://ross-test/test.rds'</span>)
+<span class="co"># 下载</span>
+<span class="kw">oss.cp</span>(<span class="st">'oss://ross-test/test.txt'</span>, <span class="st">'/tmp/'</span>)
+<span class="co"># 上传</span>
+<span class="kw">oss.cp</span>(<span class="st">'/tmp/test.txt'</span>, <span class="st">'oss://ross-test/test.txt'</span>)</code></pre></div>
+</div>
+<div class="section level1">
+<h1>安装与设置</h1>
+<div class="section level2">
+<h2>安装</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">devtools::<span class="kw">install_github</span>(<span class="st">'gahoo/ross'</span>)
+<span class="kw">library</span>(ross)</code></pre></div>
+</div>
+<div class="section level2">
+<h2>设置</h2>
+<div class="section level3">
+<h3>环境变量</h3>
+<p>操作OSS需要<code>AccessKeyId</code>和<code>AccessKeySecret</code>进行签名，在使用ross包之前需要先设置这两个环境变量。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">Sys.setenv</span>(
+  <span class="dt">AccessKeyId=</span><span class="st">"xxxxxxxxxxxxxxxx"</span>,
+  <span class="dt">AccessKeySecret=</span><span class="st">"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"</span>
+)</code></pre></div>
+<p>也可以选择将环境变量写入<code>~/.Renviron</code>文件中，R启动时会自动设置。</p>
+<pre><code>AccessKeyId=xxxxxxxxxxxxxxxx
+AccessKeySecret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+</div>
+<div class="section level3">
+<h3>其他参数</h3>
+<p>ross有以下全局参数设置，默认不需要更改。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">options</span>(
+  <span class="dt">ross.internal =</span> <span class="ot">FALSE</span>, <span class="co"># 是否使用内网地址</span>
+  <span class="dt">ross.vpc =</span> <span class="ot">FALSE</span>, <span class="co"># 是否使用vpc地址</span>
+  <span class="dt">ross.debug =</span> <span class="ot">FALSE</span>, <span class="co"># 是否开启debug模式</span>
+  <span class="dt">ross.aria2c =</span> <span class="ot">TRUE</span> <span class="co"># 是否使用aria2进行下载</span>
+)</code></pre></div>
+</div>
+<div id="location" class="section level3">
+<h3>Location</h3>
+<p>有时候权限不足无法自动获取Bucket的Location，此时需要手动设置：</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">locationState</span>(<span class="st">'ross-test'</span>, <span class="st">'oss-cn-beijing'</span>)</code></pre></div>
+</div>
+<div id="cdn" class="section level3">
+<h3>CDN加速</h3>
+<p>CDN加速的设置方法：</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cdnState</span>(<span class="st">'ross-test'</span>, <span class="st">'custom.domain.com'</span>)</code></pre></div>
+</div>
+</div>
+</div>
+<div id="oss-api" class="section level1">
+<h1>OSS API</h1>
+<p>函数名称与官方OSS API完全一致，提交API请求，返回response对象。wrapper函数基于此系列函数封装。完整参数与使用方法请参阅官方<a href="https://help.aliyun.com/document_detail/31947.html">OSS API文档</a></p>
+</div>
+<div id="wrapper" class="section level1">
+<h1>wrapper函数</h1>
+<p>方便的OSS函数调用，小写字母开头。ossutils和R6对象均基于此系列函数封装。</p>
+<div id="bucket" class="section level3">
+<h3>创建Bucket</h3>
+<p>创建Bucket有三个可选参数：Location，acl，StorageClass。分别控制Bucket的物理存储位置，访问权限以及存储类型。其中，只有acl在Bucket创建之后可以更改。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">createBucket</span>(<span class="st">'ross-test'</span>)
+<span class="kw">createBucket</span>(<span class="st">'ross-test'</span>, <span class="dt">Location=</span><span class="st">'oss-cn-beijing'</span>, <span class="dt">acl=</span><span class="st">'private'</span>, <span class="dt">StorageClass=</span><span class="st">'IA'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>读写文件</h3>
+<p><code>oss.write</code>的content若为空，则生成空文件。content可以是二进制的内容。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">writeObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test/text.txt'</span>, <span class="st">'test'</span>)
+<span class="kw">writeObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test/text.txt'</span>, <span class="st">'test'</span>)
+<span class="kw">readObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test/text.txt'</span>)</code></pre></div>
+</div>
+<div id="bucket" class="section level3">
+<h3>列出文件／Bucket</h3>
+<p>不加参数列出所有Bucket，否则列出指定路径下的文件。若以<code>/</code>结尾，则当作文件夹处理。.output参数设置为<code>character</code>可以只返回<code>Key</code>。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 列出Bucket</span>
+<span class="kw">listBucket</span>(<span class="dt">prefix=</span><span class="st">'ross'</span>)
+<span class="co"># 列出Bucket内容</span>
+<span class="kw">listBucket</span>(<span class="st">'ross-test'</span>)
+<span class="co"># 列出Bucket，test目录下内容</span>
+<span class="kw">listBucket</span>(<span class="st">'ross-test'</span>, <span class="dt">prefix =</span> <span class="st">'test/'</span>)</code></pre></div>
+</div>
+<div id="bucket" class="section level3">
+<h3>删除文件，文件夹，Bucket</h3>
+<p>文件和目录的删除用<code>removeObjects</code>函数。Bucket的删除用<code>deleteBucket</code>函数。<strong>注意：当prefix和keys都为空时，会删除整个Bucket的内容。</strong>当Bucket不为空时无法删除。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 删除文件</span>
+<span class="kw">removeObjects</span>(<span class="st">'ross-test'</span>, <span class="dt">prefix =</span> <span class="st">'test/test.txt'</span>, <span class="dt">confirm =</span> T)
+<span class="co"># keys可以接受多个值，明确需要删除的文件</span>
+<span class="kw">removeObjects</span>(<span class="st">'ross-test'</span>, <span class="dt">keys =</span> <span class="st">'test/test.txt'</span>, <span class="dt">confirm =</span> T)
+<span class="co"># 删除目录</span>
+<span class="kw">removeObjects</span>(<span class="st">'ross-test'</span>, <span class="st">'test/'</span>, <span class="dt">confirm =</span> T)
+<span class="co"># 清空Bucket</span>
+<span class="kw">removeObjects</span>(<span class="st">'ross-test'</span>, <span class="dt">confirm =</span> T)
+<span class="co"># 删除Bucket</span>
+<span class="kw">deleteBucket</span>(<span class="st">'ross-test'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>上传下载</h3>
+<p>支持断点续传，下载默认使用<code>aria2</code>，若没有安装，则使用<code>download.file</code>默认值。<code>resume</code>控制是否断点续传，<code>method</code>选择下载工具，<code>quiet</code>设置静默模式，<code>split</code>设置分块数。上传<code>maxPartSize</code>参数设置每个分块的最大值，设置过大在上传大文件时会占用过多内存。<code>minMultiSize</code>设置多大的文件需要使用分块上传。分块上传的文件，类型为<code>MultiPart</code>。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 单文件下载</span>
+<span class="kw">downloadObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test/test.txt'</span>, <span class="st">'/Volumes/RamDisk/'</span>)
+<span class="co"># 目录下载</span>
+<span class="kw">downloadMultipleObjects</span>(<span class="st">'ross-test'</span>, <span class="st">'test/'</span>, <span class="st">'/Volumes/RamDisk/'</span>, <span class="dt">pattern =</span> <span class="st">'.txt$'</span>, <span class="dt">.progressbar =</span> T)
+<span class="co"># 文件上传</span>
+<span class="kw">uploadObject</span>(<span class="st">'ross-test'</span>, <span class="st">'/Volumes/RamDisk/test.txt'</span>, <span class="st">'test2.txt'</span>)
+<span class="co"># 目录上传</span>
+<span class="kw">uploadMultipleObjects</span>(<span class="st">'ross-test'</span>, <span class="st">'/Volumes/RamDisk/test/'</span>, <span class="st">'test2'</span>)</code></pre></div>
+<div id="multipart" class="section level4">
+<h4>分块（multipart）</h4>
+<p>当使用分块上传失败未完成的时候，会留下分块。正常而言，重新上传的时候<code>resume=T</code>会跳过成功的分块继续上传。但不排除异常退出导致进度丢失，此时可以手动清掉不需要的分块。<code>listMultipartUploads</code>函数可以列出这些分块。<code>abortMultipartUpload</code>则可以清掉失败的分块。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 列出单个失败的文件所有的分块</span>
+<span class="kw">listMultipartUploads</span>(<span class="st">'ross-test'</span>, <span class="st">'some-failed-multipart.gz'</span>)
+<span class="co"># 列出所有分块</span>
+<span class="kw">listMultipartUploads</span>(<span class="st">'ross-test'</span>)
+<span class="co"># 清除单个文件的所有分块</span>
+<span class="kw">abortMultipartUpload</span>(<span class="st">'ross-test'</span>, <span class="st">'some-failed-multipart.gz'</span>)
+<span class="co"># 清楚所有分块</span>
+<span class="kw">abortMultipartUpload</span>(<span class="st">'ross-test'</span>)</code></pre></div>
+</div>
+</div>
+<div class="section level3">
+<h3>复制移动</h3>
+<p><code>copyObjects</code>可以实现上传下载以及在线文件的复制。<code>copyMultipleObjects</code>和<code>moveObjects</code>的<code>dest_bucket</code>参数默认为<code>src_bucket</code>，而<code>copyObjects</code>若要进行在线复制则必须指定这个参数。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># OSS文件或目录复制</span>
+<span class="kw">copyMultipleObjects</span>(<span class="st">'test.txt'</span>, <span class="st">'test3/'</span>, <span class="st">'ross-test'</span>)
+<span class="co"># 下载</span>
+<span class="kw">copyObjects</span>(<span class="st">'test.txt'</span>, <span class="st">'/Volumes/RamDisk/'</span>, <span class="st">'ross-test'</span>)
+<span class="co"># 上传</span>
+<span class="kw">copyObjects</span>(<span class="st">'/Volumes/RamDisk/test.txt'</span>, <span class="st">'test-up.txt'</span>, <span class="ot">NULL</span>, <span class="st">'ross-test'</span>)
+<span class="co"># 在线复制</span>
+<span class="kw">copyObjects</span>(<span class="st">'test.txt'</span>, <span class="st">'test3/'</span>, <span class="st">'ross-test'</span>, <span class="st">'ross-test'</span>)
+<span class="co"># 移动</span>
+<span class="kw">moveObjects</span>(<span class="st">'test3'</span>, <span class="st">'test4/'</span>, <span class="st">'ross-test'</span>)</code></pre></div>
+</div>
+<div id="r" class="section level3">
+<h3>R对象的存取</h3>
+<p>ross支持直接将R对象保存至OSS上。主要通过<code>saveObject</code>，<code>loadObject</code>，<code>saveRDSObject</code>，<code>readRDSObject</code>四个函数实现。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a &lt;-<span class="st"> </span><span class="dv">1</span>:<span class="dv">5</span>; b &lt;-<span class="st"> </span><span class="kw">list</span>(a)
+<span class="co"># 保存对象</span>
+<span class="kw">saveObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.RData'</span>, a, b)
+<span class="co"># 加载对象</span>
+e &lt;-<span class="st"> </span><span class="kw">new.env</span>()
+<span class="kw">loadObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.RData'</span>, <span class="dt">envir =</span> e)
+<span class="co"># 保存单个对象</span>
+<span class="kw">saveRDSObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.rds'</span>, <span class="dv">1</span>:<span class="dv">5</span>)
+<span class="co"># 读取单个对象</span>
+<span class="kw">readRDSObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.rds'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>权限控制</h3>
+<p>OSS中可以对Bucket和文件分别设置不同的权限，文件的权限会覆盖Bucket的权限设置。可选项为：<code>private</code>, <code>public-read</code>，<code>public-read-write</code></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Bucket的权限</span>
+<span class="kw">aclBucket</span>(<span class="st">'ross-test'</span>)
+<span class="kw">aclBucket</span>(<span class="st">'ross-test'</span>, <span class="st">'public-read'</span>)
+<span class="co"># 单个文件的权限</span>
+<span class="kw">aclObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>)
+<span class="kw">aclObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>, <span class="st">'private'</span>)
+<span class="co"># 设置一个目录下文件的权限</span>
+<span class="kw">aclMultipleObjects</span>(<span class="st">'ross-test'</span>, <span class="st">'test/'</span>, <span class="st">'public-read-write'</span>, <span class="dt">recursive =</span> T, <span class="dt">.progressbar=</span>F)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>元数据的设置</h3>
+<p>OSS支持设置文件额外的meta信息，对文件的进行补充说明。支持对文件夹批量操作。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 单个文件设置</span>
+<span class="kw">metaObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>, <span class="dt">meta=</span><span class="kw">list</span>(<span class="dt">crop=</span><span class="st">'igenecode'</span>, <span class="dt">author=</span><span class="st">'me'</span>))
+<span class="co"># 删除一个meta信息</span>
+<span class="kw">metaObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>, <span class="dt">meta=</span><span class="kw">list</span>(<span class="dt">author=</span><span class="ot">NULL</span>))
+<span class="co"># 清空meta信息</span>
+<span class="kw">metaObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>, <span class="dt">meta=</span><span class="ot">NULL</span>)
+<span class="co"># 设置一个目录下的文件</span>
+<span class="kw">metaMultipleObjects</span>(<span class="st">'ross-test'</span>, <span class="st">'test'</span>, <span class="dt">meta=</span><span class="kw">list</span>(<span class="dt">crop=</span><span class="st">'igenecode'</span>), <span class="dt">recursive =</span> T)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>符号链接</h3>
+<p>创建符号链接只支持文件，创建的时候不检查目标文件是否存在。下载符号链接的时候会下载目标文件，若目标文件不存在会报错。只支持链接同一个Bucket内的文件。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 设置链接</span>
+<span class="kw">linkObject</span>(<span class="st">'ross-test'</span>, <span class="st">'linked-test.txt'</span>, <span class="st">'test.txt'</span>)
+<span class="co"># 查看链接</span>
+<span class="kw">linkObject</span>(<span class="st">'ross-test'</span>, <span class="st">'linked-test.txt'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>归档文件的恢复</h3>
+<p>对于<code>Archive</code>类型的<em>Bucket</em>，需要先恢复才能访问。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">createBucket</span>(<span class="st">'ross-test-arch'</span>, <span class="dt">StorageClass =</span> <span class="st">'Archive'</span>)
+<span class="kw">writeObject</span>(<span class="st">'ross-test-arch'</span>, <span class="st">'test.txt'</span>, <span class="st">'test'</span>)
+<span class="kw">restoreObject</span>(<span class="st">'ross-test-arch'</span>, <span class="st">'test.txt'</span>)
+<span class="kw">readObject</span>(<span class="st">'ross-test-arch'</span>, <span class="st">'test.txt'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>查看信息</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">getBucketInfo</span>(<span class="st">'ross-test'</span>)
+<span class="kw">getObjectInfo</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>其他</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 判断文件是否存在</span>
+<span class="kw">isObjectExist</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>)
+<span class="co"># 判断“目录”是否存在</span>
+<span class="kw">isPseudoFolderExist</span>(<span class="st">'ross-test'</span>, <span class="st">'test/'</span>)
+<span class="co"># 判断Bucket是否存在</span>
+<span class="kw">isBucketExist</span>(<span class="st">'ross-test'</span>)
+
+<span class="co"># 获取文件下载链接</span>
+<span class="kw">urlObject</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>, <span class="dt">expires =</span> <span class="dv">600</span>)
+
+<span class="co"># 查看Bucket基本信息</span>
+<span class="kw">getBucketInfo</span>(<span class="st">'ross-test'</span>)
+<span class="kw">getObjectInfo</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>)
+
+<span class="co"># 查看Bucket用量</span>
+<span class="kw">usageBucket</span>(<span class="st">'ross-test'</span>, <span class="dt">unit=</span><span class="st">'B'</span>)
+<span class="kw">usageBucket</span>(<span class="st">'ross-test'</span>, <span class="st">'test/'</span>)</code></pre></div>
+</div>
+</div>
+<div id="ossutils" class="section level1">
+<h1>ossutils</h1>
+<p>oss开头的系列函数，实现了<a href="https://github.com/aliyun/ossutil">ossutil</a>类似的功能。操作对象为<code>oss://</code>开头的OSS路径。 最适合交互式的使用方式。</p>
+<div id="bucket-1" class="section level3">
+<h3>创建Bucket</h3>
+<p>创建Bucket有三个可选参数：Location，acl，StorageClass。分别控制Bucket的物理存储位置，访问权限以及存储类型。其中，只有acl在Bucket创建之后可以更改。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">oss.mb</span>(<span class="st">'oss://ross-test'</span>)
+<span class="kw">oss.mb</span>(<span class="st">'oss://ross-test'</span>, <span class="dt">Location=</span><span class="st">'oss-cn-beijing'</span>)
+<span class="kw">oss.mb</span>(<span class="st">'oss://ross-test'</span>, <span class="dt">acl=</span><span class="st">'public-read'</span>)
+<span class="kw">oss.mb</span>(<span class="st">'oss://ross-test'</span>, <span class="dt">StorageClass=</span><span class="st">'Archive'</span>)</code></pre></div>
+</div>
+<div id="-1" class="section level3">
+<h3>读写文件</h3>
+<p><code>oss.write</code>的content若为空，则生成空文件。content可以是二进制的内容。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">oss.write</span>(<span class="st">'oss://ross-test/test/test.txt'</span>, <span class="st">'test'</span>)
+<span class="kw">oss.read</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)</code></pre></div>
+</div>
+<div id="bucket-1" class="section level3">
+<h3>列出文件／Bucket</h3>
+<p>不加参数列出所有Bucket，否则列出指定路径下的文件。若以<code>/</code>结尾，则当作文件夹处理。.output参数设置为<code>character</code>可以只返回<code>Key</code>。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 列出ross开头的Bucket</span>
+<span class="kw">oss.ls</span>(<span class="dt">prefix=</span><span class="st">'ross'</span>)
+<span class="co"># 列出ross-test/test的内容</span>
+<span class="kw">oss.ls</span>(<span class="st">'oss://ross-test/test/'</span>)</code></pre></div>
+</div>
+<div id="bucket-1" class="section level3">
+<h3>删除文件／文件夹／Bucket</h3>
+<p>支持删除文件夹。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 删除文件夹</span>
+<span class="kw">oss.rm</span>(<span class="st">'oss://ross-test/test/'</span>)
+<span class="co"># 自动确认</span>
+<span class="kw">oss.rm</span>(<span class="st">'oss://ross-test/test/'</span>, <span class="dt">confirm=</span>T)
+<span class="co"># 删除Bucket</span>
+<span class="kw">oss.rm</span>(<span class="st">'oss://ross-test/'</span>)
+<span class="co"># 删除Bucket及其内容</span>
+<span class="kw">oss.rm</span>(<span class="st">'oss://ross-test/'</span>, <span class="dt">.all=</span>T)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>文件复制（上传下载）移动</h3>
+<p>上传下载均通过该函数实现，支持目录，在线文件的复制目前仅支持小于1G的文件。<code>split</code>参数控制并行上传下载的数量。<code>maxPartSize</code>设置每个分块的大小，过大可能会导致内存占用较高。<code>minMultiSize</code>设置最小分块上传文件的大小，即多大的文件需要分块上传。额外的参数会传递至<code>uploadMultipleObjects</code>或<code>downloadMultipleObjects</code>。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 下载</span>
+<span class="kw">oss.cp</span>(<span class="st">'oss://ross-test/test/'</span>, <span class="st">'/Volumes/RamDisk/'</span>)
+<span class="co"># 上传</span>
+<span class="kw">oss.cp</span>(<span class="st">'/Volumes/RamDisk/test'</span>, <span class="st">'oss://ross-test/test2'</span>)
+<span class="kw">oss.ls</span>(<span class="st">'oss://ross-test/'</span>)
+<span class="co"># 在线复制</span>
+<span class="kw">oss.cp</span>(<span class="st">'oss://ross-test/test/test.txt'</span>, <span class="st">'oss://ross-test/test2.txt'</span>)
+<span class="co"># 在线移动</span>
+<span class="kw">oss.mv</span>(<span class="st">'oss://ross-test/test2.txt'</span>, <span class="st">'oss://ross-test/test-mv.txt'</span>)</code></pre></div>
+</div>
+<div id="r-1" class="section level3">
+<h3>R对象的存取</h3>
+<p>R对象可以直接存入OSS，或者从OSS中读出。<code>oss.save</code>和<code>oss.load</code>对应R里的<code>save</code>和<code>load</code>函数，<code>oss.saveRDS</code>和<code>oss.readRDS</code>则对应<code>saveRDS</code>和<code>readRDS</code>函数。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a &lt;-<span class="st"> </span><span class="dv">1</span>:<span class="dv">5</span>
+b &lt;-<span class="st"> </span><span class="kw">list</span>(a)
+<span class="kw">oss.save</span>(<span class="st">'oss://ross-test/test.RData'</span>, a, b)
+e &lt;-<span class="st"> </span><span class="kw">new.env</span>()
+<span class="kw">oss.load</span>(<span class="st">'oss://ross-test/test.RData'</span>, <span class="dt">envir=</span>e)
+<span class="kw">ls</span>(e)
+
+<span class="kw">oss.saveRDS</span>(<span class="st">'oss://ross-test/test.rds'</span>, <span class="dv">1</span>:<span class="dv">5</span>)
+<span class="kw">oss.readRDS</span>(<span class="st">'oss://ross-test/test.rds'</span>)</code></pre></div>
+</div>
+<div id="-1" class="section level3">
+<h3>权限控制</h3>
+<p>Bucket或文件的权限可以分别设置，可选的参数有：‘private’, ‘public-read’, ‘public-read-write’。支持对文件夹批量操作</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 查看权限</span>
+<span class="kw">oss.acl</span>(<span class="st">'oss://ross-test'</span>)
+<span class="kw">oss.acl</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)
+<span class="co"># 设置权限</span>
+<span class="kw">oss.acl</span>(<span class="st">'oss://ross-test'</span>, <span class="st">'public-read-write'</span>)
+<span class="kw">oss.acl</span>(<span class="st">'oss://ross-test/test/'</span>, <span class="st">'public-read'</span>, <span class="dt">recursive=</span>T)</code></pre></div>
+</div>
+<div id="-1" class="section level3">
+<h3>元数据的设置</h3>
+<p>OSS支持设置文件额外的meta信息，对文件的进行补充说明。支持对文件夹批量操作。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 设置meta信息</span>
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>, <span class="kw">list</span>(<span class="dt">author=</span><span class="st">'igenecode'</span>))
+<span class="co"># 查看meta信息</span>
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)
+<span class="co"># 修改meta信息</span>
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>, <span class="kw">list</span>(<span class="dt">author=</span><span class="st">'igenecode.com'</span>))
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)
+<span class="co"># 添加meta信息</span>
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>, <span class="kw">list</span>(<span class="dt">lang=</span><span class="st">'en-US'</span>))
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)
+<span class="co"># 删除meta信息</span>
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>, <span class="kw">list</span>(<span class="dt">lang=</span><span class="ot">NULL</span>))
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)
+<span class="co"># 批量清空meta信息</span>
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/'</span>, <span class="ot">NULL</span>, <span class="dt">recursive=</span>T)
+<span class="kw">oss.meta</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)</code></pre></div>
+</div>
+<div id="-1" class="section level3">
+<h3>符号链接</h3>
+<p>创建符号链接只支持文件，创建的时候不检查目标文件是否存在。下载符号链接的时候会下载目标文件，若目标文件不存在会报错。只支持链接同一个Bucket内的文件。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 创建链接</span>
+<span class="kw">oss.ln</span>(<span class="st">'oss://ross-test/linked-test.txt'</span>, <span class="st">'oss://ross-test/test/test.txt'</span>)
+<span class="kw">oss.ln</span>(<span class="st">'oss://ross-test/linked-test.txt'</span>, <span class="st">'test/test.txt'</span>)
+<span class="co"># 查看链接</span>
+<span class="kw">oss.ln</span>(<span class="st">'oss://ross-test/linked-test.txt'</span>)
+<span class="kw">oss.read</span>(<span class="st">'oss://ross-test/linked-test.txt'</span>)
+<span class="co"># 如果链接目标文件不存在会报错</span>
+<span class="kw">oss.ln</span>(<span class="st">'oss://ross-test/linked-test.txt'</span>, <span class="st">'oss://ross-test/not-exists'</span>)
+<span class="kw">oss.read</span>(<span class="st">'oss://ross-test/linked-test.txt'</span>)</code></pre></div>
+</div>
+<div id="-1" class="section level3">
+<h3>归档文件的恢复</h3>
+<p>对于<code>Archive</code>类型的<em>Bucket</em>，需要先恢复才能访问。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">oss.mb</span>(<span class="st">'oss://ross-test-arch'</span>, <span class="dt">StorageClass=</span><span class="st">'Archive'</span>)
+<span class="kw">oss.write</span>(<span class="st">'oss://ross-test-arch/test.txt'</span>, <span class="st">'test'</span>)
+<span class="kw">oss.restore</span>(<span class="st">'oss://ross-test-arch/test.txt'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>其他操作</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 判断文件是否存在</span>
+<span class="kw">oss.exists</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)
+<span class="co"># 获取文件下载链接</span>
+<span class="kw">oss.url</span>(<span class="st">'oss://ross-test/test/test.txt'</span>, <span class="dt">expires=</span><span class="dv">600</span>)
+<span class="co"># 获取Bucket信息</span>
+<span class="kw">oss.stat</span>(<span class="st">'oss://ross-test/'</span>)
+<span class="co"># 获取文件头信息</span>
+<span class="kw">oss.stat</span>(<span class="st">'oss://ross-test/test/test.txt'</span>)
+<span class="co"># 获取文件／文件夹存储用量</span>
+<span class="kw">oss.usage</span>(<span class="st">'oss://ross-test/test/'</span>, <span class="dt">unit=</span><span class="st">'KB'</span>)</code></pre></div>
+</div>
+</div>
+<div id="r6" class="section level1">
+<h1>R6对象</h1>
+<p><code>BucketList</code>, <code>Bucket</code>, <code>Object</code>等R6对象，提供了对Bucket或者Object的完整操作方法。</p>
+<div id="bucketlist" class="section level2">
+<h2>BucketList</h2>
+<p><code>BucketList</code>对象实例化时会获取当前用户所有可用<code>Bucket</code>，<code>list</code>方法返回一个包含所有<code>bucket</code>的<code>tibble</code>对象。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">bl &lt;-<span class="st"> </span>BucketList$<span class="kw">new</span>()
+bl$<span class="kw">list</span>()</code></pre></div>
+<p><code>buckets</code>储存了当前用户所有的bucket对象。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">bl$buckets$<span class="st">`</span><span class="dt">ross-test</span><span class="st">`</span></code></pre></div>
+</div>
+<div id="bucket-2" class="section level2">
+<h2>Bucket</h2>
+<p><code>Bucket</code>对象包含了所有对<code>Bucket</code>的操作方法。</p>
+<div id="bucket-2" class="section level3">
+<h3>创建Bucket</h3>
+<p>Bucket对象需要先实例化才能使用，默认实例化时不会自动创建<code>Bucket</code>。可以修改参数<code>autoCreate=TRUE</code>，实例化同时创建。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 实例化</span>
+b &lt;-<span class="st"> </span>Bucket$<span class="kw">new</span>(<span class="st">'ross-test'</span>)
+<span class="co"># 判断Bucket是否存在</span>
+b$<span class="kw">exists</span>()
+<span class="co"># 创建Bucket，可选参数acl，StorageClass，Location</span>
+b$<span class="kw">create</span>()</code></pre></div>
+</div>
+<div id="-2" class="section level3">
+<h3>读写文件</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">b$<span class="kw">write</span>(<span class="st">'test/test.txt'</span>, <span class="st">'test'</span>)
+b$<span class="kw">read</span>(<span class="st">'test/test.txt'</span>)</code></pre></div>
+</div>
+<div id="bucket" class="section level3">
+<h3>列出Bucket内容</h3>
+<p>可选参数与<code>listBucket</code>一致。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 列出根目录内容</span>
+b$<span class="kw">list</span>()
+<span class="co"># 列出所有内容</span>
+b$<span class="kw">list</span>(<span class="dt">delimiter =</span> <span class="st">''</span>)
+<span class="co"># 列出test/下的内容</span>
+b$<span class="kw">list</span>(<span class="st">'test/'</span>)</code></pre></div>
+</div>
+<div id="bucket" class="section level3">
+<h3>删除文件/Bucket</h3>
+<p>注意：不加prefix参数会删除<code>Bucket</code>内所有文件，使用时务必小心。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 删除单个文件</span>
+b$<span class="kw">rm</span>(<span class="st">'test/test.txt'</span>, <span class="dt">confirm =</span> T)
+<span class="co"># 删除目录</span>
+b$<span class="kw">rm</span>(<span class="st">'test/'</span>, <span class="dt">confirm =</span> T)
+<span class="co"># 删除所有文件</span>
+b$<span class="kw">rm</span>(<span class="dt">confirm =</span> T)
+<span class="co"># 删除Bucket本身</span>
+b$<span class="kw">delete</span>()</code></pre></div>
+</div>
+<div id="-1" class="section level3">
+<h3>上传下载</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 下载</span>
+b$<span class="kw">download</span>(<span class="st">'test/'</span>, <span class="st">'/Volumes/RamDisk/'</span>)
+<span class="co"># 上传</span>
+b$<span class="kw">upload</span>(<span class="st">'/Volumes/RamDisk/test'</span>, <span class="st">'test2'</span>)</code></pre></div>
+</div>
+<div id="-1" class="section level3">
+<h3>复制移动</h3>
+<p>只支持<code>Bucket</code>内部的复制与移动，<code>Bucket</code>之间的操作请使用<code>oss.cp</code>与<code>oss.mv</code></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 复制</span>
+b$<span class="kw">cp</span>(<span class="st">'test2'</span>, <span class="st">'test3'</span>)
+<span class="co"># 移动</span>
+b$<span class="kw">mv</span>(<span class="st">'test3'</span>, <span class="st">'test-mv'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>用量统计</h3>
+<p><code>usage</code>方法可以统计Bucket或某目录下存储的使用量<code>unit</code>参数设置统计单位。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 整个Bucket的用量</span>
+b$<span class="kw">usage</span>(<span class="dt">unit=</span><span class="st">'B'</span>)
+<span class="co"># test/目录下的用量</span>
+b$<span class="kw">usage</span>(<span class="st">'test/'</span>, <span class="dt">unit=</span><span class="st">'B'</span>)</code></pre></div>
+</div>
+<div id="-2" class="section level3">
+<h3>权限控制</h3>
+<p>权限的查看与设置，均通过<code>acl</code>进行。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 查看当前设置</span>
+b$acl
+<span class="co"># 更改权限为公共读</span>
+b$acl &lt;-<span class="st"> 'public-read'</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3>日志设置</h3>
+<p>OSS的日志信息可以记录在任意一个Bucket之中，<code>logging</code>可以查看和设置访问日志的记录路径。<code>TargetBucket</code>和<code>TargetPrefix</code>为可以设置的值。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 设置日志存储前缀</span>
+b$logging &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">TargetPrefix=</span><span class="st">'log-'</span>)
+<span class="co"># 查看日志配置</span>
+b$logging
+<span class="co"># TargetBucket如果不设置即存储在本bucket内，也可以指定其他Bucket</span>
+b$logging &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">TargetBucket=</span><span class="st">'ross-test'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>静态网站托管配置</h3>
+<p>OSS可以用来托管静态网站，通过<code>website</code>可以查看和设置。<code>Suffix</code>和<code>Key</code>分别为主页和错误信息页面的名称。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 设置</span>
+b$website &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">Suffix=</span><span class="st">'index.html'</span>, <span class="dt">Key=</span><span class="st">'404.html'</span>)
+<span class="co"># 查看配置</span>
+b$website</code></pre></div>
+</div>
+<div class="section level3">
+<h3>防盗链设置</h3>
+<p>为了防止OSS上的数据被其他人盗链，OSS支持基于HTTP header中表头字段referer的防盗链方法。<code>AllowEmptyReferer</code>设置是否允许空的Referer，<code>RefererList</code>设置允许的Referer。细节请看：<a href="https://help.aliyun.com/document_detail/31869.html" class="uri">https://help.aliyun.com/document_detail/31869.html</a></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 设置referer</span>
+b$referer &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">AllowEmptyReferer=</span>T, <span class="dt">RefererList=</span><span class="kw">c</span>(<span class="st">'*.igenecode.com'</span>, <span class="st">'aliyun.com'</span>))
+b$referer &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">AllowEmptyReferer=</span>T)
+b$referer &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">RefererList=</span><span class="kw">c</span>(<span class="st">'*.igenecode.com'</span>, <span class="st">'aliyun.com'</span>))
+<span class="co"># 查看referer</span>
+b$referer</code></pre></div>
+</div>
+<div class="section level3">
+<h3>生命周期配置</h3>
+<p>OSS可以设置<code>Bucket</code>内指定前缀文件的生存周期，超过生存周期的文件会自动删除。 <code>ID</code>如果不指定会自动给一个, <code>Status</code>状态是否开启, <code>Object.CreatedBeforeDate</code>匹配某日期之前的文件, <code>Object.Days</code>匹配若干天前的文件, <code>Multpart.CreatedBeforeDate</code>匹配某日期前的parts, <code>Multpart.Days</code>匹配若干天前的part。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 增加一条记录，保留5天</span>
+b$lifecycle$<span class="kw">add</span>(<span class="st">'upload/'</span>, <span class="dt">Object.Days =</span> <span class="dv">5</span>)
+<span class="co"># 自动删除指定日期前的文件，由于前缀相同，会覆盖上一条记录</span>
+b$lifecycle$<span class="kw">add</span>(<span class="st">'upload/'</span>, <span class="dt">Object.CreatedBeforeDate =</span> <span class="st">"2017-04-01"</span>)
+<span class="co"># 保存设置，如果没有设置autoSave必须手动保存</span>
+b$lifecycle$<span class="kw">save</span>()
+<span class="co"># 查看设置</span>
+b$lifecycle
+<span class="co"># 可以设置自动保存，添加后自动保存</span>
+b$lifecycle$autoSave &lt;-<span class="st"> </span>T
+b$lifecycle$<span class="kw">add</span>(<span class="st">'backup/'</span>, <span class="dt">Object.Days =</span> <span class="dv">7</span>)
+b$lifecycle
+<span class="co"># 删除设置</span>
+b$lifecycle$<span class="kw">remove</span>(<span class="st">'backup/'</span>)
+b$lifecycle
+<span class="co"># 清空设置</span>
+b$lifecycle$<span class="kw">clear</span>()
+b$lifecycle</code></pre></div>
+</div>
+<div class="section level3">
+<h3>跨域资源共享</h3>
+<p>跨域资源共享(CORS)允许WEB端的应用程序访问不属于本域的资源。<code>AllowedOrigin</code>允许的来源，<code>AllowedMethod</code>允许的方法，<code>AllowedHeader</code>允许的Header，<code>ExposeHeader</code>允许访问的响应头，<code>MaxAgeSeconds</code>对特定资源的预取（OPTIONS）请求返回结果的缓存时间，单位为秒。除<code>MaxAgeSeconds</code>之外，都可以有多个。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 添加</span>
+b$cors$<span class="kw">add</span>(<span class="st">'*'</span>, <span class="kw">c</span>(<span class="st">'GET'</span>,<span class="st">'PUT'</span>))
+b$cors$<span class="kw">save</span>()
+b$cors
+<span class="co"># 删除</span>
+b$cors$<span class="kw">remove</span>(<span class="st">'*'</span>, <span class="st">'GET'</span>)
+b$cors</code></pre></div>
+</div>
+</div>
+<div id="object" class="section level2">
+<h2>Object</h2>
+<p><code>Object</code>对象包括了所有对单个文件的操作方法。</p>
+<div class="section level3">
+<h3>实例化</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">o &lt;-<span class="st"> </span>Object$<span class="kw">new</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>文件读写</h3>
+<p><code>read</code>方法可以指定每次读出多少字节。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">o$<span class="kw">write</span>(<span class="st">'test'</span>)
+o$<span class="kw">read</span>()
+<span class="co"># 每次只读两个字节</span>
+o$<span class="kw">read</span>(<span class="dt">n=</span><span class="dv">2</span>)
+o$<span class="kw">read</span>(<span class="dt">n=</span><span class="dv">2</span>)
+o$<span class="kw">read</span>(<span class="dt">n=</span><span class="dv">2</span>)
+<span class="co"># 指针位置归零</span>
+o$<span class="kw">seek</span>(<span class="dv">0</span>)
+o$<span class="kw">read</span>(<span class="dt">n=</span><span class="dv">3</span>)</code></pre></div>
+</div>
+<div class="section level3">
+<h3>删除</h3>
+<p><code>delete</code>方法用于删除文件，<code>exists</code>方法可以判断文件是否存在。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">o$<span class="kw">exists</span>()
+o$<span class="kw">delete</span>()
+o$<span class="kw">exists</span>()</code></pre></div>
+</div>
+<div class="section level3">
+<h3>追加模式</h3>
+<p><code>Appendable</code>类型的文件，可以多次写入。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">o$<span class="kw">append</span>(<span class="st">'1'</span>)
+o$<span class="kw">append</span>(<span class="st">'2'</span>)
+o$<span class="kw">append</span>(<span class="st">'3'</span>)
+o$<span class="kw">read</span>()</code></pre></div>
+</div>
+<div class="section level3">
+<h3>获取文件下载地址</h3>
+<p><code>expires</code>参数设置超时时间，单位为秒。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">o$<span class="kw">url</span>(<span class="dv">600</span>)</code></pre></div>
+</div>
+<div id="-2" class="section level3">
+<h3>上传下载</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">o$<span class="kw">download</span>(<span class="st">'/Volumes/RamDisk/'</span>, <span class="dt">quiet=</span>T)
+o$<span class="kw">upload</span>(<span class="st">'/Volumes/RamDisk/test.txt'</span>)</code></pre></div>
+</div>
+<div id="-2" class="section level3">
+<h3>复制移动</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 复制到</span>
+o$<span class="kw">copyTo</span>(<span class="st">'ross-test'</span>, <span class="st">'test2.txt'</span>)
+<span class="co"># 从文件复制</span>
+o2 &lt;-<span class="st"> </span>Object$<span class="kw">new</span>(<span class="st">'ross-test'</span>, <span class="st">'test3.txt'</span>)
+o2$<span class="kw">copyFrom</span>(<span class="st">'ross-test'</span>, <span class="st">'test.txt'</span>)
+<span class="co"># 移动到</span>
+o$<span class="kw">copyTo</span>(<span class="st">'ross-test'</span>, <span class="st">'test-mv.txt'</span>)</code></pre></div>
+</div>
+<div id="r" class="section level3">
+<h3>R对象的导入导出</h3>
+<p><code>save</code>, <code>load</code>方法可以导入导出多个R对象。<code>saveRDS</code>, <code>readRDS</code>则只能导入导出单个R对象。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a &lt;-<span class="st"> </span><span class="dv">1</span>:<span class="dv">5</span>; b &lt;-<span class="st"> </span><span class="kw">list</span>(a)
+o3 &lt;-<span class="st"> </span>Object$<span class="kw">new</span>(<span class="st">'ross-test'</span>, <span class="st">'test.RData'</span>)
+<span class="co"># 保存</span>
+o3$<span class="kw">save</span>(a, b)
+<span class="co"># 加载</span>
+o3$<span class="kw">load</span>()
+<span class="co"># 单个对象</span>
+o4 &lt;-<span class="st"> </span>Object$<span class="kw">new</span>(<span class="st">'ross-test'</span>, <span class="st">'test.rds'</span>)
+o4$<span class="kw">saveRDS</span>(<span class="dv">1</span>:<span class="dv">5</span>)
+o4$<span class="kw">readRDS</span>()</code></pre></div>
+</div>
+<div id="-3" class="section level3">
+<h3>权限控制</h3>
+<p>单个文件的权限可以独立设置，可选的参数有：‘private’, ‘public-read’, ‘public-read-write’</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 设置权限</span>
+o$acl &lt;-<span class="st"> 'public-read'</span>
+<span class="co"># 查看权限</span>
+o$acl</code></pre></div>
+</div>
+<div id="-2" class="section level3">
+<h3>元数据的设置</h3>
+<p>OSS支持设置文件额外的meta信息，对文件的进行补充说明。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># 添加元数据</span>
+o$meta &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">author=</span><span class="st">'me'</span>)
+o$meta &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">crop=</span><span class="st">'igenecode'</span>)
+<span class="co"># 查看元数据</span>
+o$meta
+<span class="co"># 删除单条数据</span>
+o$meta &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">author=</span><span class="ot">NULL</span>)
+o$meta
+<span class="co"># 清空元数据</span>
+o$meta &lt;-<span class="st"> </span><span class="ot">NULL</span></code></pre></div>
+</div>
+<div id="-2" class="section level3">
+<h3>符号链接</h3>
+<p>只有<code>Symlink</code>类型的文件可以设置这个值。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ol &lt;-<span class="st"> </span>Object$<span class="kw">new</span>(<span class="st">'ross-test'</span>, <span class="st">'test-link.txt'</span>)
+<span class="co"># 设置链接，不检查目标文件是否存在</span>
+ol$link &lt;-<span class="st"> 'test.txt'</span>
+<span class="co"># 查看链接</span>
+ol$link
+<span class="co"># 读取文件</span>
+<span class="kw">rawToChar</span>(ol$<span class="kw">read</span>())</code></pre></div>
+</div>
+<div id="-2" class="section level3">
+<h3>归档文件的恢复</h3>
+<p>对于归档类型的文件，需要先恢复，才能读取到。</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">oss.mb</span>(<span class="st">'oss://ross-test-arch'</span>, <span class="dt">StorageClass=</span><span class="st">'Archive'</span>)
+ro &lt;-<span class="st"> </span>Object$<span class="kw">new</span>(<span class="st">'ross-test-arch'</span>, <span class="st">'test.txt'</span>)
+ro$<span class="kw">write</span>(<span class="st">'test'</span>)
+<span class="co"># 直接读取会失败</span>
+ro$<span class="kw">read</span>()
+ro$<span class="kw">restore</span>()
+ro$<span class="kw">read</span>()</code></pre></div>
+</div>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+
+
+</body></html>
