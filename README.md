@@ -1,10 +1,8 @@
-ross封装了大部分的阿里云OSS API，实现了在R中直接调用OSS的大部分功能。
-
 # Overview
-ross对阿里云OSS API进行了三层封装。
+为了在R中方便地调用阿里云OSS，ross对阿里云OSS API进行了三层封装，实现了OSS的大部分功能。
 - 原始的OSS API，与阿里官方保持一致。
 - wrapper函数，更符合R用户的使用习惯。
-- ossutil函数与R6对象，前者提供了类似[ossutil](https://github.com/aliyun/ossutil)的使用体验，后者提供了面向对象的操作方式。
+- ossutil函数与R6对象，前者提供了类似[ossutil](https://github.com/aliyun/ossutil)的体验，后者提供了面向对象的操作方法。
 
 > 建议开发者使用wrapper函数或R6对象，普通用户使用ossutil函数或R6对象。ossutil函数更适合交互式操作。
 
@@ -51,8 +49,8 @@ oss.cp('oss://ross-test/test.txt', '/tmp/')
 oss.cp('/tmp/test.txt', 'oss://ross-test/test.txt')
 ```
 
-# wrapper & ossutil & R6
-同样的功能可以用三类不同的函数实现，可以挑选自己喜欢的方法。
+# wrapper / ossutil / R6
+同样的功能可以用三类不同的函数实现，可以挑选习惯的使用。
 
 wrapper函数将常用的OSS功能进行了封装，方便调用。ossutil和R6均基于wrapper函数构建。ossutil函数与官方的ossutil命令行工具使用方法类似，适合交互式的使用模式。此外，ross以Bucket，Obejct等为对象封装了与之相关的大部分功能，诸如`lifecycle`，`logging`等关于Bucket的设置更适合用这些R6对象。
 
