@@ -10,28 +10,31 @@ ross对阿里云OSS API进行了三层封装。
 
 # Installation
 目前ross没有收录在CRAN中，需要用devtools直接从GitHub安装。
-```{r}
+```r
 devtools::install_github('gahoo/ross', build_vignettes = TRUE)
 library(ross)
+```
+查看[完整文档](Guide)。
+```r
 browseVignettes('ross')
 ```
 
 # Settings
 操作OSS需要`AccessKeyId`和`AccessKeySecret`进行签名，在使用ross包之前需要先设置这两个环境变量。
-```{r, eval=FALSE}
+```r
 Sys.setenv(
   AccessKeyId="xxxxxxxxxxxxxxxx",
   AccessKeySecret="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 )
 ```
-也可以选择将环境变量写入`~/.Renviron`文件中，R启动时会自动设置。
+也可以选择将环境变量写入`~/.Renviron`文件。
 ```
 AccessKeyId=xxxxxxxxxxxxxxxx
 AccessKeySecret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 # Quick Start
-```{r}
+```r
 # 创建Bucket
 oss.mb('oss://ross-test')
 # 写入文件
@@ -48,10 +51,13 @@ oss.cp('oss://ross-test/test.txt', '/tmp/')
 oss.cp('/tmp/test.txt', 'oss://ross-test/test.txt')
 ```
 
-# Wrapper & ossutil & R6
+# wrapper & ossutil & R6
 同样的功能可以用三类不同的函数实现，可以挑选自己喜欢的方法。
-```{r}
-# Wrapper
+
+wrapper函数将常用的OSS功能进行了封装，方便调用。ossutil和R6均基于wrapper函数构建。ossutil函数与官方的ossutil命令行工具使用方法类似，适合交互式的使用模式。此外，ross以Bucket，Obejct等为对象封装了与之相关的大部分功能，诸如`lifecycle`，`logging`等关于Bucket的设置更适合用这些R6对象。
+
+```r
+# wrapper
 createBucket('ross-test')
 # ossutil
 oss.mb('oss://ross-test')
