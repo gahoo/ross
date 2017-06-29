@@ -78,7 +78,7 @@ Browser <- R6::R6Class("Browser",
     show = function(.DT=TRUE, .shiny=FALSE){
       createLink <- function(x){
         if(is.folder.char(x)){
-          NULL
+          NA
         }else{
           link <- urlObject(self$bucket, x)
           HTML(sprintf('<a href="%s">%s</a>', link, x))
@@ -86,11 +86,19 @@ Browser <- R6::R6Class("Browser",
       }
 
       smartSize <- function(x){
-        if(is.na(x)) return()
+        if(is.na(x)) return(NA)
         units <- c('B', 'KB', 'MB', 'GB', 'TB', 'PB')
         for(i in 1:6){ if(x < 1024^i) break }
         x <- round(x / 1024^(i-1))
         paste(x, units[i])
+      }
+
+      shinyInput = function(FUN, id, values, ...) {
+        inputs = character(length(values))
+        for (i in seq_along(values)) {
+          inputs[i] = as.character(FUN(paste0(id, i), label = values[i], ...))
+        }
+        inputs
       }
 
       formatTable <- function(files){
@@ -105,22 +113,26 @@ Browser <- R6::R6Class("Browser",
               Key = gsub(paste0('^', prefix), '', Key),
               Size = sapply(as.numeric(Size), smartSize)
             ) %>%
+            mutate(
+              Key = shinyInput(actionLink, 'download_', Key)
+            ) %>%
             select(Key, LastModified, ETag, Size, Link)
         }
       }
 
       renderDT <- function(files){
-        parent <- data.frame(Key = '..', LastModified = NA, ETag = NA, Size = NA, Link = NA)
+        parent_key <- actionLink('download_0', label = '..') %>% as.character
+        parent <- data.frame(Key = parent_key, LastModified = NA, ETag = NA, Size = NA, Link = NA)
         if(.shiny){
           if(!is.null(self$bucket)){
             files <- rbind(parent, files)
-            class(files$Link) <- 'list'
-            class(files$Size) <- 'character'
+#            class(files$Link) <- 'list'
+#            class(files$Size) <- 'character'
             # files
           }
         }
         if(.DT){
-          DT::datatable(files, selection = 'single',
+          DT::datatable(files, selection = 'single', escape = F,
                         extensions = 'Scroller', options = list(
                           deferRender = TRUE,
                           scrollY = 300,
