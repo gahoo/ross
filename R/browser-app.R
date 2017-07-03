@@ -14,6 +14,7 @@ browserApp <- function(bucket=NULL, root=''){
       tabsetPanel(
         tabPanel(
           'Download',
+          actionButton('select', 'Select All'),
           actionButton('download', 'Download'),
           actionButton('download_all', 'Download All'),
           htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js'))
@@ -47,6 +48,7 @@ browserApp <- function(bucket=NULL, root=''){
         Browser$new(bucket, input$root)
       }else{
         Browser$new(bucket, '.')
+        Browser$new(bucket)
       }
     })
 
@@ -55,6 +57,20 @@ browserApp <- function(bucket=NULL, root=''){
         browser()$goto(input$cwd)
       }
       browser()$show(.shiny = T)
+    })
+
+    proxy <- DT::dataTableProxy('oss')
+
+    observeEvent(input$select, {
+      row_cnts <- nrow(browser()$files) + 1
+      if(is.null(input$oss_rows_selected) || length(input$oss_rows_selected) != row_cnts - 1){
+        selected_rows <- 2:row_cnts
+        updateActionButton(session, 'select', 'Select None')
+      }else{
+        selected_rows <- NULL
+        updateActionButton(session, 'select', 'Select All')
+      }
+      proxy %>% DT::selectRows(selected_rows)
     })
 
     observe({
@@ -71,11 +87,16 @@ browserApp <- function(bucket=NULL, root=''){
     })
 
     observeEvent(input$download, {
-      click <- isolate(input$oss_cell_clicked)
-      if(!is.null(click)){
-        key <- browser()$show(.shiny = TRUE, .DT = FALSE)$Key[click$row]
-        message(key)
-        links <- browser()$getLinks(key)
+      selected_rows <- input$oss_rows_selected
+      if(!is.null(selected_rows)){
+        keys <- browser()$show(.shiny = TRUE, .DT = FALSE)$Key[selected_rows]
+        links <- list(url=list(), dir=list)
+        for(key in keys){
+          message(key)
+          key_link <- browser()$getLinks(key)
+          links$url <- c(links$url, key_link$url)
+          links$dir <- c(links$dir, key_link$dir)
+        }
         session$sendCustomMessage(
           type = 'addLinks',
           message = links
@@ -112,9 +133,6 @@ browserApp <- function(bucket=NULL, root=''){
     output$debug <- renderText({
       click <- input$oss_cell_clicked
       str(click)
-      click$value
-      gsub(browser()$root, '', browser()$pwd)
-      isolate(input$download_1)
       input$cwd
     })
   }
