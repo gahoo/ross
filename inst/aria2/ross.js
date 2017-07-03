@@ -6,6 +6,32 @@ var setDownloadDir = function(){
   });
 };
 
+var updateNavi = function(key){
+  document.getElementById("navi").value = key;
+  Shiny.onInputChange("navi", key);
+  if(key == '..'){
+    document.getElementById("navi").value = '_';
+  }
+};
+
+var updateCWD = function(key){
+  cwd = document.getElementById("cwd").value;
+
+  if(key == '..'){
+    cwd_array = cwd.split('/');
+    console.log(naviTo);
+    naviTo = cwd_array.slice(0, cwd_array.length - 2).join('/');
+    if(naviTo !== ''){
+      naviTo = naviTo + '/';
+    }
+  }else{
+    naviTo = cwd + key;
+  }
+
+  document.getElementById("cwd").value = naviTo;
+  Shiny.onInputChange("cwd", naviTo);
+};
+
 setDownloadDir();
 
 Shiny.addCustomMessageHandler("addLinks",
