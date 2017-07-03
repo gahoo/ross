@@ -6,14 +6,6 @@ var setDownloadDir = function(){
   });
 };
 
-var updateNavi = function(key){
-  document.getElementById("navi").value = key;
-  Shiny.onInputChange("navi", key);
-  if(key == '..'){
-    document.getElementById("navi").value = '_';
-  }
-};
-
 var updateCWD = function(key){
   cwd = document.getElementById("cwd").value;
 
