@@ -1,14 +1,14 @@
-browserApp <- function(bucket=NULL, root=NULL){
+browserApp <- function(bucket=NULL, root=''){
   ui = navbarPage(
     "OSS Browser",
     tabPanel(
       "Files",
       DT::dataTableOutput('oss'),
       textOutput('debug'),
+      textInput('cwd', 'cwd'),
       tabsetPanel(
         tabPanel(
           'Download',
-          actionButton('go', 'GO'),
           actionButton('download', 'Download'),
           actionButton('download_all', 'Download All'),
           htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js'))
@@ -38,21 +38,17 @@ browserApp <- function(bucket=NULL, root=NULL){
   )
   server = function(input, output, session) {
     output$oss <- DT::renderDataTable({
-      click <- isolate(input$oss_cell_clicked)
-      if(!is.null(click)){
-        key <- browser$show(.shiny = TRUE, .DT = FALSE)$Key[click$row]
-        if(is.folder.char(key) || key == '..'){
-          browser$navi(key)
-        }
+      if(!is.null(input$cwd)){
+        browser$goto(input$cwd)
       }
-      input$go
-      browser$show(.shiny = TRUE)
+      browser$show(.shiny = T)
     })
 
     observeEvent(input$download, {
       click <- isolate(input$oss_cell_clicked)
       if(!is.null(click)){
         key <- browser$show(.shiny = TRUE, .DT = FALSE)$Key[click$row]
+        message(key)
         links <- browser$getLinks(key)
         session$sendCustomMessage(
           type = 'addLinks',
@@ -69,7 +65,11 @@ browserApp <- function(bucket=NULL, root=NULL){
       }
       keys <- listBucket(browser$bucket, prefix, delimiter = '', .output = 'character')
       message(paste0(keys, collapse = '\n'))
-      dirs <- gsub(add.slash(browser$root), '', dirname(keys))
+      if(browser$root == ''){
+        dirs <- dirname(keys)
+      }else{
+        dirs <- gsub(add.slash(browser$root), '', dirname(keys))
+      }
       dirs[dirs == '.'] <- ''
       message(paste0(dirs, collapse = '\n'))
       urls <- sapply(keys, function(x){urlObject(browser$bucket, x, expires = 7200)})
@@ -88,6 +88,8 @@ browserApp <- function(bucket=NULL, root=NULL){
       str(click)
       click$value
       gsub(browser$root, '', browser$pwd)
+      isolate(input$download_1)
+      input$cwd
     })
   }
 
