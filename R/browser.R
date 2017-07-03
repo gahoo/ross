@@ -6,7 +6,8 @@
 #' @import xml2
 #' @import httr
 #' @import shiny
-#' @import dplyr
+#' @importFrom dplyr select
+#' @importFrom dplyr mutate
 #' @export
 #' @name Bucket
 #'

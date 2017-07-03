@@ -75,7 +75,7 @@ Bucket <- R6::R6Class("Bucket",
     },
 
 #' @method list
-#' @import plyr
+#' @importFrom plyr ldply
 #' @inheritParams GetBucket
 #' @param .output output format
 #'
@@ -283,7 +283,7 @@ Bucket <- R6::R6Class("Bucket",
 #' @importFrom R6 R6Class
 #' @import xml2
 #' @import httr
-#' @import plyr
+#' @importFrom plyr ldply
 #' @export
 #' @name BucketLifecycle
 #'
@@ -415,7 +415,7 @@ BucketLifecycle <- R6::R6Class("BucketLifecycle",
 #' @importFrom R6 R6Class
 #' @import xml2
 #' @import httr
-#' @import plyr
+#' @importFrom plyr ldply
 #' @export
 #' @name BucketLifecycle
 #'
