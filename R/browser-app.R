@@ -16,8 +16,7 @@ browserApp <- function(bucket=NULL, root=''){
           'Download',
           actionButton('download', 'Download'),
           actionButton('download_all', 'Download All'),
-          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js')),
-          tags$iframe(src = 'http://report.igenecode.com/yaaw/index.html', width='100%', height=300, border="0", style="border-style: none;")
+          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js'))
         ),
         tabPanel(
           'Preview'
