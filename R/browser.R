@@ -14,18 +14,19 @@
 
 Browser <- R6::R6Class("Browser",
   public = list(
-    root = NULL,
     bucket = NULL,
-    pwd = NULL,
-    initialize = function(bucket = NULL, root = NULL){
+    root = '',
+    initialize = function(bucket = NULL, root = ''){
       self$bucket = bucket
-      if(!is.null(root)){
-        self$root <- strip.slash(root)
-        self$pwd <- strip.slash(root)
-      }else{
-        self$root <- ''
-        self$pwd <- NULL
+      self$root <- strip.slash(root)
+      private$cwd <- ifelse(root != '', self$root, '')
+    },
+    goto = function(path){
+      path <- strip.slash(path)
+      if(self$root != ''){
+        path <- file.path(self$root, path)
       }
+      self$pwd <- path
     },
     navi = function(key){
       if(is.null(self$bucket)){
@@ -33,34 +34,29 @@ Browser <- R6::R6Class("Browser",
         return(invisible())
       }
       if(key == '..'){
-        if(is.null(self$pwd)) return(invisible())
-        pwd <- dirname(self$pwd)
+        if(private$cwd == '') return(invisible())
+        pwd <- dirname(private$cwd)
         if(nchar(pwd) < nchar(self$root)) return(invisible())
         if(pwd == '.') {
-          self$pwd <- NULL
+          private$cwd <- ''
           return(invisible())
         }
       }else{
-        if(is.null(self$pwd)){
+        if(private$cwd == ''){
           pwd <- strip.slash(key)
         }else{
-          pwd <- file.path(self$pwd, strip.slash(key))
+          pwd <- file.path(private$cwd, strip.slash(key))
         }
+      }
 
-      }
-      if(isObjectExist(self$bucket, pwd) || isPseudoFolderExist(self$bucket, pwd)){
-        self$pwd <- pwd
-      }else{
-        warning("No Such Key: ", pwd)
-      }
-      message(self$pwd)
+      self$pwd <- pwd
     },
     getLinks = function(key){
       if(key == '..') return(invisible())
-      if(is.null(self$pwd)){
+      if(private$cwd == ''){
         prefix <- key
       }else{
-        prefix <- file.path(self$pwd, key)
+        prefix <- file.path(private$cwd, key)
       }
       if(isPseudoFolderExist(self$bucket, prefix)){
         keys <- listBucket(self$bucket, prefix, delimiter = '', .output = 'character')
@@ -71,20 +67,11 @@ Browser <- R6::R6Class("Browser",
         dirs <- self$relative_dir
         urls <- urlObject(self$bucket, prefix)
       }
-      message('download:', key)
+      message('download: ', key, '\tprefix: ', prefix)
       list(url = as.list(urls),
            dir = as.list(dirs))
     },
     show = function(.DT=TRUE, .shiny=FALSE){
-      createLink <- function(x){
-        if(is.folder.char(x)){
-          NA
-        }else{
-          link <- urlObject(self$bucket, x)
-          HTML(sprintf('<a href="%s">%s</a>', link, x))
-        }
-      }
-
       smartSize <- function(x){
         if(is.na(x)) return(NA)
         units <- c('B', 'KB', 'MB', 'GB', 'TB', 'PB')
@@ -93,12 +80,22 @@ Browser <- R6::R6Class("Browser",
         paste(x, units[i])
       }
 
-      shinyInput = function(FUN, id, values, ...) {
-        inputs = character(length(values))
-        for (i in seq_along(values)) {
-          inputs[i] = as.character(FUN(paste0(id, i), label = values[i], ...))
+      if(.DT){
+        formatKey <- function(x){
+          filename <- gsub(paste0('^', prefix), '', x)
+          if(is.folder.char(x)){
+            # makeNavi
+            sprintf("<a onclick='updateCWD(\"%s\")'>%s</a>", filename, filename)
+          }else{
+            # createLink
+            link <- urlObject(self$bucket, x)
+            sprintf('<a href="%s">%s</a>', link, filename)
+          }
         }
-        inputs
+      }else{
+        formatKey <- function(x) {
+          gsub(paste0('^', prefix), '', x)
+        }
       }
 
       formatTable <- function(files){
@@ -108,27 +105,19 @@ Browser <- R6::R6Class("Browser",
         }else{
           files %>%
             mutate(
-              Link = sapply(Key, createLink),
-              # Preview = sapply(Key, createLink),
-              Key = gsub(paste0('^', prefix), '', Key),
+              Key = sapply(Key, formatKey),
               Size = sapply(as.numeric(Size), smartSize)
             ) %>%
-            mutate(
-              Key = shinyInput(actionLink, 'download_', Key)
-            ) %>%
-            select(Key, LastModified, ETag, Size, Link)
+            select(Key, LastModified, ETag, Size)
         }
       }
 
       renderDT <- function(files){
-        parent_key <- actionLink('download_0', label = '..') %>% as.character
-        parent <- data.frame(Key = parent_key, LastModified = NA, ETag = NA, Size = NA, Link = NA)
+        parent_key <- "<a onclick='updateCWD(\"..\")'>Parent</a>"
+        parent <- data.frame(Key = parent_key, LastModified = NA, ETag = NA, Size = NA)
         if(.shiny){
           if(!is.null(self$bucket)){
             files <- rbind(parent, files)
-#            class(files$Link) <- 'list'
-#            class(files$Size) <- 'character'
-            # files
           }
         }
         if(.DT){
@@ -136,17 +125,21 @@ Browser <- R6::R6Class("Browser",
                         extensions = 'Scroller', options = list(
                           deferRender = TRUE,
                           scrollY = 300,
-                          scroller = TRUE)) %>%
+                          scroller = TRUE
+                          )) %>%
             DT::formatDate('LastModified')
         }else{
           files
         }
       }
 
-      prefix <- paste0(self$pwd, '/')
+      prefix <- add.slash(private$cwd)
       self$files %>% formatTable %>% renderDT
 
     }
+  ),
+  private = list(
+    cwd = ''
   ),
   active = list(
     files = function(){
@@ -157,25 +150,30 @@ Browser <- R6::R6Class("Browser",
         x
       }
 
-      prefix <- paste0(self$pwd, '/')
+      prefix <- add.slash(private$cwd)
       if(is.null(self$bucket)){
         files <- listBucket()
-      }else if(is.null(self$pwd)){
+      }else if(private$cwd == ''){
         files <- listBucket(self$bucket)
       }else{
         files <- listBucket(self$bucket, prefix)
       }
-      for(column in c('LastModified', 'ETag', 'Size', 'Link')){
+      for(column in c('LastModified', 'ETag', 'Size')){
         files <- fillNA(files, column)
       }
       files
     },
-    relative_dir = function(){
-      if(is.null(self$pwd)){
-        ''
+    pwd = function(wd){
+      if(missing(wd)) return(private$cwd)
+      if(wd == '' || isObjectExist(self$bucket, wd) || isPseudoFolderExist(self$bucket, wd)){
+        private$cwd <- wd
       }else{
-        gsub(self$root, '', self$pwd)
+        warning("No Such Key: ", wd)
       }
+      message(wd)
+    },
+    relative_dir = function(){
+      gsub(self$root, '', private$cwd)
     }
   )
 )
