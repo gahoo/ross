@@ -64,7 +64,11 @@ browserApp <- function(bucket=NULL, root=''){
     observeEvent(input$select, {
       row_cnts <- nrow(browser()$files) + 1
       if(is.null(input$oss_rows_selected) || length(input$oss_rows_selected) != row_cnts - 1){
-        selected_rows <- 2:row_cnts
+        if(input$oss_search != ''){
+          selected_rows <- input$oss_rows_current
+        }else{
+          selected_rows <- 2:row_cnts
+        }
         updateActionButton(session, 'select', 'Select None')
       }else{
         selected_rows <- NULL
