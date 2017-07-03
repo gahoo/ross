@@ -1,17 +1,23 @@
 browserApp <- function(bucket=NULL, root=''){
+  enableBookmarking("url")
   ui = navbarPage(
     "OSS Browser",
     tabPanel(
       "Files",
       DT::dataTableOutput('oss'),
       textOutput('debug'),
+      div(
       textInput('cwd', 'cwd'),
+      textInput('root', 'root'),
+      style='display: none'
+      ),
       tabsetPanel(
         tabPanel(
           'Download',
           actionButton('download', 'Download'),
           actionButton('download_all', 'Download All'),
-          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js'))
+          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js')),
+          tags$iframe(src = 'http://report.igenecode.com/yaaw/index.html', width='100%', height=300, border="0", style="border-style: none;")
         ),
         tabPanel(
           'Preview'
@@ -37,19 +43,40 @@ browserApp <- function(bucket=NULL, root=''){
     )
   )
   server = function(input, output, session) {
+    browser <- reactive({
+      if(!is.null(input$root) && input$root != ''){
+        Browser$new(bucket, input$root)
+      }else{
+        Browser$new(bucket, '.')
+      }
+    })
+
     output$oss <- DT::renderDataTable({
       if(!is.null(input$cwd)){
-        browser$goto(input$cwd)
+        browser()$goto(input$cwd)
       }
-      browser$show(.shiny = T)
+      browser()$show(.shiny = T)
+    })
+
+    observe({
+      query <- parseQueryString(session$clientData$url_search)
+      if (!is.null(query[['cwd']])) {
+        cwd <- URLdecode(query[['cwd']])
+        updateTextInput(session, "cwd", value = cwd)
+      }
+      if (!is.null(query[['root']])) {
+        root <- URLdecode(query[['root']])
+        updateTextInput(session, "root", value = root)
+        message(browser()$root)
+      }
     })
 
     observeEvent(input$download, {
       click <- isolate(input$oss_cell_clicked)
       if(!is.null(click)){
-        key <- browser$show(.shiny = TRUE, .DT = FALSE)$Key[click$row]
+        key <- browser()$show(.shiny = TRUE, .DT = FALSE)$Key[click$row]
         message(key)
-        links <- browser$getLinks(key)
+        links <- browser()$getLinks(key)
         session$sendCustomMessage(
           type = 'addLinks',
           message = links
@@ -58,21 +85,21 @@ browserApp <- function(bucket=NULL, root=''){
     })
 
     observeEvent(input$download_all, {
-      if(browser$root == ''){
+      if(browser()$root == ''){
         prefix <- NULL
       }else{
-        prefix <- add.slash(browser$root)
+        prefix <- add.slash(browser()$root)
       }
-      keys <- listBucket(browser$bucket, prefix, delimiter = '', .output = 'character')
+      keys <- listBucket(browser()$bucket, prefix, delimiter = '', .output = 'character')
       message(paste0(keys, collapse = '\n'))
-      if(browser$root == ''){
+      if(browser()$root == ''){
         dirs <- dirname(keys)
       }else{
-        dirs <- gsub(add.slash(browser$root), '', dirname(keys))
+        dirs <- gsub(add.slash(browser()$root), '', dirname(keys))
       }
       dirs[dirs == '.'] <- ''
       message(paste0(dirs, collapse = '\n'))
-      urls <- sapply(keys, function(x){urlObject(browser$bucket, x, expires = 7200)})
+      urls <- sapply(keys, function(x){urlObject(browser()$bucket, x, expires = 7200)})
       names(urls) <- NULL
       session$sendCustomMessage(
         type = 'addLinks',
@@ -87,13 +114,11 @@ browserApp <- function(bucket=NULL, root=''){
       click <- input$oss_cell_clicked
       str(click)
       click$value
-      gsub(browser$root, '', browser$pwd)
+      gsub(browser()$root, '', browser()$pwd)
       isolate(input$download_1)
       input$cwd
     })
   }
-
-  browser <- Browser$new(bucket, root)
 
   shinyApp(ui = ui, server = server)
 }
