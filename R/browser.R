@@ -131,7 +131,7 @@ Browser <- R6::R6Class("Browser",
           }
         }
         if(.DT){
-          DT::datatable(files, selection = 'single', escape = F,
+          DT::datatable(files, escape = F,
                         extensions = 'Scroller', options = list(
                           deferRender = TRUE,
                           scrollY = 300,
