@@ -332,7 +332,7 @@ getObjectInfo <- function(bucketname, key, print=TRUE){
 #' @examples
 #' isObjectExist('ross-test', 'test.txt')
 isObjectExist <- function(bucketname, key){
-  if(is.null(key)) return(FALSE)
+  if(is.null(key)||key == '') return(FALSE)
   r <- HeadObject(bucketname, key)
   if(r$status_code == 200){
     TRUE
@@ -345,7 +345,7 @@ isObjectExist <- function(bucketname, key){
 }
 
 isPseudoFolderExist <- function(bucketname, key){
-  if(is.null(key)) return(FALSE)
+  if(is.null(key)||key == '') return(FALSE)
   if(!is.folder.char(key)) key <- paste0(key, '/')
   nrow(listBucket(bucketname, key)) > 0
 }
