@@ -1,15 +1,24 @@
 #' Browser
 #'
 #' @docType class
-#' @format An R6 class object.
+#' @format \code{\link{R6Class}} object.
 #' @importFrom R6 R6Class
 #' @import xml2
 #' @import httr
 #' @import shiny
+#' @import magrittr
 #' @importFrom dplyr select
 #' @importFrom dplyr mutate
 #' @export
-#' @name Bucket
+#' @name Browser
+#' @examples
+#' @field bucket store the bucket.
+#' @field root Stores the root.
+#' @section Methods:
+#' \describe{
+#'   \item{Documentation}{For full documentation of each method go to https://gahoo.github.io/ross/Guide}
+#'   \item{\code{new(bucket, root)}}{This method is used to create object of this class with \code{bucket} as bucket and \code{root} as root of the browser object.}
+#'   \item{\code{goto(path)}}{This method goto the \code{path}.}}
 #'
 #'
 
