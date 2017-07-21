@@ -1,5 +1,23 @@
 browserApp <- function(bucket=NULL, root=''){
+  jsCode <- 'shinyjs.updateTasks = function(){updateTasks();}'
+
+  extractAria2 <- function(res, name, as.fun = as.character){
+    res <- sapply(res, function(x) x[[name]])
+    as.fun(res)
+  }
+
+  extractAria2TaskDF <- function(res){
+    plyr::ldply(res, function(x){
+      x$files <-x$files[[1]]$path;
+      as.data.frame(x, stringsAsFactors=F)
+    })
+  }
+
   enableBookmarking("url")
+  registerInputHandler("aria2_tasks", function(data, ...) {
+    as.list(data)
+  }, force = TRUE)
+
   ui = navbarPage(
     "OSS Browser",
     tabPanel(
@@ -7,9 +25,12 @@ browserApp <- function(bucket=NULL, root=''){
       DT::dataTableOutput('oss'),
       textOutput('debug'),
       div(
-      textInput('cwd', 'cwd'),
-      textInput('root', 'root'),
-      style='display: none'
+        textInput('cwd', 'cwd'),
+        textInput('root', 'root'),
+        tags$div(id="tasks"),
+        useShinyjs(),
+        extendShinyjs(text = jsCode),
+        style='display: none'
       ),
       tabsetPanel(
         tabPanel(
@@ -17,7 +38,9 @@ browserApp <- function(bucket=NULL, root=''){
           actionButton('select', 'Select All'),
           actionButton('download', 'Download'),
           actionButton('download_all', 'Download All'),
-          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js'))
+          actionButton('refresh', 'Refresh'),
+          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js')),
+          DT::dataTableOutput('aria2tasks_list')
         ),
         tabPanel(
           'Preview'
@@ -56,6 +79,7 @@ browserApp <- function(bucket=NULL, root=''){
       if(!is.null(input$cwd)){
         browser()$goto(input$cwd)
       }
+      status <- extractAria2TaskDF(input$tasks)
       browser()$show(.shiny = T)
     })
 
@@ -75,6 +99,12 @@ browserApp <- function(bucket=NULL, root=''){
         updateActionButton(session, 'select', 'Select All')
       }
       proxy %>% DT::selectRows(selected_rows)
+    })
+
+    observe({
+      input$refresh
+      autoInvalidate()
+      js$updateTasks()
     })
 
     observe({
@@ -134,9 +164,42 @@ browserApp <- function(bucket=NULL, root=''){
       )
     })
 
+    output$aria2tasks_list <- DT::renderDataTable({
+      status <- extractAria2TaskDF(input$tasks)
+      progress_html_template <- '<div class="progress progress-striped"><div class="progress-bar" style="width: %s%%">%s%%</div></div>'
+      if(nrow(status)>0){
+        status %>%
+          dplyr::mutate(Key=files,
+                        progress = round(100 * as.numeric(completedLength) / as.numeric(totalLength), digits = 2),
+                        progress = sprintf(progress_html_template, progress, progress)
+                        ) %>%
+          dplyr::select(Key, progress, gid) ->
+          status
+        # browser()$files %>%
+        #   dplyr::left_join(status) ->
+        #   status
+      }else{
+        status <- NULL
+      }
+      DT::datatable(status, escape = F,
+                    extensions = 'Scroller', options = list(
+                      deferRender = TRUE,
+                      scrollY = 300,
+                      scroller = TRUE
+                    ))
+    })
+
+    autoInvalidate <- reactiveTimer(5000)
+
     output$debug <- renderText({
       click <- input$oss_cell_clicked
       str(click)
+#      autoInvalidate()
+      # message(input$tasks[[1]]$completedLength)
+      # str(input$tasks)
+      completedLength <- extractAria2(input$tasks, 'completedLength', as.numeric)
+      totalLength <- extractAria2(input$tasks, 'totalLength', as.numeric)
+#      str(completedLength/totalLength)
       input$cwd
     })
   }
