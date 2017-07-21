@@ -94,7 +94,7 @@ browserApp <- function(bucket=NULL, root=''){
       selected_rows <- input$oss_rows_selected
       if(!is.null(selected_rows)){
         keys <- browser()$show(.shiny = TRUE, .DT = FALSE)$Key[selected_rows]
-        links <- list(url=list(), dir=list)
+        links <- list(url=list(), dir=list())
         for(key in keys){
           message(key)
           key_link <- browser()$getLinks(key)
