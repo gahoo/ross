@@ -1,5 +1,6 @@
 var aria2 = new Aria2();
 var download_dir;
+var task_list = [];
 var setDownloadDir = function(){
   aria2.getGlobalOption(function(err, res){
   download_dir = res.dir;
@@ -22,6 +23,22 @@ var updateCWD = function(key){
 
   document.getElementById("cwd").value = naviTo;
   Shiny.onInputChange("cwd", naviTo);
+};
+
+
+var getTasks = function(err, res) {
+  task_list = task_list.concat(res);
+};
+
+var updateTasks = function(){
+  aria2.tellActive(getTasks);
+  aria2.tellWaiting(0, 5000, getTasks);
+  aria2.tellStopped(0, 5000, getTasks);
+
+  document.getElementById("tasks").value = task_list;
+  Shiny.onInputChange("tasks:aria2_tasks", task_list);
+  console.log(task_list);
+  task_list = [];
 };
 
 setDownloadDir();
