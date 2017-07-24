@@ -12,7 +12,15 @@
 #'
 #' @examples
 browserApp <- function(bucket=NULL, root=''){
-  jsCode <- 'shinyjs.updateTasks = function(){updateTasks();}'
+  jsCode <- '
+  shinyjs.updateTasks = function(){updateTasks();}
+  shinyjs.setMaxCon = function(){setMaxCon();}
+  shinyjs.setMaxCon2 = function(max_concurrent){
+    console.log(max_concurrent[0])
+    aria2.changeGlobalOption({"max-concurrent-downloads": max_concurrent[0]});
+  }
+  shinyjs.setMaxOverallDonwloadLimit = function(){setMaxOverallDonwloadLimit();}
+  '
 
   extractAria2 <- function(res, name, as.fun = as.character){
     res <- sapply(res, function(x) x[[name]])
@@ -51,6 +59,7 @@ browserApp <- function(bucket=NULL, root=''){
           actionButton('download', 'Download'),
           actionButton('download_all', 'Download All'),
           actionButton('refresh', 'Refresh'),
+          actionButton("settings", "", icon = icon('cog', lib = 'glyphicon')),
           checkboxInput('aria2_task_hide_stopped', 'Hide Stopped', value = TRUE),
           htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
                                     script=c('bundle.js', 'ross.js'),
@@ -192,14 +201,14 @@ browserApp <- function(bucket=NULL, root=''){
                         progress = sprintf(progress_html_template, progress_status, progress, progress),
                         speed = paste0(sapply(as.numeric(downloadSpeed), smartSize, digit = 2), '/s')
           ) %>%
-          dplyr::select(gid, progress, speed, Key)
+          dplyr::select(gid, progress, speed, files)
       }else{
         NULL
       }
     })
 
     output$aria2tasks_list <- DT::renderDataTable({
-      status <- data.frame(gid='', progress='', speed='', Key='')
+      status <- data.frame(gid='', progress='', speed='', files='')
       DT::datatable(status, escape = F,
                     extensions = 'Scroller', options = list(
                       dom = 't',
@@ -209,7 +218,37 @@ browserApp <- function(bucket=NULL, root=''){
                     ))
     })
 
-    autoInvalidate <- reactiveTimer(5000)
+    observeEvent(input$settings, {
+      if(is.null(input$max_concurrent)){
+        max_concurrent_value = 3
+      }else{
+        max_concurrent_value = input$max_concurrent
+      }
+
+      if(is.null(input$max_overall_download_limit)){
+        max_overall_download_limit_value = 0
+      }else{
+        max_overall_download_limit_value = input$max_overall_download_limit
+      }
+
+      showModal(modalDialog(
+        title = "Aria2 Settings",
+        "Ross use aria2 as client to download files.",
+        numericInput('max_concurrent', 'Concurrent Downs', value = max_concurrent_value, min = 1, max = 20),
+        textInput('max_overall_download_limit', 'Download limit', value = max_overall_download_limit_value),
+        easyClose = TRUE,
+        footer = NULL
+      ))
+    })
+
+    observeEvent(input$max_concurrent, {
+      js$setMaxCon()
+      #js$setMaxCon2(as.character(input$max_concurrent))
+    })
+
+    observeEvent(input$max_overall_download_limit, {
+      js$setMaxOverallDonwloadLimit()
+    })
 
     output$debug <- renderText({
       click <- input$oss_cell_clicked

@@ -8,6 +8,15 @@ var setDownloadDir = function(){
   // Shiny.onInputChange("download_dir", download_dir);
 };
 
+var setMaxCon = function(){
+  var max_concurrent = $('#max_concurrent').val();
+  aria2.changeGlobalOption({'max-concurrent-downloads': max_concurrent});
+};
+
+var setMaxOverallDonwloadLimit = function(){
+  var max_overall_download_limit = $('#max_overall_download_limit').val();
+  aria2.changeGlobalOption({'max-overall-download-limit': max_overall_download_limit});
+};
 
 var updateCWD = function(key){
   cwd = document.getElementById("cwd").value;
