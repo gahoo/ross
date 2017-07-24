@@ -3,9 +3,11 @@ var download_dir;
 var task_list = [];
 var setDownloadDir = function(){
   aria2.getGlobalOption(function(err, res){
-  download_dir = res.dir;
+    download_dir = res.dir;
   });
+  // Shiny.onInputChange("download_dir", download_dir);
 };
+
 
 var updateCWD = function(key){
   cwd = document.getElementById("cwd").value;
@@ -33,9 +35,10 @@ var getTasks = function(err, res) {
 var updateTasks = function(){
   aria2.tellActive(getTasks);
   aria2.tellWaiting(0, 5000, getTasks);
-  aria2.tellStopped(0, 5000, getTasks);
+    if(!$("#aria2_task_hide_stopped").is(':checked')){
+      aria2.tellStopped(0, 5000, getTasks);
+  }
 
-  document.getElementById("tasks").value = task_list;
   Shiny.onInputChange("tasks:aria2_tasks", task_list);
   console.log(task_list);
   task_list = [];
