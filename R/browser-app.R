@@ -27,9 +27,8 @@ browserApp <- function(bucket=NULL, root=''){
       div(
         textInput('cwd', 'cwd'),
         textInput('root', 'root'),
-        tags$div(id="tasks"),
-        useShinyjs(),
-        extendShinyjs(text = jsCode),
+        shinyjs::useShinyjs(),
+        shinyjs::extendShinyjs(text = jsCode),
         style='display: none'
       ),
       tabsetPanel(
@@ -39,6 +38,7 @@ browserApp <- function(bucket=NULL, root=''){
           actionButton('download', 'Download'),
           actionButton('download_all', 'Download All'),
           actionButton('refresh', 'Refresh'),
+          checkboxInput('aria2_task_hide_stopped', 'Hide Stopped', value = TRUE),
           htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js')),
           DT::dataTableOutput('aria2tasks_list')
         ),
@@ -51,11 +51,6 @@ browserApp <- function(bucket=NULL, root=''){
     ),
     tabPanel(
       "Download"
-      #          includeScript('inst/aria2/bundle.js'),
-
-      # HTML(sprintf("<iframe src='file://%s' width='100%%' height='600px'>", system.file('yaaw/index.html', package = 'ross')))
-      #          HTML("<iframe src='http://report.igenecode.com/yaaw/index.html' width='100%' height='600px'>")
-      # htmltools::includeHTML(system.file('yaaw/index.html', package = 'ross'))
     ),
     navbarMenu(
       "More",
@@ -69,6 +64,8 @@ browserApp <- function(bucket=NULL, root=''){
     browser <- reactive({
       if(!is.null(input$root) && input$root != ''){
         Browser$new(bucket, input$root)
+      }else if(root != ''){
+        Browser$new(bucket, root)
       }else{
         Browser$new(bucket, '.')
         Browser$new(bucket)
@@ -79,11 +76,11 @@ browserApp <- function(bucket=NULL, root=''){
       if(!is.null(input$cwd)){
         browser()$goto(input$cwd)
       }
-      status <- extractAria2TaskDF(input$tasks)
       browser()$show(.shiny = T)
     })
 
     proxy <- DT::dataTableProxy('oss')
+    aria2task_proxy <- DT::dataTableProxy('aria2tasks_list')
 
     observeEvent(input$select, {
       row_cnts <- nrow(browser()$files) + 1
@@ -103,8 +100,8 @@ browserApp <- function(bucket=NULL, root=''){
 
     observe({
       input$refresh
-      autoInvalidate()
-      js$updateTasks()
+      aria2task_proxy %>%
+        DT::replaceData(aria2tasks(), resetPaging = FALSE, clearSelection = "none")
     })
 
     observe({
@@ -164,23 +161,27 @@ browserApp <- function(bucket=NULL, root=''){
       )
     })
 
-    output$aria2tasks_list <- DT::renderDataTable({
+    aria2tasks <- reactivePoll(5000, session,
+      checkFunc = function() {
+        js$updateTasks()
+      },
+    valueFunc = function(){
       status <- extractAria2TaskDF(input$tasks)
-      progress_html_template <- '<div class="progress progress-striped"><div class="progress-bar" style="width: %s%%">%s%%</div></div>'
-      if(nrow(status)>0){
+      progress_html_template <- '<div class="progress progress-striped active"><div class="progress-bar" style="width: %s%%">%s%%</div></div>'
+      if(nrow(status) > 0){
         status %>%
-          dplyr::mutate(Key=files,
+          dplyr::mutate(Key=gsub('/Volumes/RamDisk/', '', files),
                         progress = round(100 * as.numeric(completedLength) / as.numeric(totalLength), digits = 2),
                         progress = sprintf(progress_html_template, progress, progress)
-                        ) %>%
-          dplyr::select(Key, progress, gid) ->
-          status
-        # browser()$files %>%
-        #   dplyr::left_join(status) ->
-        #   status
+          ) %>%
+          dplyr::select(Key, progress, gid)
       }else{
-        status <- NULL
+        NULL
       }
+    })
+
+    output$aria2tasks_list <- DT::renderDataTable({
+      status <- data.frame(Key='', progress='', gid='')
       DT::datatable(status, escape = F,
                     extensions = 'Scroller', options = list(
                       deferRender = TRUE,
@@ -201,6 +202,7 @@ browserApp <- function(bucket=NULL, root=''){
       totalLength <- extractAria2(input$tasks, 'totalLength', as.numeric)
 #      str(completedLength/totalLength)
       input$cwd
+      input$download_dir
     })
   }
 
