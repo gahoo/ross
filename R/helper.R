@@ -434,3 +434,11 @@ add.slash <- function(string){
 strip.slash <- function(string){
   sub('/$', '', string)
 }
+
+smartSize <- function(x, ...){
+  if(is.na(x)) return(NA)
+  units <- c('B', 'KB', 'MB', 'GB', 'TB', 'PB')
+  for(i in 1:6){ if(x < 1024^i) break }
+  x <- round(x / 1024^(i-1), ...)
+  paste(x, units[i])
+}

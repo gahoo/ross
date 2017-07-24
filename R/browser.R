@@ -82,14 +82,6 @@ Browser <- R6::R6Class("Browser",
            dir = as.list(dirs))
     },
     show = function(.DT=TRUE, .shiny=FALSE){
-      smartSize <- function(x){
-        if(is.na(x)) return(NA)
-        units <- c('B', 'KB', 'MB', 'GB', 'TB', 'PB')
-        for(i in 1:6){ if(x < 1024^i) break }
-        x <- round(x / 1024^(i-1))
-        paste(x, units[i])
-      }
-
       if(.DT){
         formatKey <- function(x){
           filename <- gsub(paste0('^', prefix), '', x)
