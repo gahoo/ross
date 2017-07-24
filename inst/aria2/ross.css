@@ -1,0 +1,12 @@
+.progress {
+  position: relative;
+  margin-bottom: 0 !important;
+}
+
+.progress span {
+  position: absolute;
+  display: block;
+  width: 100%;
+  color: silver;
+  text-shadow: 1px 1px 1px black;
+}

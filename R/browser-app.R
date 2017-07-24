@@ -1,3 +1,16 @@
+#' browserApp
+#'
+#' @param bucket
+#' @param root
+#'
+#' @importFrom shinyjs useShinyjs
+#' @importFrom shinyjs extendShinyjs
+#' @importFrom shinyjs js
+#'
+#' @return
+#' @export
+#'
+#' @examples
 browserApp <- function(bucket=NULL, root=''){
   jsCode <- 'shinyjs.updateTasks = function(){updateTasks();}'
 
@@ -39,7 +52,9 @@ browserApp <- function(bucket=NULL, root=''){
           actionButton('download_all', 'Download All'),
           actionButton('refresh', 'Refresh'),
           checkboxInput('aria2_task_hide_stopped', 'Hide Stopped', value = TRUE),
-          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/', script=c('bundle.js', 'ross.js')),
+          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
+                                    script=c('bundle.js', 'ross.js'),
+                                    stylesheet=c('ross.css')),
           DT::dataTableOutput('aria2tasks_list')
         ),
         tabPanel(
@@ -167,23 +182,27 @@ browserApp <- function(bucket=NULL, root=''){
       },
     valueFunc = function(){
       status <- extractAria2TaskDF(input$tasks)
-      progress_html_template <- '<div class="progress progress-striped active"><div class="progress-bar" style="width: %s%%">%s%%</div></div>'
+      str(status)
+      progress_html_template <- '<div class="progress %s"><div class="progress-bar" style="width: %s%%"><span>%s%%</span></div></div>'
       if(nrow(status) > 0){
         status %>%
           dplyr::mutate(Key=gsub('/Volumes/RamDisk/', '', files),
+                        progress_status = ifelse(status == 'complete', '', 'progress-striped active'),
                         progress = round(100 * as.numeric(completedLength) / as.numeric(totalLength), digits = 2),
-                        progress = sprintf(progress_html_template, progress, progress)
+                        progress = sprintf(progress_html_template, progress_status, progress, progress),
+                        speed = paste0(sapply(as.numeric(downloadSpeed), smartSize, digit = 2), '/s')
           ) %>%
-          dplyr::select(Key, progress, gid)
+          dplyr::select(gid, progress, speed, Key)
       }else{
         NULL
       }
     })
 
     output$aria2tasks_list <- DT::renderDataTable({
-      status <- data.frame(Key='', progress='', gid='')
+      status <- data.frame(gid='', progress='', speed='', Key='')
       DT::datatable(status, escape = F,
                     extensions = 'Scroller', options = list(
+                      dom = 't',
                       deferRender = TRUE,
                       scrollY = 300,
                       scroller = TRUE
