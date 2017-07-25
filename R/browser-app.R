@@ -35,18 +35,25 @@ browserApp <- function(bucket=NULL, root=''){
   }
 
   makeCtrlButton <- function(gid, status){
-    if(status == 'complete'){
-      ctrl_btn <- NULL
-    }else if(status %in% c('active', 'waiting')){
-      ctrl_btn <- actionLink(paste0('pause-', gid), '', icon = icon('pause'), onclick = sprintf("aria2.pause('%s')", gid), title = 'pause')
-    }else{
-      ctrl_btn <- actionLink(paste0('unpause-', gid), '', icon = icon('play'), onclick = sprintf("aria2.unpause('%s')", gid), title = 'start')
+    newButton <- function(command, icon_name=command, title=command){
+      actionLink(paste0(command, '-', gid), '', icon = icon(icon_name), onclick = sprintf("aria2.%s('%s')", command, gid), title = title)
     }
-    as.character(div(
-      id = gid,
-      actionLink(paste0('remove-', gid), '', icon = icon('trash'), onclick = sprintf("aria2.remove('%s')", gid), title = 'remove'),
-      ctrl_btn
-    ))
+
+    if(status %in% c('complete', 'removed', 'error')){
+      pause_btn <- NULL
+    }else if(status %in% c('active', 'waiting')){
+      pause_btn <- newButton('pause')
+    }else{ #pause
+      pause_btn <- newButton('unpause', 'play', 'start')
+    }
+
+    if(status %in% c('active', 'waiting', 'paused')){
+      trash_btn <- newButton('remove', 'trash')
+    }else{ # complete, removed, error
+      trash_btn <- newButton('removeDownloadResult', 'trash', 'remove')
+    }
+
+    as.character(div(id = gid, trash_btn, pause_btn))
   }
 
   enableBookmarking("url")
@@ -125,13 +132,26 @@ browserApp <- function(bucket=NULL, root=''){
     })
 
     output$oss <- DT::renderDataTable({
+      browser()$formatDT(add.parent = T) %>%
+        DT::datatable(escape = F,
+                      extensions = 'Scroller', options = list(
+                        deferRender = TRUE,
+                        scrollY = 300,
+                        scroller = TRUE
+                      )) %>%
+        DT::formatDate('LastModified')
+    })
+
+    observeEvent(input$cwd, {
       if(!is.null(input$cwd)){
         browser()$goto(input$cwd)
       }
-      browser()$show(.shiny = T)
+      oss_files <- browser()$formatDT(add.parent = T)
+      oss_proxy %>%
+        DT::replaceData(oss_files)
     })
 
-    proxy <- DT::dataTableProxy('oss')
+    oss_proxy <- DT::dataTableProxy('oss')
     aria2task_proxy <- DT::dataTableProxy('aria2tasks_list')
 
     observeEvent(input$select, {
@@ -147,7 +167,7 @@ browserApp <- function(bucket=NULL, root=''){
         selected_rows <- NULL
         updateActionButton(session, 'select', 'Select All', icon = icon('check', lib = 'glyphicon'))
       }
-      proxy %>% DT::selectRows(selected_rows)
+      oss_proxy %>% DT::selectRows(selected_rows)
     })
 
     observe({
@@ -172,7 +192,8 @@ browserApp <- function(bucket=NULL, root=''){
     observeEvent(input$download, {
       selected_rows <- input$oss_rows_selected
       if(!is.null(selected_rows)){
-        keys <- browser()$show(.shiny = TRUE, .DT = FALSE)$Key[selected_rows]
+        keys <- browser()$formatDT(key.type='short', add.parent = TRUE)$Key[selected_rows]
+        str(keys)
         links <- list(url=list(), dir=list())
         for(key in keys){
           message(key)
