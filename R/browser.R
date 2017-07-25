@@ -91,7 +91,7 @@ Browser <- R6::R6Class("Browser",
           }else{
             # createLink
             link <- urlObject(self$bucket, x)
-            sprintf('<a href="%s">%s</a>', link, filename)
+            sprintf('<a href="%s" target="_blank">%s</a>', link, filename)
           }
         }
       }else{
