@@ -34,6 +34,21 @@ browserApp <- function(bucket=NULL, root=''){
     })
   }
 
+  makeCtrlButton <- function(gid, status){
+    if(status == 'complete'){
+      ctrl_btn <- NULL
+    }else if(status %in% c('active', 'waiting')){
+      ctrl_btn <- actionLink(paste0('pause-', gid), '', icon = icon('pause'), onclick = sprintf("aria2.pause('%s')", gid))
+    }else{
+      ctrl_btn <- actionLink(paste0('unpause-', gid), '', icon = icon('play'), onclick = sprintf("aria2.unpause('%s')", gid))
+    }
+    as.character(div(
+      id = gid,
+      actionLink(paste0('remove-', gid), '', icon = icon('trash'), onclick = sprintf("aria2.remove('%s')", gid)),
+      ctrl_btn
+    ))
+  }
+
   enableBookmarking("url")
   registerInputHandler("aria2_tasks", function(data, ...) {
     as.list(data)
@@ -55,12 +70,16 @@ browserApp <- function(bucket=NULL, root=''){
       tabsetPanel(
         tabPanel(
           'Download',
-          actionButton('select', 'Select All'),
-          actionButton('download', 'Download'),
-          actionButton('download_all', 'Download All'),
-          actionButton('refresh', 'Refresh'),
-          actionButton("settings", "", icon = icon('cog', lib = 'glyphicon')),
+          actionButton('select', 'Select All', icon = icon('check', lib = 'glyphicon')),
+          actionButton('download', 'Download', icon = icon('download')),
+          actionButton('download_all', 'Download All', icon = icon('download')),
           checkboxInput('aria2_task_hide_stopped', 'Hide Stopped', value = TRUE),
+          #actionLink('refresh', "", icon = icon('refresh')),
+          actionLink("settings", "", icon = icon('cog')),
+          actionLink("unpause_all", "", icon = icon('play'), onclick = 'aria2.unpauseAll()'),
+          actionLink("pause_all", "", icon = icon('pause'), onclick = 'aria2.pauseAll()'),
+          actionLink("remove_all_stopped", "", icon = icon('trash'), onclick = 'aria2.purgeDownloadResult()'),
+          #actionLink("show_task", "", icon = icon('tasks')),
           htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
                                     script=c('bundle.js', 'ross.js'),
                                     stylesheet=c('ross.css')),
@@ -85,6 +104,14 @@ browserApp <- function(bucket=NULL, root=''){
     )
   )
   server = function(input, output, session) {
+    getInputValue <- function(input_name, default){
+      if(is.null(input[[input_name]])){
+        default
+      }else{
+        input[[input_name]]
+      }
+    }
+
     browser <- reactive({
       if(!is.null(input$root) && input$root != ''){
         Browser$new(bucket, input$root)
@@ -114,10 +141,10 @@ browserApp <- function(bucket=NULL, root=''){
         }else{
           selected_rows <- 2:row_cnts
         }
-        updateActionButton(session, 'select', 'Select None')
+        updateActionButton(session, 'select', 'Select None', icon = icon('unchecked', lib = 'glyphicon'))
       }else{
         selected_rows <- NULL
-        updateActionButton(session, 'select', 'Select All')
+        updateActionButton(session, 'select', 'Select All', icon = icon('check', lib = 'glyphicon'))
       }
       proxy %>% DT::selectRows(selected_rows)
     })
@@ -191,42 +218,43 @@ browserApp <- function(bucket=NULL, root=''){
       },
     valueFunc = function(){
       status <- extractAria2TaskDF(input$tasks)
-      str(status)
       progress_html_template <- '<div class="progress %s"><div class="progress-bar" style="width: %s%%"><span>%s%%</span></div></div>'
       if(nrow(status) > 0){
         status %>%
           dplyr::mutate(Key=gsub('/Volumes/RamDisk/', '', files),
                         progress_status = ifelse(status == 'complete', '', 'progress-striped active'),
                         progress = round(100 * as.numeric(completedLength) / as.numeric(totalLength), digits = 2),
+                        progress = ifelse(is.nan(progress), 0, progress),
                         progress = sprintf(progress_html_template, progress_status, progress, progress),
-                        speed = paste0(sapply(as.numeric(downloadSpeed), smartSize, digit = 2), '/s')
+                        speed = paste0(sapply(as.numeric(downloadSpeed), smartSize, digit = 2), '/s'),
+                        gid = mapply(makeCtrlButton, gid, status)
           ) %>%
-          dplyr::select(gid, progress, speed, files)
+          dplyr::select(gid, progress, speed, status, files)
       }else{
         NULL
       }
     })
 
     output$aria2tasks_list <- DT::renderDataTable({
-      status <- data.frame(gid='', progress='', speed='', files='')
+      status <- data.frame(gid='', progress='', speed='', status='', files='')
       DT::datatable(status, escape = F,
                     extensions = 'Scroller', options = list(
                       dom = 't',
                       deferRender = TRUE,
-                      scrollY = 300,
+                      scrollY = 200,
                       scroller = TRUE
                     ))
     })
 
     observeEvent(input$settings, {
       if(is.null(input$max_concurrent)){
-        max_concurrent_value = 3
+        max_concurrent_value = 1
       }else{
         max_concurrent_value = input$max_concurrent
       }
 
       if(is.null(input$max_overall_download_limit)){
-        max_overall_download_limit_value = 0
+        max_overall_download_limit_value = '10k'
       }else{
         max_overall_download_limit_value = input$max_overall_download_limit
       }
@@ -234,8 +262,8 @@ browserApp <- function(bucket=NULL, root=''){
       showModal(modalDialog(
         title = "Aria2 Settings",
         "Ross use aria2 as client to download files.",
-        numericInput('max_concurrent', 'Concurrent Downs', value = max_concurrent_value, min = 1, max = 20),
-        textInput('max_overall_download_limit', 'Download limit', value = max_overall_download_limit_value),
+        numericInput('max_concurrent', 'Concurrent Downs', value = getInputValue('max_concurrent', 1), min = 1, max = 20),
+        textInput('max_overall_download_limit', 'Download limit', value = getInputValue('max_overall_download_limit', '10k')),
         easyClose = TRUE,
         footer = NULL
       ))
