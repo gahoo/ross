@@ -75,14 +75,14 @@ Browser <- R6::R6Class("Browser",
         names(urls) <- NULL
       }else if(isObjectExist(self$bucket, prefix)){
         dirs <- self$relative_dir
-        urls <- urlObject(self$bucket, prefix)
+        urls <- urlObject(self$bucket, prefix, expires = 7200)
       }
       message('download: ', key, '\tprefix: ', prefix)
       list(url = as.list(urls),
            dir = as.list(dirs))
     },
-    show = function(.DT=TRUE, .shiny=FALSE){
-      if(.DT){
+    formatDT = function(key.type='link', add.parent=FALSE){
+      if(key.type == 'link'){
         formatKey <- function(x){
           filename <- gsub(paste0('^', prefix), '', x)
           if(is.folder.char(x)){
@@ -94,10 +94,14 @@ Browser <- R6::R6Class("Browser",
             sprintf('<a href="%s" target="_blank">%s</a>', link, filename)
           }
         }
-      }else{
+      }else if(key.type == 'short'){
         formatKey <- function(x) {
           gsub(paste0('^', prefix), '', x)
         }
+      }else if(key.type == 'full'){
+        formatKey <- function(x) x
+      }else{
+        stop('Wrong key type: ', key.type, '. Choose from link, short, full.')
       }
 
       formatTable <- function(files){
@@ -114,30 +118,30 @@ Browser <- R6::R6Class("Browser",
         }
       }
 
-      renderDT <- function(files){
+      addParent <- function(files){
         parent_key <- "<a onclick='updateCWD(\"..\")'>Parent</a>"
         parent <- data.frame(Key = parent_key, LastModified = NA, ETag = NA, Size = NA)
-        if(.shiny){
+        if(add.parent){
           if(!is.null(self$bucket)){
             files <- rbind(parent, files)
           }
         }
-        if(.DT){
-          DT::datatable(files, escape = F,
-                        extensions = 'Scroller', options = list(
-                          deferRender = TRUE,
-                          scrollY = 300,
-                          scroller = TRUE
-                          )) %>%
-            DT::formatDate('LastModified')
-        }else{
-          files
-        }
+        files
       }
 
       prefix <- add.slash(private$cwd)
-      self$files %>% formatTable %>% renderDT
+      self$files %>% formatTable %>% addParent
 
+    },
+    show = function(key.type = 'link', add.parent=FALSE){
+      self$formatDT(key.type, add.parent) %>%
+        DT::datatable(escape = F,
+                      extensions = 'Scroller', options = list(
+                        deferRender = TRUE,
+                        scrollY = 300,
+                        scroller = TRUE
+                      )) %>%
+        DT::formatDate('LastModified')
     }
   ),
   private = list(
