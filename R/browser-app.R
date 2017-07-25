@@ -38,13 +38,13 @@ browserApp <- function(bucket=NULL, root=''){
     if(status == 'complete'){
       ctrl_btn <- NULL
     }else if(status %in% c('active', 'waiting')){
-      ctrl_btn <- actionLink(paste0('pause-', gid), '', icon = icon('pause'), onclick = sprintf("aria2.pause('%s')", gid))
+      ctrl_btn <- actionLink(paste0('pause-', gid), '', icon = icon('pause'), onclick = sprintf("aria2.pause('%s')", gid), title = 'pause')
     }else{
-      ctrl_btn <- actionLink(paste0('unpause-', gid), '', icon = icon('play'), onclick = sprintf("aria2.unpause('%s')", gid))
+      ctrl_btn <- actionLink(paste0('unpause-', gid), '', icon = icon('play'), onclick = sprintf("aria2.unpause('%s')", gid), title = 'start')
     }
     as.character(div(
       id = gid,
-      actionLink(paste0('remove-', gid), '', icon = icon('trash'), onclick = sprintf("aria2.remove('%s')", gid)),
+      actionLink(paste0('remove-', gid), '', icon = icon('trash'), onclick = sprintf("aria2.remove('%s')", gid), title = 'remove'),
       ctrl_btn
     ))
   }
@@ -63,6 +63,7 @@ browserApp <- function(bucket=NULL, root=''){
       div(
         textInput('cwd', 'cwd'),
         textInput('root', 'root'),
+        checkboxInput('aria2_task_hide_stopped', 'Hide Stopped', value = TRUE),
         shinyjs::useShinyjs(),
         shinyjs::extendShinyjs(text = jsCode),
         style='display: none'
@@ -71,14 +72,16 @@ browserApp <- function(bucket=NULL, root=''){
         tabPanel(
           'Download',
           actionButton('select', 'Select All', icon = icon('check', lib = 'glyphicon')),
-          actionButton('download', 'Download', icon = icon('download')),
-          actionButton('download_all', 'Download All', icon = icon('download')),
-          checkboxInput('aria2_task_hide_stopped', 'Hide Stopped', value = TRUE),
+          actionButton('download', 'Download', icon = icon('download'), title = 'download selected items.'),
+          actionButton('download_all', 'Download All', icon = icon('download'), title = 'download everything.'),
           #actionLink('refresh', "", icon = icon('refresh')),
-          actionLink("settings", "", icon = icon('cog')),
-          actionLink("unpause_all", "", icon = icon('play'), onclick = 'aria2.unpauseAll()'),
-          actionLink("pause_all", "", icon = icon('pause'), onclick = 'aria2.pauseAll()'),
-          actionLink("remove_all_stopped", "", icon = icon('trash'), onclick = 'aria2.purgeDownloadResult()'),
+          div(
+            actionLink("unpause_all", "", icon = icon('play'), onclick = 'aria2.unpauseAll()', title = 'start all paused tasks.'),
+            actionLink("pause_all", "", icon = icon('pause'), onclick = 'aria2.pauseAll()', title = 'pause all tasks.'),
+            actionLink("remove_all_stopped", "", icon = icon('trash'), onclick = 'aria2.purgeDownloadResult()', title = 'remove all stopped tasks.'),
+            actionLink("settings", "", icon = icon('cog'), title = 'aria2 settings'),
+            style = 'float: right'
+          ),
           #actionLink("show_task", "", icon = icon('tasks')),
           htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
                                     script=c('bundle.js', 'ross.js'),
@@ -87,20 +90,18 @@ browserApp <- function(bucket=NULL, root=''){
         ),
         tabPanel(
           'Preview'
-        ),
-        tabPanel('ELF'),
-        tabPanel('Info')
+        )
       )
     ),
     tabPanel(
-      "Download"
+      "FAQ"
     ),
     navbarMenu(
       "More",
+      tabPanel('ELF'),
       tabPanel("Help"),
       "----",
-      "Section header",
-      tabPanel("Table")
+      tabPanel("About")
     )
   )
   server = function(input, output, session) {
@@ -227,17 +228,17 @@ browserApp <- function(bucket=NULL, root=''){
                         progress = ifelse(is.nan(progress), 0, progress),
                         progress = sprintf(progress_html_template, progress_status, progress, progress),
                         speed = paste0(sapply(as.numeric(downloadSpeed), smartSize, digit = 2), '/s'),
-                        gid = mapply(makeCtrlButton, gid, status)
+                        ctrl = mapply(makeCtrlButton, gid, status)
           ) %>%
-          dplyr::select(gid, progress, speed, status, files)
+          dplyr::select(ctrl, progress, speed, status, files)
       }else{
         NULL
       }
     })
 
     output$aria2tasks_list <- DT::renderDataTable({
-      status <- data.frame(gid='', progress='', speed='', status='', files='')
-      DT::datatable(status, escape = F,
+      status <- data.frame(ctrl='', progress='', speed='', status='', files='')
+      DT::datatable(status, escape = F, selection = 'none', class = 'hover stripe compact row-border',
                     extensions = 'Scroller', options = list(
                       dom = 't',
                       deferRender = TRUE,
@@ -247,26 +248,20 @@ browserApp <- function(bucket=NULL, root=''){
     })
 
     observeEvent(input$settings, {
-      if(is.null(input$max_concurrent)){
-        max_concurrent_value = 1
-      }else{
-        max_concurrent_value = input$max_concurrent
-      }
-
-      if(is.null(input$max_overall_download_limit)){
-        max_overall_download_limit_value = '10k'
-      }else{
-        max_overall_download_limit_value = input$max_overall_download_limit
-      }
 
       showModal(modalDialog(
         title = "Aria2 Settings",
         "Ross use aria2 as client to download files.",
+        checkboxInput('aria2_task_hide_stopped_modal', 'Hide Stopped', value = input$aria2_task_hide_stopped),
         numericInput('max_concurrent', 'Concurrent Downs', value = getInputValue('max_concurrent', 1), min = 1, max = 20),
         textInput('max_overall_download_limit', 'Download limit', value = getInputValue('max_overall_download_limit', '10k')),
         easyClose = TRUE,
         footer = NULL
       ))
+    })
+
+    observeEvent(input$aria2_task_hide_stopped_modal, {
+      updateCheckboxInput(session, 'aria2_task_hide_stopped', label = 'Hide Stopped', value = input$aria2_task_hide_stopped_modal)
     })
 
     observeEvent(input$max_concurrent, {
