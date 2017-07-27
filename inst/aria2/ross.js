@@ -1,6 +1,15 @@
 var aria2 = new Aria2();
 var download_dir;
 var task_list = [];
+var aria2_version;
+
+var getVersion = function(){
+  aria2.getVersion(function(err, res){
+    aria2_version = res.version;
+  });
+  Shiny.onInputChange("aria2_version", aria2_version);
+};
+
 var setDownloadDir = function(){
   aria2.getGlobalOption(function(err, res){
     download_dir = res.dir;
@@ -36,6 +45,12 @@ var updateCWD = function(key){
   Shiny.onInputChange("cwd", naviTo);
 };
 
+var setCWD = function(key){
+  console.log(key);
+  document.getElementById("cwd").value = key;
+  Shiny.onInputChange("cwd", key);
+};
+
 
 var getTasks = function(err, res) {
   task_list = task_list.concat(res);
@@ -54,6 +69,7 @@ var updateTasks = function(){
 };
 
 setDownloadDir();
+getVersion();
 
 Shiny.addCustomMessageHandler("addLinks",
   function(message) {
