@@ -11,7 +11,7 @@
 #' @export
 #'
 #' @examples
-browserApp <- function(bucket=NULL, root=''){
+browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
   Sys.setlocale(category = "LC_ALL", locale="UTF-8")
 
   jsCode <- '
@@ -71,7 +71,6 @@ browserApp <- function(bucket=NULL, root=''){
       textOutput('debug'),
       div(
         textInput('cwd', 'cwd'),
-        textInput('root', 'root'),
         checkboxInput('aria2_task_hide_stopped', 'Hide Stopped', value = TRUE),
         shinyjs::useShinyjs(),
         shinyjs::extendShinyjs(text = jsCode),
@@ -122,15 +121,10 @@ browserApp <- function(bucket=NULL, root=''){
       }
     }
 
+    root <- reactiveVal(root)
+
     browser <- reactive({
-      if(!is.null(input$root) && input$root != ''){
-        Browser$new(bucket, input$root)
-      }else if(root != ''){
-        Browser$new(bucket, root)
-      }else{
-        Browser$new(bucket, '.')
-        Browser$new(bucket)
-      }
+      Browser$new(bucket, root(), forbid_empty_root_access)
     })
 
     output$oss <- DT::renderDataTable({
@@ -185,8 +179,7 @@ browserApp <- function(bucket=NULL, root=''){
         updateTextInput(session, "cwd", value = cwd)
       }
       if (!is.null(query[['root']])) {
-        root <- URLdecode(query[['root']])
-        updateTextInput(session, "root", value = root)
+        root(URLdecode(query[['root']]))
         message(browser()$root)
       }
     })
