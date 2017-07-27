@@ -23,7 +23,6 @@ var updateCWD = function(key){
 
   if(key == '..'){
     cwd_array = cwd.split('/');
-    console.log(naviTo);
     naviTo = cwd_array.slice(0, cwd_array.length - 2).join('/');
     if(naviTo !== ''){
       naviTo = naviTo + '/';
@@ -32,6 +31,7 @@ var updateCWD = function(key){
     naviTo = cwd + key;
   }
 
+  console.log(naviTo);
   document.getElementById("cwd").value = naviTo;
   Shiny.onInputChange("cwd", naviTo);
 };
