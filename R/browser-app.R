@@ -58,6 +58,19 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
     as.character(div(id = gid, trash_btn, pause_btn))
   }
 
+  makeNaviBar <- function(cwd){
+    cwd <- unlist(strsplit(cwd, '/'))
+    home <- list(a('Home /', href='#', onclick = 'setCWD("")'))
+    if(length(cwd) == 0){
+      return(home)
+    }
+    navi_bar <- lapply(1:length(cwd), function(i){
+      partial_cwd <- paste0(cwd[1:i], collapse = '/')
+      a(cwd[i], '/', href='#', onclick = sprintf('setCWD("%s/")', partial_cwd))
+    })
+    c(home, navi_bar)
+  }
+
   enableBookmarking("url")
   registerInputHandler("aria2_tasks", function(data, ...) {
     as.list(data)
@@ -67,6 +80,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
     "OSS Browser",
     tabPanel(
       "Files",
+      uiOutput('cwd_navi_bar'),
       DT::dataTableOutput('oss'),
       textOutput('debug'),
       div(
@@ -79,22 +93,27 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
       tabsetPanel(
         tabPanel(
           'Download',
-          actionButton('select', 'Select All', icon = icon('check', lib = 'glyphicon')),
-          actionButton('download', 'Download', icon = icon('download'), title = 'download selected items.'),
-          actionButton('download_all', 'Download All', icon = icon('download'), title = 'download everything.'),
-          #actionLink('refresh', "", icon = icon('refresh')),
-          div(
-            actionLink("unpause_all", "", icon = icon('play'), onclick = 'aria2.unpauseAll()', title = 'start all paused tasks.'),
-            actionLink("pause_all", "", icon = icon('pause'), onclick = 'aria2.pauseAll()', title = 'pause all tasks.'),
-            actionLink("remove_all_stopped", "", icon = icon('trash'), onclick = 'aria2.purgeDownloadResult()', title = 'remove all stopped tasks.'),
-            actionLink("settings", "", icon = icon('cog'), title = 'aria2 settings'),
-            style = 'float: right'
+          conditionalPanel("'undefined' != typeof aria2_version",
+            actionButton('select', 'Select All', icon = icon('check', lib = 'glyphicon')),
+            actionButton('download', 'Download', icon = icon('download'), title = 'download selected items.'),
+            actionButton('download_all', 'Download All', icon = icon('download'), title = 'download everything.'),
+            #actionLink('refresh', "", icon = icon('refresh')),
+            div(
+              actionLink("unpause_all", "", icon = icon('play'), onclick = 'aria2.unpauseAll()', title = 'start all paused tasks.'),
+              actionLink("pause_all", "", icon = icon('pause'), onclick = 'aria2.pauseAll()', title = 'pause all tasks.'),
+              actionLink("remove_all_stopped", "", icon = icon('trash'), onclick = 'aria2.purgeDownloadResult()', title = 'remove all stopped tasks.'),
+              actionLink("settings", "", icon = icon('cog'), title = 'aria2 settings'),
+              style = 'float: right'
+            ),
+            #actionLink("show_task", "", icon = icon('tasks')),
+            htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
+                                      script=c('bundle.js', 'ross.js'),
+                                      stylesheet=c('ross.css')),
+            DT::dataTableOutput('aria2tasks_list')
           ),
-          #actionLink("show_task", "", icon = icon('tasks')),
-          htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
-                                    script=c('bundle.js', 'ross.js'),
-                                    stylesheet=c('ross.css')),
-          DT::dataTableOutput('aria2tasks_list')
+          conditionalPanel("'undefined' === typeof aria2_version",
+            includeMarkdown('inst/aria2/setup_aria2.md')
+          )
         ),
         tabPanel(
           'Preview'
@@ -287,14 +306,16 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
       js$setMaxOverallDonwloadLimit()
     })
 
+    output$cwd_navi_bar <- renderUI({
+      div(makeNaviBar(input$cwd), style="background-color: #E8E8E8;float: left;")
+    })
+
     output$debug <- renderText({
       click <- input$oss_cell_clicked
       str(click)
 #      autoInvalidate()
       # message(input$tasks[[1]]$completedLength)
       # str(input$tasks)
-      completedLength <- extractAria2(input$tasks, 'completedLength', as.numeric)
-      totalLength <- extractAria2(input$tasks, 'totalLength', as.numeric)
 #      str(completedLength/totalLength)
       input$cwd
       input$download_dir
