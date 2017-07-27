@@ -26,9 +26,11 @@ Browser <- R6::R6Class("Browser",
   public = list(
     bucket = NULL,
     root = '',
-    initialize = function(bucket = NULL, root = ''){
+    forbid_empty_root_access = F,
+    initialize = function(bucket = NULL, root = '', forbid_empty_root_access = F){
       self$bucket = bucket
       self$root <- strip.slash(root)
+      self$forbid_empty_root_access <- forbid_empty_root_access
       private$cwd <- ifelse(root != '', self$root, '')
     },
     goto = function(path){
@@ -153,6 +155,10 @@ Browser <- R6::R6Class("Browser",
         x
       }
 
+      if(self$forbid_empty_root_access){
+        return(data.frame(Key=character(), LastModified=character(), ETag=character(), Size=character()))
+      }
+
       prefix <- add.slash(private$cwd)
       if(is.null(self$bucket)){
         files <- listBucket()
@@ -161,6 +167,7 @@ Browser <- R6::R6Class("Browser",
       }else{
         files <- listBucket(self$bucket, prefix)
       }
+
       for(column in c('LastModified', 'ETag', 'Size')){
         files <- fillNA(files, column)
       }
