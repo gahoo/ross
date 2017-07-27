@@ -12,6 +12,8 @@
 #'
 #' @examples
 browserApp <- function(bucket=NULL, root=''){
+  Sys.setlocale(category = "LC_ALL", locale="UTF-8")
+
   jsCode <- '
   shinyjs.updateTasks = function(){updateTasks();}
   shinyjs.setMaxCon = function(){setMaxCon();}
@@ -192,11 +194,9 @@ browserApp <- function(bucket=NULL, root=''){
     observeEvent(input$download, {
       selected_rows <- input$oss_rows_selected
       if(!is.null(selected_rows)){
-        keys <- browser()$formatDT(key.type='short', add.parent = TRUE)$Key[selected_rows]
-        str(keys)
+        keys <- browser()$formatDT(key.type='full', add.parent = TRUE)$Key[selected_rows]
         links <- list(url=list(), dir=list())
         for(key in keys){
-          message(key)
           key_link <- browser()$getLinks(key)
           links$url <- c(links$url, key_link$url)
           links$dir <- c(links$dir, key_link$dir)

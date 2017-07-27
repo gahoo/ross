@@ -61,13 +61,8 @@ Browser <- R6::R6Class("Browser",
 
       self$pwd <- pwd
     },
-    getLinks = function(key){
-      if(key == '..') return(invisible())
-      if(private$cwd == ''){
-        prefix <- key
-      }else{
-        prefix <- file.path(private$cwd, key)
-      }
+    getLinks = function(prefix){
+      if(prefix == '..') return(invisible())
       if(isPseudoFolderExist(self$bucket, prefix)){
         keys <- listBucket(self$bucket, prefix, delimiter = '', .output = 'character')
         dirs <- gsub(self$root, '', dirname(keys))
@@ -77,7 +72,7 @@ Browser <- R6::R6Class("Browser",
         dirs <- self$relative_dir
         urls <- urlObject(self$bucket, prefix, expires = 7200)
       }
-      message('download: ', key, '\tprefix: ', prefix)
+      message('prefix: ', prefix)
       list(url = as.list(urls),
            dir = as.list(dirs))
     },
@@ -94,12 +89,15 @@ Browser <- R6::R6Class("Browser",
             sprintf('<a href="%s" target="_blank">%s</a>', link, filename)
           }
         }
+        parent_key <- "<a onclick='updateCWD(\"..\")'>Parent</a>"
       }else if(key.type == 'short'){
         formatKey <- function(x) {
           gsub(paste0('^', prefix), '', x)
         }
+        parent_key <- ".."
       }else if(key.type == 'full'){
         formatKey <- function(x) x
+        parent_key <- ".."
       }else{
         stop('Wrong key type: ', key.type, '. Choose from link, short, full.')
       }
@@ -119,9 +117,8 @@ Browser <- R6::R6Class("Browser",
       }
 
       addParent <- function(files){
-        parent_key <- "<a onclick='updateCWD(\"..\")'>Parent</a>"
-        parent <- data.frame(Key = parent_key, LastModified = NA, ETag = NA, Size = NA)
         if(add.parent){
+          parent <- data.frame(Key = parent_key, LastModified = NA, ETag = NA, Size = NA)
           if(!is.null(self$bucket)){
             files <- rbind(parent, files)
           }
