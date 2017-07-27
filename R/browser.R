@@ -84,14 +84,14 @@ Browser <- R6::R6Class("Browser",
           filename <- gsub(paste0('^', prefix), '', x)
           if(is.folder.char(x)){
             # makeNavi
-            sprintf("<a onclick='updateCWD(\"%s\")'>%s</a>", filename, filename)
+            sprintf("<a href='#' onclick='updateCWD(\"%s\")'>%s</a>", filename, filename)
           }else{
             # createLink
             link <- urlObject(self$bucket, x)
             sprintf('<a href="%s" target="_blank">%s</a>', link, filename)
           }
         }
-        parent_key <- "<a onclick='updateCWD(\"..\")'>Parent</a>"
+        parent_key <- "<a href='#' onclick='updateCWD(\"..\")'>Parent</a>"
       }else if(key.type == 'short'){
         formatKey <- function(x) {
           gsub(paste0('^', prefix), '', x)
