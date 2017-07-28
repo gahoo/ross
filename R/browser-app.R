@@ -90,33 +90,35 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
         shinyjs::extendShinyjs(text = jsCode),
         style='display: none'
       ),
-      tabsetPanel(
-        tabPanel(
-          'Download',
-          conditionalPanel("'undefined' != typeof aria2_version",
-            actionButton('select', 'Select All', icon = icon('check', lib = 'glyphicon')),
-            actionButton('download', 'Download', icon = icon('download'), title = 'download selected items.'),
-            actionButton('download_all', 'Download All', icon = icon('download'), title = 'download everything.'),
-            #actionLink('refresh', "", icon = icon('refresh')),
-            div(
-              actionLink("unpause_all", "", icon = icon('play'), onclick = 'aria2.unpauseAll()', title = 'start all paused tasks.'),
-              actionLink("pause_all", "", icon = icon('pause'), onclick = 'aria2.pauseAll()', title = 'pause all tasks.'),
-              actionLink("remove_all_stopped", "", icon = icon('trash'), onclick = 'aria2.purgeDownloadResult()', title = 'remove all stopped tasks.'),
-              actionLink("settings", "", icon = icon('cog'), title = 'aria2 settings'),
-              style = 'float: right'
+      actionLink("show_task", "", icon = icon('tasks'), style="float: right;"),
+      conditionalPanel("input.show_task % 2 == 0",
+        tabsetPanel(
+          tabPanel(
+            'Download',
+            conditionalPanel("'undefined' != typeof aria2_version",
+              actionButton('select', 'Select All', icon = icon('check', lib = 'glyphicon')),
+              actionButton('download', 'Download', icon = icon('download'), title = 'download selected items.'),
+              actionButton('download_all', 'Download All', icon = icon('download'), title = 'download everything.'),
+              #actionLink('refresh', "", icon = icon('refresh')),
+              div(
+                actionLink("unpause_all", "", icon = icon('play'), onclick = 'aria2.unpauseAll()', title = 'start all paused tasks.'),
+                actionLink("pause_all", "", icon = icon('pause'), onclick = 'aria2.pauseAll()', title = 'pause all tasks.'),
+                actionLink("remove_all_stopped", "", icon = icon('trash'), onclick = 'aria2.purgeDownloadResult()', title = 'remove all stopped tasks.'),
+                actionLink("settings", "", icon = icon('cog'), title = 'aria2 settings'),
+                style = 'float: right'
+              ),
+              htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
+                                        script=c('bundle.js', 'ross.js'),
+                                        stylesheet=c('ross.css')),
+              DT::dataTableOutput('aria2tasks_list')
             ),
-            #actionLink("show_task", "", icon = icon('tasks')),
-            htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
-                                      script=c('bundle.js', 'ross.js'),
-                                      stylesheet=c('ross.css')),
-            DT::dataTableOutput('aria2tasks_list')
+            conditionalPanel("'undefined' === typeof aria2_version",
+              includeMarkdown('inst/aria2/setup_aria2.md')
+            )
           ),
-          conditionalPanel("'undefined' === typeof aria2_version",
-            includeMarkdown('inst/aria2/setup_aria2.md')
+          tabPanel(
+            'Preview'
           )
-        ),
-        tabPanel(
-          'Preview'
         )
       )
     ),
@@ -147,11 +149,12 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
     })
 
     output$oss <- DT::renderDataTable({
+      height <- ifelse(input$show_task %% 2 == 0, 300, 500)
       browser()$formatDT(add.parent = T) %>%
         DT::datatable(escape = F,
                       extensions = 'Scroller', options = list(
                         deferRender = TRUE,
-                        scrollY = 300,
+                        scrollY = height,
                         scroller = TRUE
                       )) %>%
         DT::formatDate('LastModified')
@@ -227,14 +230,14 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
         prefix <- add.slash(browser()$root)
       }
       keys <- listBucket(browser()$bucket, prefix, delimiter = '', .output = 'character')
-      message(paste0(keys, collapse = '\n'))
-      if(browser()$root == ''){
-        dirs <- dirname(keys)
-      }else{
-        dirs <- gsub(add.slash(browser()$root), '', dirname(keys))
+
+      if(browser()$root != ''){
+        dirs <- gsub(add.slash(browser()$root), '', keys)
       }
+      dirs <- dirname(keys)
       dirs[dirs == '.'] <- ''
-      message(paste0(dirs, collapse = '\n'))
+      message(paste0(keys, "\t", dirs, collapse = '\n'))
+
       urls <- sapply(keys, function(x){urlObject(browser()$bucket, x, expires = 7200)})
       names(urls) <- NULL
       session$sendCustomMessage(
