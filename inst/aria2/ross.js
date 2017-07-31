@@ -68,8 +68,6 @@ var updateTasks = function(){
   task_list = [];
 };
 
-setDownloadDir();
-
 Shiny.addCustomMessageHandler("addLinks",
   function(message) {
     setDownloadDir();
@@ -87,4 +85,7 @@ Shiny.addCustomMessageHandler("addLinks",
   }
 );
 
-getVersion();
+$('document').ready(function(){
+   setDownloadDir();
+   getVersion();
+});
