@@ -6,13 +6,24 @@
 #' @importFrom shinyjs useShinyjs
 #' @importFrom shinyjs extendShinyjs
 #' @importFrom shinyjs js
+#' @import rintrojs
+
 #'
 #' @return
 #' @export
 #'
 #' @examples
-browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
+browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='cn'){
   Sys.setlocale(category = "LC_ALL", locale="UTF-8")
+  docs <- list(
+    cn = list(
+      'quick-start' = 'inst/aria2/quick-start_cn.md',
+      'faq' = 'inst/aria2/faq_cn.md',
+      'help' = 'inst/aria2/help_cn.md',
+      'about' = 'inst/aria2/about_cn.md'
+    )
+  )
+  docs[['en']] <- lapply(docs[['cn']], function(x) gsub('_cn', '_en', x))
 
   jsCode <- '
   shinyjs.updateTasks = function(){updateTasks();}
@@ -22,6 +33,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
     aria2.changeGlobalOption({"max-concurrent-downloads": max_concurrent[0]});
   }
   shinyjs.setMaxOverallDonwloadLimit = function(){setMaxOverallDonwloadLimit();}
+  shinyjs.getVersion = function(){getVersion();}
   '
 
   extractAria2 <- function(res, name, as.fun = as.character){
@@ -88,9 +100,15 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
         checkboxInput('aria2_task_hide_stopped', 'Hide Stopped', value = TRUE),
         shinyjs::useShinyjs(),
         shinyjs::extendShinyjs(text = jsCode),
+        introjsUI(),
         style='display: none'
       ),
-      actionLink("show_task", "", icon = icon('tasks'), style="float: right;"),
+      div(
+        actionLink("help", "", icon = icon('question-sign', lib = 'glyphicon')),
+        actionLink("show_task", "", icon = icon('tasks')),
+        actionLink("comment", "", icon = icon('comment', lib = 'glyphicon')),
+        style="float: right;"
+      ),
       conditionalPanel("input.show_task % 2 == 0",
         tabsetPanel(
           tabPanel(
@@ -104,6 +122,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
                 actionLink("unpause_all", "", icon = icon('play'), onclick = 'aria2.unpauseAll()', title = 'start all paused tasks.'),
                 actionLink("pause_all", "", icon = icon('pause'), onclick = 'aria2.pauseAll()', title = 'pause all tasks.'),
                 actionLink("remove_all_stopped", "", icon = icon('trash'), onclick = 'aria2.purgeDownloadResult()', title = 'remove all stopped tasks.'),
+                actionLink("shutdown", "", onclick = 'aria2.shutdown()', icon = icon('power-off'), title = 'shutdown aria2'),
                 actionLink("settings", "", icon = icon('cog'), title = 'aria2 settings'),
                 style = 'float: right'
               ),
@@ -113,7 +132,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
               DT::dataTableOutput('aria2tasks_list')
             ),
             conditionalPanel("'undefined' === typeof aria2_version",
-              includeMarkdown('inst/aria2/setup_aria2.md')
+              includeMarkdown(docs[[lang]][['quick-start']])
             )
           ),
           tabPanel(
@@ -123,12 +142,19 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
       )
     ),
     tabPanel(
-      "FAQ"
+      "FAQ",
+      includeMarkdown('inst/aria2/faq_en.md')
     ),
     navbarMenu(
       "More",
-      tabPanel('ELF'),
-      tabPanel("Help"),
+      tabPanel(
+        'ELF',
+        'Coming Soon...'
+        ),
+      tabPanel(
+        "Help",
+        includeMarkdown('inst/aria2/help_en.md')
+      ),
       "----",
       tabPanel("About")
     )
@@ -147,6 +173,8 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
     browser <- reactive({
       Browser$new(bucket, root(), forbid_empty_root_access)
     })
+
+    js$getVersion()
 
     output$oss <- DT::renderDataTable({
       height <- ifelse(input$show_task %% 2 == 0, 300, 500)
@@ -296,6 +324,16 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
       ))
     })
 
+    observeEvent(input$comment, {
+      showModal(modalDialog(
+        title = "Comments",
+        "Comment and advice are welcomed.",
+        textAreaInput('comments', '', width = 500, height = 300),
+        easyClose = TRUE,
+        footer = actionButton('summit_comment', 'Summit')
+      ))
+    })
+
     observeEvent(input$aria2_task_hide_stopped_modal, {
       updateCheckboxInput(session, 'aria2_task_hide_stopped', label = 'Hide Stopped', value = input$aria2_task_hide_stopped_modal)
     })
@@ -312,6 +350,55 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F){
     output$cwd_navi_bar <- renderUI({
       div(makeNaviBar(input$cwd), style="background-color: #E8E8E8;float: left;")
     })
+
+    steps <- reactive({
+      hints <- list(
+        '#oss' = "All your files are listed here. </br> You can navigate or download single file directly by clicking each link.",
+        '#cwd_navi_bar' = "You can fast navigate here.",
+        '#go_parent' = "Go to parent folder",
+        '#help' = 'Show this hints.',
+        '#show_task' = 'Show task list and preview or not.'
+      )
+
+      if(input$show_task %% 2 == 0 && is.character(input$aria2_version)){
+        hints <- c(hints, list(
+          '#select' = "Select all or none files.",
+          '#download' = "Download selected files.",
+          '#download_all' = "Dwnload everything.",
+          '#aria2tasks_list' = "Download task lists",
+          '#unpause_all' = "Start all tasks.",
+          '#pause_all' = "Pause all tasks.",
+          '#remove_all_stopped' = "Clear all stopped tasks.",
+          '#shutdown' = "Shutdown aira2.",
+          '#settings' = "aira2 options, includes: </p>1. show stopped tasks or not.</p>2.max concurrent tasks.</p>3.download speed limits."
+        ))
+      }
+      #aria2_version
+
+      hints %>%
+        plyr::ldply(.id = 'element') %>%
+        dplyr::rename(intro = V1)
+    })
+
+    observeEvent(input$help,{
+      options <- list(steps = steps())
+      if(lang == 'cn'){
+        options <- c(options,
+          list(
+           "nextLabel"="继续",
+           "prevLabel"="返回",
+           "skipLabel"="跳过",
+           "doneLabel"="完成"
+          ))
+      }
+      introjs(session, options = options)
+    })
+
+    # observe({
+    #   if(input$help == 0){
+    #     introjs(session,options = list(steps=steps()))
+    #   }
+    # })
 
     output$debug <- renderText({
       click <- input$oss_cell_clicked
