@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @examples
-browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='cn'){
+browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.size=FALSE, lang='cn'){
   Sys.setlocale(category = "LC_ALL", locale="UTF-8")
   docs <- list(
     cn = list(
@@ -179,7 +179,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='c
 
     output$oss <- DT::renderDataTable({
       height <- ifelse(input$show_task %% 2 == 0, 300, 500)
-      browser()$formatDT(add.parent = T) %>%
+      browser()$formatDT(add.parent = T, folder.size=folder.size) %>%
         DT::datatable(escape = F,
                       extensions = 'Scroller', options = list(
                         deferRender = TRUE,
@@ -193,7 +193,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='c
       if(!is.null(input$cwd)){
         browser()$goto(input$cwd)
       }
-      oss_files <- browser()$formatDT(add.parent = T)
+      oss_files <- browser()$formatDT(add.parent = T, folder.size=folder.size)
       oss_proxy %>%
         DT::replaceData(oss_files)
     })
