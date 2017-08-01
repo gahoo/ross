@@ -353,16 +353,24 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='c
     })
 
     steps <- reactive({
-      hints <- list(
+      hints <- list()
+      hints[['en']] <- list(
         '#oss' = "All your files are listed here. </br> You can navigate or download single file directly by clicking each link.",
         '#cwd_navi_bar' = "You can fast navigate here.",
         '#go_parent' = "Go to parent folder",
         '#help' = 'Show this hints. When aria2 is running, there will be more hints.',
         '#show_task' = 'Show task list and preview or not.'
       )
+      hints[['cn']] <- list(
+        '#oss' = "文件列表，点击链接浏览目录或下载单个文件，点击其他地方选中或取消选中。",
+        '#cwd_navi_bar' = "点击链接快速跳转目录",
+        '#go_parent' = "返回上一级目录",
+        '#help' = '显示此帮助信息。当aria2运行时会有更多信息。',
+        '#show_task' = '是否显示任务列表与预览面板。'
+      )
 
       if(input$show_task %% 2 == 0 && is.character(input$aria2_version)){
-        hints <- c(hints, list(
+        hints[['en']] <- c(hints[['en']], list(
           '#select' = "Select all or none files.",
           '#download' = "Download selected files.",
           '#download_all' = "Dwnload everything.",
@@ -370,16 +378,30 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='c
           '#unpause_all' = "Start all tasks.",
           '#pause_all' = "Pause all tasks.",
           '#remove_all_stopped' = "Clear all stopped tasks.",
-          '#shutdown' = "Shutdown aira2.",
+          '#shutdown' = "Shutdown aria2.",
           '#settings' = "aira2 options, includes: </p>1. show stopped tasks or not.</p>2.max concurrent tasks.</p>3.download speed limits."
         ))
+        hints[['cn']] <- c(hints[['cn']], list(
+          '#select' = "全选／不选",
+          '#download' = "下载选中的文件",
+          '#download_all' = "下载所有文件",
+          '#aria2tasks_list' = "下载任务列表",
+          '#unpause_all' = "启动所有任务",
+          '#pause_all' = "暂停所有任务",
+          '#remove_all_stopped' = "清除所有停止任务",
+          '#shutdown' = "退出aria2的运行",
+          '#settings' = "aira2设置, 包括：</p>1.是否显示已停止任务</p>2.最大下载任务数</p>3.下载速度限制"
+        ))
       }else{
-        hints <- c(hints, list(
+        hints[['en']] <- c(hints[['en']], list(
           '#quick_start' = 'Please follow instruction here.'
+        ))
+        hints[['cn']] <- c(hints[['cn']], list(
+          '#quick_start' = '首次使用，请按以下方法操作'
         ))
       }
 
-      hints %>%
+      hints[[lang]] %>%
         plyr::ldply(.id = 'element') %>%
         dplyr::rename(intro = V1)
     })
