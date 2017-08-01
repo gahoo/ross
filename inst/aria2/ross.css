@@ -10,3 +10,11 @@
   color: silver;
   text-shadow: 1px 1px 1px black;
 }
+
+.blink {
+  animation: blinker 1.5s linear infinite;
+}
+
+@keyframes blinker {
+  50% { opacity: 0; }
+}
