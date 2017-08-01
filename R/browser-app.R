@@ -144,7 +144,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.
     ),
     tabPanel(
       "FAQ",
-      includeMarkdown('inst/aria2/faq_en.md')
+      includeMarkdown(docs[[lang]][['faq']])
     ),
     navbarMenu(
       "More",
@@ -154,7 +154,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.
         ),
       tabPanel(
         "Help",
-        includeMarkdown('inst/aria2/help_en.md')
+        includeMarkdown(docs[[lang]][['help']])
       ),
       "----",
       tabPanel("About")
@@ -394,7 +394,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.
         ))
       }else{
         hints[['en']] <- c(hints[['en']], list(
-          '#quick_start' = 'Please follow instruction here.'
+          '#quick_start' = 'Please follow the instruction here.'
         ))
         hints[['cn']] <- c(hints[['cn']], list(
           '#quick_start' = '首次使用，请按以下方法操作'
