@@ -78,11 +78,13 @@ Browser <- R6::R6Class("Browser",
       list(url = as.list(urls),
            dir = as.list(dirs))
     },
-    formatDT = function(key.type='link', add.parent=FALSE){
+    formatDT = function(key.type='link', add.parent=FALSE, folder.size=FALSE){
       if(key.type == 'link'){
         formatKey <- function(x){
           filename <- gsub(paste0('^', prefix), '', x)
-          if(is.folder.char(x)){
+          if(filename == ''){
+            filename
+          }else if(is.folder.char(x)){
             # makeNavi
             sprintf("<a href='#' onclick='updateCWD(\"%s\")'>%s</a>", filename, filename)
           }else{
@@ -104,6 +106,20 @@ Browser <- R6::R6Class("Browser",
         stop('Wrong key type: ', key.type, '. Choose from link, short, full.')
       }
 
+      if(folder.size){
+        formatSize <- function(key, size){
+          if(is.na(size)){
+            message(key)
+            size <- usageBucket(self$bucket, key, unit = 'B')
+          }
+          smartSize(size)
+        }
+      }else{
+        formatSize <- function(key, size){
+          smartSize(size)
+        }
+      }
+
       formatTable <- function(files){
         if(is.null(self$bucket)){
           files %>%
@@ -111,9 +127,10 @@ Browser <- R6::R6Class("Browser",
         }else{
           files %>%
             mutate(
-              Key = sapply(Key, formatKey),
-              Size = sapply(as.numeric(Size), smartSize)
+              Size = mapply(formatSize, Key, as.numeric(Size)),
+              Key = sapply(Key, formatKey)
             ) %>%
+            dplyr::filter(Key != '') %>%
             select(Key, LastModified, ETag, Size)
         }
       }
