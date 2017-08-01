@@ -91,7 +91,7 @@ Browser <- R6::R6Class("Browser",
             sprintf('<a href="%s" target="_blank">%s</a>', link, filename)
           }
         }
-        parent_key <- "<a href='#' onclick='updateCWD(\"..\")'>Parent</a>"
+        parent_key <- "<a id='go_parent' href='#' onclick='updateCWD(\"..\")'>Parent</a>"
       }else if(key.type == 'short'){
         formatKey <- function(x) {
           gsub(paste0('^', prefix), '', x)
