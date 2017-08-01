@@ -104,7 +104,8 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='c
         style='display: none'
       ),
       div(
-        actionLink("help", "", icon = icon('question-sign', lib = 'glyphicon')),
+        actionLink("help", "", icon = icon('question-sign', lib = 'glyphicon'),
+                   class='blink', onclick="javascript: this.classList.remove('blink');"),
         actionLink("show_task", "", icon = icon('tasks')),
         actionLink("comment", "", icon = icon('comment', lib = 'glyphicon')),
         style="float: right;"
@@ -131,7 +132,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='c
                                         stylesheet=c('ross.css')),
               DT::dataTableOutput('aria2tasks_list')
             ),
-            conditionalPanel("'undefined' === typeof aria2_version",
+            conditionalPanel("'undefined' === typeof aria2_version", id = 'quick_start',
               includeMarkdown(docs[[lang]][['quick-start']])
             )
           ),
@@ -356,7 +357,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='c
         '#oss' = "All your files are listed here. </br> You can navigate or download single file directly by clicking each link.",
         '#cwd_navi_bar' = "You can fast navigate here.",
         '#go_parent' = "Go to parent folder",
-        '#help' = 'Show this hints.',
+        '#help' = 'Show this hints. When aria2 is running, there will be more hints.',
         '#show_task' = 'Show task list and preview or not.'
       )
 
@@ -372,8 +373,11 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, lang='c
           '#shutdown' = "Shutdown aira2.",
           '#settings' = "aira2 options, includes: </p>1. show stopped tasks or not.</p>2.max concurrent tasks.</p>3.download speed limits."
         ))
+      }else{
+        hints <- c(hints, list(
+          '#quick_start' = 'Please follow instruction here.'
+        ))
       }
-      #aria2_version
 
       hints %>%
         plyr::ldply(.id = 'element') %>%
