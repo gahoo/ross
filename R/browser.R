@@ -82,9 +82,7 @@ Browser <- R6::R6Class("Browser",
       if(key.type == 'link'){
         formatKey <- function(x){
           filename <- gsub(paste0('^', prefix), '', x)
-          if(filename == ''){
-            filename
-          }else if(is.folder.char(x)){
+          if(is.folder.char(x)){
             # makeNavi
             sprintf("<a href='#' onclick='updateCWD(\"%s\")'>%s</a>", filename, filename)
           }else{
@@ -130,7 +128,6 @@ Browser <- R6::R6Class("Browser",
               Size = mapply(formatSize, Key, as.numeric(Size)),
               Key = sapply(Key, formatKey)
             ) %>%
-            dplyr::filter(Key != '') %>%
             select(Key, LastModified, ETag, Size)
         }
       }
@@ -172,7 +169,7 @@ Browser <- R6::R6Class("Browser",
         x
       }
 
-      if(self$forbid_empty_root_access){
+      if(self$forbid_empty_root_access && self$root == ''){
         return(data.frame(Key=character(), LastModified=character(), ETag=character(), Size=character()))
       }
 
@@ -182,7 +179,8 @@ Browser <- R6::R6Class("Browser",
       }else if(private$cwd == ''){
         files <- listBucket(self$bucket)
       }else{
-        files <- listBucket(self$bucket, prefix)
+        files <- listBucket(self$bucket, prefix) %>%
+          dplyr::filter(Key != prefix)
       }
 
       for(column in c('LastModified', 'ETag', 'Size')){
