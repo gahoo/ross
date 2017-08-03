@@ -18,3 +18,7 @@
 @keyframes blinker {
   50% { opacity: 0; }
 }
+
+.dataTables_scrollBody {
+  background: none !important;
+}
