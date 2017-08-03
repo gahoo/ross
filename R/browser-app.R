@@ -13,14 +13,15 @@
 #' @export
 #'
 #' @examples
-browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.size=FALSE, lang='cn'){
-  Sys.setlocale(category = "LC_ALL", locale="UTF-8")
+browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.size=FALSE, lang='cn', ...){
+  Sys.setlocale(locale="zh_CN.UTF-8")
+  aria2_path <- system.file(package = 'ross', 'aria2')
   docs <- list(
     cn = list(
-      'quick-start' = 'inst/aria2/quick-start_cn.md',
-      'faq' = 'inst/aria2/faq_cn.md',
-      'help' = 'inst/aria2/help_cn.md',
-      'about' = 'inst/aria2/about_cn.md'
+      'quick-start' = file.path(aria2_path, 'quick-start_cn.md'),
+      'faq' = file.path(aria2_path, 'faq_cn.md'),
+      'help' = file.path(aria2_path, 'help_cn.md'),
+      'about' = file.path(aria2_path, 'about_cn.md')
     )
   )
   docs[['en']] <- lapply(docs[['cn']], function(x) gsub('_cn', '_en', x))
@@ -127,7 +128,7 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.
                 actionLink("settings", "", icon = icon('cog'), title = 'aria2 settings'),
                 style = 'float: right'
               ),
-              htmltools::htmlDependency('aria2js', '3.0.0', 'inst/aria2/',
+              htmltools::htmlDependency('aria2js', '3.0.0', aria2_path,
                                         script=c('bundle.js', 'ross.js'),
                                         stylesheet=c('ross.css')),
               DT::dataTableOutput('aria2tasks_list')
@@ -359,14 +360,16 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.
         '#cwd_navi_bar' = "You can fast navigate here.",
         '#go_parent' = "Go to parent folder",
         '#help' = 'Show this hints. When aria2 is running, there will be more hints.',
-        '#show_task' = 'Show task list and preview or not.'
+        '#show_task' = 'Show task list and preview or not.',
+        '#comment' = 'Leave comments here.'
       )
       hints[['cn']] <- list(
         '#oss' = "文件列表，点击链接浏览目录或下载单个文件，点击其他地方选中或取消选中。",
         '#cwd_navi_bar' = "点击链接快速跳转目录",
         '#go_parent' = "返回上一级目录",
         '#help' = '显示此帮助信息。当aria2运行时会有更多信息。',
-        '#show_task' = '是否显示任务列表与预览面板。'
+        '#show_task' = '是否显示任务列表与预览面板。',
+        '#comment' = '请在此留下建议与意见'
       )
 
       if(input$show_task %% 2 == 0 && is.character(input$aria2_version)){
@@ -438,5 +441,5 @@ browserApp <- function(bucket=NULL, root='', forbid_empty_root_access=F, folder.
     })
   }
 
-  shinyApp(ui = ui, server = server)
+  shinyApp(ui = ui, server = server, ...)
 }
